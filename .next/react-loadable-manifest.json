@@ -14,5 +14,11 @@
   "node_modules/@supabase/storage-js/dist/module/lib/helpers.js -> @supabase/node-fetch": {
     "id": "node_modules/@supabase/storage-js/dist/module/lib/helpers.js -> @supabase/node-fetch",
     "files": []
+  },
+  "pages/scan.js -> ../components/QRCodeScanner": {
+    "id": "pages/scan.js -> ../components/QRCodeScanner",
+    "files": [
+      "static/chunks/_pages-dir-browser_components_QRCodeScanner_js.js"
+    ]
   }
 }
