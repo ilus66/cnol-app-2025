@@ -27,45 +27,34 @@ export default async function handler(req, res) {
   const idStr = String(id);
 
   try {
-    // id exemple: 'cnol2025-jean-barnard'
-    // Extraire prénom-nom
+    // Extraire l'ID de la base de données (enlever le préfixe cnol2025-)
     const prefix = 'cnol2025-';
     if (!idStr.startsWith(prefix)) {
       return res.status(400).json({ message: 'Format d\'ID invalide' });
     }
 
-    const safeName = idStr.slice(prefix.length); // 'jean-barnard'
+    const dbId = idStr.slice(prefix.length);
 
-    // Rechercher inscription via prénom et nom "safe"
-    // Comme la base a les colonnes prenom, nom, on doit retrouver la ligne
-    // Pour cela, on normalise aussi prenom+nom en safe et on compare
-
-    // Récupérer toutes inscriptions non validées (ou mieux, indexer côté DB)
-    const { data: inscrits, error } = await supabase
+    // Récupérer l'inscription
+    const { data: inscrit, error } = await supabase
       .from('inscription')
       .select('*')
-      .eq('valide', false);
+      .eq('id', dbId)
+      .single();
 
-    if (error) {
-      return res.status(500).json({ message: 'Erreur DB' });
+    if (error || !inscrit) {
+      return res.status(404).json({ message: 'Inscription non trouvée' });
     }
 
-    // Chercher l'inscription qui correspond au safeName
-    const inscrit = inscrits.find(i => {
-      const combinedName = `${i.prenom} ${i.nom}`;
-      const safeCombined = makeSafeFileName(combinedName);
-      return safeCombined === safeName;
-    });
-
-    if (!inscrit) {
-      return res.status(404).json({ message: 'Inscription non trouvée' });
+    if (inscrit.valide) {
+      return res.status(400).json({ message: 'Inscription déjà validée' });
     }
 
     // Mise à jour statut valide
     const { data: updated, error: updateError } = await supabase
       .from('inscription')
       .update({ valide: true })
-      .eq('id', inscrit.id)
+      .eq('id', dbId)
       .select()
       .single();
 
