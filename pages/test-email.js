@@ -1,4 +1,4 @@
-import { sendMail } from '../../mailer'
+import { sendMail } from '../lib/mailer'
 
 export default async function handler(req, res) {
   try {
@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     res.status(200).json({ message: 'Test email envoyé' })
   } catch (error) {
     console.error("❌ Erreur d'envoi test :", error)
-    res.status(500).json({ message: 'Erreur lors de l’envoi du test' })
+    res.status(500).json({ message: 'Erreur lors de l'envoi du test' })
   }
 }
 
