@@ -95,7 +95,7 @@ export default function Admin() {
       const res = await fetch('/api/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id: `cnol2025-${id}` }),
       })
       const result = await res.json()
       if (res.ok) {
