@@ -6,7 +6,6 @@ const nextConfig = {
     unoptimized: true
   },
   experimental: {
-    optimizeCss: true,
     optimizePackageImports: ['@mui/material', '@mui/icons-material']
   },
   webpack: (config, { dev, isServer }) => {
