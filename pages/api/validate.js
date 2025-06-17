@@ -23,15 +23,18 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'ID manquant' });
   }
 
+  // S'assurer que id est une chaîne de caractères
+  const idStr = String(id);
+
   try {
     // id exemple: 'cnol2025-jean-barnard'
     // Extraire prénom-nom
     const prefix = 'cnol2025-';
-    if (!id.startsWith(prefix)) {
+    if (!idStr.startsWith(prefix)) {
       return res.status(400).json({ message: 'Format d\'ID invalide' });
     }
 
-    const safeName = id.slice(prefix.length); // 'jean-barnard'
+    const safeName = idStr.slice(prefix.length); // 'jean-barnard'
 
     // Rechercher inscription via prénom et nom "safe"
     // Comme la base a les colonnes prenom, nom, on doit retrouver la ligne
@@ -76,7 +79,7 @@ export default async function handler(req, res) {
       function: updated.fonction,
       city: updated.ville,
       email: updated.email,
-      userId: id,  // on garde l'id dans le QR tel quel
+      userId: idStr,  // utiliser la version string de l'id
     });
 
     // Envoyer mail
