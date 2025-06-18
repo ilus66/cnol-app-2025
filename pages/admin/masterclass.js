@@ -16,6 +16,8 @@ export default function AdminMasterclassPage() {
   const [internalError, setInternalError] = useState('')
   const [openListMasterId, setOpenListMasterId] = useState(null)
   const [listResas, setListResas] = useState([])
+  const [addError, setAddError] = useState('')
+  const [addSuccess, setAddSuccess] = useState('')
 
   const fetchMasterclass = async () => {
     const { data } = await supabase.from('masterclass').select('*').order('date_heure')
@@ -34,10 +36,22 @@ export default function AdminMasterclassPage() {
   }
 
   const handleAdd = async () => {
-    if (!form.titre || !form.date_heure) return
-    await supabase.from('masterclass').insert({ ...form, places: parseInt(form.places) || 0 })
-    setForm({ titre: '', intervenant: '', date_heure: '', salle: '', places: '' })
-    fetchMasterclass()
+    setAddError('');
+    setAddSuccess('');
+    // Vérification des champs requis
+    if (!form.titre || !form.intervenant || !form.date_heure || !form.salle || !form.places) {
+      setAddError('Tous les champs sont obligatoires');
+      return;
+    }
+    const { error } = await supabase.from('masterclass').insert({ ...form, places: parseInt(form.places) || 0 });
+    if (error) {
+      setAddError('Erreur lors de l\'ajout : ' + error.message);
+      console.error('Erreur ajout masterclass:', error);
+    } else {
+      setAddSuccess('Masterclass ajoutée avec succès !');
+      setForm({ titre: '', intervenant: '', date_heure: '', salle: '', places: '' });
+      fetchMasterclass();
+    }
   }
 
   const handleDelete = async (id) => {
@@ -128,6 +142,8 @@ export default function AdminMasterclassPage() {
         <TextField label="Places" name="places" type="number" value={form.places} onChange={handleChange} />
         <Button variant="contained" onClick={handleAdd}>Ajouter</Button>
       </Box>
+      {addError && <Typography color="error">{addError}</Typography>}
+      {addSuccess && <Typography color="success.main">{addSuccess}</Typography>}
 
       <List>
         {masterclass.map((m) => (

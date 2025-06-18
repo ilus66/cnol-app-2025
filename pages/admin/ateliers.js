@@ -34,6 +34,8 @@ export default function AdminAteliers() {
   const [editError, setEditError] = useState('')
   const [openListAtelierId, setOpenListAtelierId] = useState(null)
   const [listResas, setListResas] = useState([])
+  const [addError, setAddError] = useState('')
+  const [addSuccess, setAddSuccess] = useState('')
 
   useEffect(() => {
     fetchAteliers()
@@ -45,8 +47,18 @@ export default function AdminAteliers() {
   }
 
   const handleAdd = async () => {
+    setAddError('')
+    setAddSuccess('')
+    if (!newAtelier.titre || !newAtelier.intervenant || !newAtelier.date_heure || !newAtelier.salle || !newAtelier.places) {
+      setAddError('Tous les champs sont obligatoires')
+      return
+    }
     const { error } = await supabase.from('ateliers').insert([newAtelier])
-    if (!error) {
+    if (error) {
+      setAddError('Erreur lors de l\'ajout : ' + error.message)
+      console.error('Erreur ajout atelier:', error)
+    } else {
+      setAddSuccess('Atelier ajouté avec succès !')
       setNewAtelier({ titre: '', intervenant: '', date_heure: '', salle: '', places: '' })
       fetchAteliers()
     }
@@ -172,6 +184,8 @@ export default function AdminAteliers() {
         <TextField type="number" label="Nombre de places" value={newAtelier.places} onChange={e => setNewAtelier({ ...newAtelier, places: e.target.value })} />
         <Button variant="contained" onClick={handleAdd}>Ajouter</Button>
       </Box>
+      {addError && <Typography color="error">{addError}</Typography>}
+      {addSuccess && <Typography color="success.main">{addSuccess}</Typography>}
       <Divider sx={{ my: 2 }} />
       <List>
         {ateliers.map((a) => (
