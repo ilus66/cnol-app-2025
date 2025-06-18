@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Paramètre id manquant' })
   }
 
-  // Récupérer l’inscrit
+  // Récupérer l'inscrit
   const { data: inscrit, error } = await supabase
     .from('inscription')
     .select('*')
@@ -37,10 +37,14 @@ export default async function handler(req, res) {
     const pdfBuffer = await generateBadge(userData)
 
     // Envoyer le PDF en binaire
+    function toAscii(str) {
+      return str.normalize('NFD').replace(/[^\x00-\x7F]/g, '').replace(/[^a-zA-Z0-9-_]/g, '');
+    }
+    const filename = `badge-${toAscii(inscrit.prenom.toLowerCase())}-${toAscii(inscrit.nom.toLowerCase())}.pdf`;
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader(
       'Content-Disposition',
-      `inline; filename="badge-${inscrit.prenom.toLowerCase()}-${inscrit.nom.toLowerCase()}.pdf"`
+      `inline; filename="${filename}"`
     )
     // IMPORTANT : use .end() to send raw buffer
     return res.status(200).end(pdfBuffer)
