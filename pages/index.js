@@ -24,12 +24,12 @@ export default function Home() {
 
         <h1 style={styles.title}>Bienvenue au CNOL 2025</h1>
         <p style={styles.description}>
-          Le Congrès National d’Optique Lunetterie revient à Rabat du 10 au 12 octobre 2025.
+          Le Congrès National d'Optique Lunetterie revient à Rabat du 10 au 12 octobre 2025.
         </p>
 
         <div style={styles.buttonGroup}>
           <a href="/inscription" style={styles.button}>S'inscrire</a>
-          <a href="/admin" style={styles.adminButton}>Admin</a>
+          {/* <a href="/admin" style={styles.adminButton}>Admin</a> */}
         </div>
       </main>
     </div>

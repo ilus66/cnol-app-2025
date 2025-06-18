@@ -7,6 +7,7 @@ import {
 import toast, { Toaster } from 'react-hot-toast'
 import Link from 'next/link'
 import { supabase } from '../lib/supabaseClient'
+import { useRouter } from 'next/router'
 
 const participantTypes = [
   { value: 'exposant', label: 'Exposant' },
@@ -35,6 +36,8 @@ const statusFilters = [
 const PAGE_SIZE = 10
 
 const AdminPage = () => {
+  const router = useRouter()
+  const [isAuth, setIsAuth] = useState(false)
   const [inscriptions, setInscriptions] = useState([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -52,6 +55,17 @@ const AdminPage = () => {
     ville: '',
   })
   const [adding, setAdding] = useState(false)
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const auth = localStorage.getItem('admin_auth')
+      if (auth === 'true') {
+        setIsAuth(true)
+      } else {
+        router.replace('/admin-login')
+      }
+    }
+  }, [])
 
   useEffect(() => {
     fetchInscriptions()
@@ -189,8 +203,20 @@ const AdminPage = () => {
     URL.revokeObjectURL(url)
   }
 
+  if (!isAuth) return null
+
+  function handleLogout() {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('admin_auth')
+      router.replace('/admin-login')
+    }
+  }
+
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button variant="outlined" color="error" onClick={handleLogout}>Déconnexion</Button>
+      </Box>
       <Toaster position="top-right" />
 
       <Typography variant="h4" gutterBottom>Administration des Inscriptions</Typography>
