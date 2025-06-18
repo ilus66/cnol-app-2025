@@ -15,8 +15,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Insert dans Supabase sans token magique
-    const { error } = await supabase.from('inscription').insert([{ ...user }])
+    // Liste des champs autorisés (ceux de la table inscription)
+    const allowedFields = ['email', 'telephone', 'nom', 'prenom', 'fonction', 'ville']; // Ajoute ici les autres champs réels si besoin
+    const userToInsert = {};
+    for (const field of allowedFields) {
+      if (user[field]) userToInsert[field] = user[field];
+    }
+
+    // Insert dans Supabase sans les champs parasites
+    const { error } = await supabase.from('inscription').insert([userToInsert]);
     if (error) throw error
 
     // Envoi email à l'utilisateur
