@@ -9,6 +9,9 @@ export default async function handler(req, res) {
 
   const user = req.body
 
+  // Log du payload reçu
+  console.log('Payload reçu dans /register:', user)
+
   // Validation côté backend
   if (!user.email || !user.telephone) {
     return res.status(400).json({ message: "L'email et le téléphone sont obligatoires." })
