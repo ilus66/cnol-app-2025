@@ -26,6 +26,7 @@ export default async function handler(req, res) {
     // Préparer le lien magique
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     const link = `${baseUrl}/mon-espace?token=${token}`
+    console.log('Lien magique généré :', link)
 
     // Envoi email à l'utilisateur
     await sendMail({

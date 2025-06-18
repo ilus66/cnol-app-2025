@@ -9,7 +9,10 @@ export default async function handler(req, res) {
 
   // Vérifier que l'utilisateur existe
   const { data: user, error } = await supabase.from('inscription').select('*').eq('email', email).single()
-  if (error || !user) return res.status(404).json({ message: 'Utilisateur non trouvé' })
+  if (error || !user) {
+    console.error('Utilisateur non trouvé ou erreur:', error)
+    return res.status(404).json({ message: 'Utilisateur non trouvé' })
+  }
 
   // Générer un token sécurisé
   const token = crypto.randomBytes(32).toString('hex')
@@ -26,19 +29,24 @@ export default async function handler(req, res) {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: process.env.SMTP_PORT,
-    secure: false,
+    secure: true,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS,
     },
   })
 
-  await transporter.sendMail({
-    from: process.env.SMTP_FROM || process.env.SMTP_USER,
-    to: email,
-    subject: 'Votre lien magique CNOL',
-    html: `<p>Bonjour ${user.prenom},<br/>Voici votre <a href="${link}">lien magique</a> pour accéder à votre espace personnel CNOL.<br/><br/>Ce lien est valable 30 minutes.</p>`
-  })
+  try {
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: 'Votre lien magique CNOL',
+      html: `<p>Bonjour ${user.prenom},<br/>Voici votre <a href="${link}">lien magique</a> pour accéder à votre espace personnel CNOL.<br/><br/>Ce lien est valable 30 minutes.</p>`
+    })
+  } catch (err) {
+    console.error('Erreur envoi mail:', err)
+    return res.status(500).json({ message: 'Erreur envoi mail' })
+  }
 
   return res.status(200).json({ success: true })
 } 

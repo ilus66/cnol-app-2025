@@ -10,6 +10,7 @@ export default function ReservationAteliers() {
   const [ateliers, setAteliers] = useState([])
   const [reservations, setReservations] = useState([])
   const [loading, setLoading] = useState(true)
+  const [placesExternes, setPlacesExternes] = useState({})
 
   useEffect(() => {
     const session = supabase.auth.getSession().then(({ data: { session } }) => {
@@ -29,7 +30,17 @@ export default function ReservationAteliers() {
       .from('reservations_atelier')
       .select('atelier_id')
       .eq('user_id', userId)
-
+    // Récupérer le nombre de réservations externes pour chaque atelier
+    const places = {}
+    for (const a of all || []) {
+      const { count } = await supabase
+        .from('reservations_atelier')
+        .select('*', { count: 'exact', head: true })
+        .eq('atelier_id', a.id)
+        .eq('type', 'externe')
+      places[a.id] = count
+    }
+    setPlacesExternes(places)
     setAteliers(all || [])
     setReservations(booked?.map(r => r.atelier_id) || [])
     setLoading(false)
@@ -74,10 +85,14 @@ export default function ReservationAteliers() {
             <Button
               variant={reservations.includes(a.id) ? 'outlined' : 'contained'}
               color={reservations.includes(a.id) ? 'success' : 'primary'}
-              disabled={reservations.includes(a.id)}
+              disabled={reservations.includes(a.id) || placesExternes[a.id] >= 30}
               onClick={() => reserver(a)}
             >
-              {reservations.includes(a.id) ? 'Réservé' : 'Réserver'}
+              {reservations.includes(a.id)
+                ? 'Réservé'
+                : placesExternes[a.id] >= 30
+                  ? 'Complet'
+                  : 'Réserver'}
             </Button>
           </ListItem>
         ))}

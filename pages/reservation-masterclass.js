@@ -9,6 +9,7 @@ export default function ReservationMasterclassPage() {
   const [masterclass, setMasterclass] = useState([])
   const [loading, setLoading] = useState(false)
   const [user, setUser] = useState(null)
+  const [placesExternes, setPlacesExternes] = useState({})
 
   useEffect(() => {
     fetchUser()
@@ -22,6 +23,16 @@ export default function ReservationMasterclassPage() {
 
   const fetchMasterclass = async () => {
     const { data } = await supabase.from('masterclass').select('*').order('date_heure')
+    const places = {}
+    for (const m of data || []) {
+      const { count } = await supabase
+        .from('reservations_masterclass')
+        .select('*', { count: 'exact', head: true })
+        .eq('masterclass_id', m.id)
+        .eq('type', 'externe')
+      places[m.id] = count
+    }
+    setPlacesExternes(places)
     setMasterclass(data || [])
   }
 
@@ -56,8 +67,11 @@ export default function ReservationMasterclassPage() {
               <Typography>{new Date(m.date_heure).toLocaleString()}</Typography>
               <Typography>Salle : {m.salle}</Typography>
               <Typography>Places : {m.places}</Typography>
-              <Button sx={{ mt: 1 }} variant="contained" onClick={() => handleReservation(m.id)}>
-                Réserver
+              <Button sx={{ mt: 1 }} variant="contained"
+                onClick={() => handleReservation(m.id)}
+                disabled={placesExternes[m.id] >= 30}
+              >
+                {placesExternes[m.id] >= 30 ? 'Complet' : 'Réserver'}
               </Button>
             </CardContent>
           </Card>
