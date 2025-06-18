@@ -34,7 +34,7 @@ const statusFilters = [
 
 const PAGE_SIZE = 10
 
-export default function Admin() {
+const AdminPage = () => {
   const [inscriptions, setInscriptions] = useState([])
   const [loading, setLoading] = useState(false)
   const [page, setPage] = useState(1)
@@ -95,7 +95,7 @@ export default function Admin() {
       const res = await fetch('/api/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: `cnol2025-${id}` }),
+        body: JSON.stringify({ id }),
       })
       const result = await res.json()
       if (res.ok) {
@@ -200,7 +200,25 @@ export default function Admin() {
           <Button variant="contained" color="secondary" component="a">Scanner un badge</Button>
         </Link>
         <Button variant="contained" color="primary" onClick={exportCSV}>Exporter CSV</Button>
+
+        {/* AJOUT ICI */}
+        <Link href="/entrees" passHref legacyBehavior>
+          <Button variant="outlined" color="primary" component="a">Voir les entrées</Button>
+        </Link>
+        <Link href="/admin/ateliers" passHref legacyBehavior>
+          <Button variant="outlined" color="secondary" component="a">
+            Gérer les Ateliers
+          </Button>
+        </Link>
+
+        <Link href="/admin/masterclass" passHref legacyBehavior>
+          <Button variant="outlined" color="secondary" component="a">
+            Gérer les Masterclass
+          </Button>
+        </Link>
+
       </Stack>
+
 
       <Box component="form" onSubmit={handleAdd} sx={{ mb: 4 }}>
         <Typography variant="h6" gutterBottom>Ajouter un participant interne</Typography>
@@ -394,7 +412,7 @@ export default function Admin() {
 
       <Box display="flex" justifyContent="center" mt={3}>
         <Pagination
-          count={10} // si tu connais le total, adapte ici
+          count={10} // ajuster si tu connais le total
           page={page}
           onChange={(_, value) => setPage(value)}
           color="primary"
@@ -405,3 +423,5 @@ export default function Admin() {
     </Box>
   )
 }
+
+export default AdminPage

@@ -7,6 +7,7 @@ export default function Inscription() {
     nom: '',
     prenom: '',
     email: '',
+    confirmEmail: '',
     telephone: '',
     fonction: '',
     ville: '',
@@ -21,11 +22,20 @@ export default function Inscription() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorMessage('')
+    if (!formData.email || !formData.telephone) {
+      setErrorMessage('L\'email et le téléphone sont obligatoires.')
+      return
+    }
+    if (formData.email !== formData.confirmEmail) {
+      setErrorMessage('Les deux emails ne correspondent pas.')
+      return
+    }
     try {
+      const { confirmEmail, ...dataToSend } = formData
       const res = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(dataToSend),
       })
 
       const data = await res.json()
@@ -61,6 +71,9 @@ export default function Inscription() {
 
         <label>Email</label>
         <input type="email" name="email" value={formData.email} onChange={handleChange} required style={inputStyle} />
+
+        <label>Confirmer l'email</label>
+        <input type="email" name="confirmEmail" value={formData.confirmEmail} onChange={handleChange} required style={inputStyle} />
 
         <label>Téléphone</label>
         <input type="tel" name="telephone" value={formData.telephone} onChange={handleChange} required style={inputStyle} />

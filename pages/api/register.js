@@ -8,6 +8,11 @@ export default async function handler(req, res) {
 
   const user = req.body
 
+  // Validation côté backend
+  if (!user.email || !user.telephone) {
+    return res.status(400).json({ message: "L'email et le téléphone sont obligatoires." })
+  }
+
   try {
     // Insert dans Supabase
     const { error } = await supabase.from('inscription').insert([user])
@@ -16,7 +21,7 @@ export default async function handler(req, res) {
     // Envoi email à l'utilisateur
     await sendMail({
       to: user.email,
-      subject: 'Confirmation d’inscription - CNOL 2025',
+      subject: 'Confirmation d'inscription - CNOL 2025',
       text: `Bonjour ${user.prenom},
 
 Merci pour votre inscription au CNOL 2025 !
@@ -39,7 +44,7 @@ L'équipe CNOL 2025`,
       </div>`
     })
 
-    // Envoi email à l’organisateur
+    // Envoi email à l'organisateur
     await sendMail({
       to: 'cnol.badge@gmail.com',
       subject: `📥 Nouvelle inscription - ${user.prenom} ${user.nom}`,
