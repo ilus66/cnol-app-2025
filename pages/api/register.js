@@ -15,29 +15,19 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Générer un token magique et son expiration
-    const token = crypto.randomBytes(32).toString('hex')
-    const expires = new Date(Date.now() + 1000 * 60 * 30) // 30 min
-
-    // Insert dans Supabase avec le token
-    const { error } = await supabase.from('inscription').insert([{ ...user, magic_token: token, magic_token_expires: expires.toISOString() }])
+    // Insert dans Supabase sans token magique
+    const { error } = await supabase.from('inscription').insert([{ ...user }])
     if (error) throw error
-
-    // Préparer le lien magique
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
-    const link = `${baseUrl}/mon-espace?token=${token}`
-    console.log('Lien magique généré :', link)
 
     // Envoi email à l'utilisateur
     await sendMail({
       to: user.email,
       subject: "Confirmation d'inscription - CNOL 2025",
-      text: `Bonjour ${user.prenom},\n\nMerci pour votre inscription au CNOL 2025 !\nVotre inscription est bien reçue et sera validée par notre équipe.\n\nAccédez à votre espace personnel ici : ${link}\n\nUne fois validée, votre badge vous sera envoyé par email.\n\nÀ très bientôt !\nL'équipe CNOL 2025`,
+      text: `Bonjour ${user.prenom},\n\nMerci pour votre inscription au CNOL 2025 !\nVotre inscription est bien reçue et sera validée par notre équipe.\n\nUne fois validée, votre badge vous sera envoyé par email.\n\nÀ très bientôt !\nL'équipe CNOL 2025`,
       html: `<div style="font-family: Arial, sans-serif; color: #333; line-height:1.6; max-width:600px; margin:auto; padding:20px; border:1px solid #ddd; border-radius:8px;">
         <h2 style="color: #0070f3;">Bonjour ${user.prenom},</h2>
         <p>Merci pour votre inscription au <strong>CNOL 2025</strong> !</p>
         <p>Votre inscription est bien reçue et sera <strong>validée par notre équipe</strong>.</p>
-        <p><a href="${link}" style="color:#0070f3;font-weight:bold;">Accéder à mon espace personnel</a></p>
         <p><strong>Une fois validée, votre badge vous sera envoyé par email.</strong></p>
         <p>Nous avons hâte de vous accueillir lors de cet événement incontournable de l'optique au Maroc.</p>
         <hr style="border:none; border-top:1px solid #eee; margin:20px 0;" />
