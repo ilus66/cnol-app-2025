@@ -8,6 +8,8 @@ export default function ScanPage() {
   const [scanning, setScanning] = useState(false)
   const [lastResult, setLastResult] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [lastQr, setLastQr] = useState('')
+  const [errorScan, setErrorScan] = useState('')
 
   useEffect(() => {
     if (!scanning) return
@@ -35,10 +37,11 @@ export default function ScanPage() {
   const handleScan = async (decodedText) => {
     setLoading(true);
     setLastResult(null);
+    setLastQr(decodedText);
+    setErrorScan('');
     try {
       let id = null;
-
-      // Logique pour extraire l'ID du QR code (inchangée)
+      // Logique robuste pour extraire l'ID
       if (decodedText.startsWith('cnol2025-')) {
         const extractedId = decodedText.split('-')[1];
         if (/^\d+$/.test(extractedId)) {
@@ -49,63 +52,60 @@ export default function ScanPage() {
         id = parseInt(decodedText, 10);
       }
       if (!id && decodedText.includes('id=')) {
-        const url = new URL(decodedText);
-        const paramId = url.searchParams.get('id');
-        if (paramId && /^\d+$/.test(paramId)) {
-          id = parseInt(paramId, 10);
-        }
+        try {
+          const url = new URL(decodedText);
+          const paramId = url.searchParams.get('id');
+          if (paramId && /^\d+$/.test(paramId)) {
+            id = parseInt(paramId, 10);
+          }
+        } catch {}
       }
-
       if (!id) {
+        playSound('error');
+        setErrorScan('Format du QR code non valide.');
         throw new Error("Format du QR code non valide.");
       }
-
-      const playSound = (type) => {
-        let audio
-        switch (type) {
-          case 'success':
-            audio = new Audio('/success.mp3')
-            break
-          case 'error':
-            audio = new Audio('/error.mp3')
-            break
-          case 'warning':
-            audio = new Audio('/warning.mp3')
-            break
-          default:
-            return
-        }
-        audio.play().catch(() => {}) // ignore erreur silencieuse
-      }
-
-
-      // --- MODIFICATION PRINCIPALE ICI ---
-      // Ancien code : supabase.from('inscription').update(...)
-      // Nouveau code : On insère dans la table 'entrees'
-
+      // --- Enregistrement dans la table 'entrees' ---
       const { data, error } = await supabase
         .from('entrees')
-        .insert({ user_id: id }) // 1. On insère une nouvelle entrée liée à l'ID de l'inscrit
-        .select('*, inscription(*)')    // 2. On récupère les détails de l'entrée ET de l'inscrit associé
+        .insert({ user_id: id })
+        .select('*, inscription(*)')
         .single();
-
-      if (error) throw error;
-
-      // 3. On adapte l'objet pour l'affichage du dernier scan
+      if (error) {
+        playSound('error');
+        setErrorScan(error.message || 'Erreur lors de l\'enregistrement.');
+        throw error;
+      }
       const scanResult = {
-        ...data.inscription, // Copie les infos de l'inscrit (nom, prénom, etc.)
-        scanned_at: data.scanned_at     
-        // Ajoute l'heure du scan
+        ...data.inscription,
+        scanned_at: data.scanned_at
       };
-
       setLastResult(scanResult);
+      playSound('success');
       toast.success(`Entrée enregistrée pour ${scanResult.prenom} ${scanResult.nom}`);
-
     } catch (err) {
       toast.error(err.message || 'Erreur lors du scan');
     }
     setLoading(false);
   };
+
+  const playSound = (type) => {
+    let audio
+    switch (type) {
+      case 'success':
+        audio = new Audio('/success.mp3')
+        break
+      case 'error':
+        audio = new Audio('/error.mp3')
+        break
+      case 'warning':
+        audio = new Audio('/warning.mp3')
+        break
+      default:
+        return
+    }
+    audio.play().catch(() => {})
+  }
 
   return (
     <Box sx={{ p: 3 }}>
@@ -125,6 +125,15 @@ export default function ScanPage() {
           <Typography>Type : {lastResult.participant_type}</Typography>
           <Typography>Fonction : {lastResult.fonction}</Typography>
           <Typography>Ville : {lastResult.ville}</Typography>
+          <Typography>Scanné le : {new Date(lastResult.scanned_at).toLocaleString()}</Typography>
+          <Button sx={{ mt: 2 }} variant="outlined" onClick={() => { setScanning(true); setLastResult(null); setErrorScan(''); setLastQr(''); }}>Scanner un autre badge</Button>
+        </Paper>
+      )}
+      {errorScan && (
+        <Paper sx={{ mt: 3, p: 2, background: '#ffeaea' }}>
+          <Typography color="error">Erreur : {errorScan}</Typography>
+          <Typography variant="body2">QR brut : <code>{lastQr}</code></Typography>
+          <Button sx={{ mt: 2 }} variant="outlined" onClick={() => { setScanning(true); setLastResult(null); setErrorScan(''); setLastQr(''); }}>Réessayer</Button>
         </Paper>
       )}
     </Box>
