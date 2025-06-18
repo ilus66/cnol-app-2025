@@ -21,7 +21,7 @@ export default async function handler(req, res) {
     // Envoi email à l'utilisateur
     await sendMail({
       to: user.email,
-      subject: 'Confirmation d'inscription - CNOL 2025',
+      subject: "Confirmation d'inscription - CNOL 2025",
       text: `Bonjour ${user.prenom},
 
 Merci pour votre inscription au CNOL 2025 !
