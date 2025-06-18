@@ -200,25 +200,16 @@ const AdminPage = () => {
           <Button variant="contained" color="secondary" component="a">Scanner un badge</Button>
         </Link>
         <Button variant="contained" color="primary" onClick={exportCSV}>Exporter CSV</Button>
-
-        {/* AJOUT ICI */}
         <Link href="/entrees" passHref legacyBehavior>
-          <Button variant="outlined" color="primary" component="a">Voir les entrées</Button>
+          <Button variant="outlined" color="success" component="a">Voir les entrées</Button>
         </Link>
         <Link href="/admin/ateliers" passHref legacyBehavior>
-          <Button variant="outlined" color="secondary" component="a">
-            Gérer les Ateliers
-          </Button>
+          <Button variant="outlined" color="primary" component="a">Gérer les Ateliers</Button>
         </Link>
-
         <Link href="/admin/masterclass" passHref legacyBehavior>
-          <Button variant="outlined" color="secondary" component="a">
-            Gérer les Masterclass
-          </Button>
+          <Button variant="outlined" color="secondary" component="a">Gérer les Masterclass</Button>
         </Link>
-
       </Stack>
-
 
       <Box component="form" onSubmit={handleAdd} sx={{ mb: 4 }}>
         <Typography variant="h6" gutterBottom>Ajouter un participant interne</Typography>
