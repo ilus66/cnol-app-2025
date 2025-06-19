@@ -103,7 +103,7 @@ export default function AdminMasterclassPage() {
       .eq('masterclass_id', master.id)
     // Générer le CSV
     const header = [
-      'Titre masterclass', 'Intervenant', 'Jour/heure', 'Salle', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Type', 'Validé'
+      'Titre masterclass', 'Intervenant', 'Jour/heure', 'Salle', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Type', 'Validé', 'Scanné'
     ]
     const rows = (resas || []).map(r => [
       master.titre,
@@ -115,7 +115,8 @@ export default function AdminMasterclassPage() {
       r.email,
       r.telephone || '',
       r.type,
-      r.valide ? 'Oui' : 'Non'
+      r.valide ? 'Oui' : 'Non',
+      r.scanned ? 'Oui' : 'Non'
     ])
     const csv = [header, ...rows].map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })

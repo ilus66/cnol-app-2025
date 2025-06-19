@@ -145,7 +145,7 @@ export default function AdminAteliers() {
       .eq('atelier_id', atelier.id)
     // Générer le CSV
     const header = [
-      'Titre atelier', 'Intervenant', 'Jour/heure', 'Salle', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Type', 'Validé'
+      'Titre atelier', 'Intervenant', 'Jour/heure', 'Salle', 'Nom', 'Prénom', 'Email', 'Téléphone', 'Type', 'Validé', 'Scanné'
     ]
     const rows = (resas || []).map(r => [
       atelier.titre,
@@ -157,7 +157,8 @@ export default function AdminAteliers() {
       r.email,
       r.telephone || '',
       r.type,
-      r.valide ? 'Oui' : 'Non'
+      r.valide ? 'Oui' : 'Non',
+      r.scanned ? 'Oui' : 'Non'
     ])
     const csv = [header, ...rows].map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
