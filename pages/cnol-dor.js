@@ -66,9 +66,12 @@ export default function CnolDorPage() {
   return (
     <div>
       <h1>CNOL d'Or 2025 – Inscriptions</h1>
+      <div>
+        <a href="#opticien">Formulaire Opticien de l'année</a> | <a href="#vitrine">Formulaire Meilleure vitrine</a>
+      </div>
       <p>Les CNOL d'Or récompensent les opticiens et vitrines les plus remarquables. Ce formulaire vous permet de soumettre votre candidature. Les documents nécessaires seront demandés par email après validation.</p>
 
-      <h2>Opticien de l'année</h2>
+      <h2 id="opticien">Opticien de l'année</h2>
       <form onSubmit={handleOpticienSubmit}>
         <input name="nom" placeholder="Nom" value={opticien.nom} onChange={handleOpticienChange} required /><br />
         <input name="prenom" placeholder="Prénom" value={opticien.prenom} onChange={handleOpticienChange} required /><br />
@@ -81,7 +84,7 @@ export default function CnolDorPage() {
       </form>
       {opticienMsg && <p>{opticienMsg}</p>}
 
-      <h2>Meilleure vitrine de l'année</h2>
+      <h2 id="vitrine">Meilleure vitrine de l'année</h2>
       <form onSubmit={handleVitrineSubmit}>
         <input name="nom_responsable" placeholder="Nom du responsable" value={vitrine.nom_responsable} onChange={handleVitrineChange} required /><br />
         <input name="email" placeholder="Email" value={vitrine.email} onChange={handleVitrineChange} required type="email" /><br />
