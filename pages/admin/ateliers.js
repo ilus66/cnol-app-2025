@@ -15,6 +15,7 @@ import {
   DialogActions
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
+import toast from 'react-hot-toast'
 
 export default function AdminAteliers() {
   const [ateliers, setAteliers] = useState([])
@@ -174,6 +175,21 @@ export default function AdminAteliers() {
     setListResas(data || [])
   }
 
+  const handleValidate = async (resaId) => {
+    const res = await fetch('/api/valider-reservation-atelier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: resaId })
+    })
+    if (res.ok) {
+      toast.success('Réservation validée et ticket envoyé !')
+      fetchInternalResas(openAtelierId)
+      handleOpenList(openAtelierId)
+    } else {
+      toast.error('Erreur lors de la validation')
+    }
+  }
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5">Gestion des Ateliers</Typography>
@@ -315,6 +331,13 @@ export default function AdminAteliers() {
                   <td>{r.telephone || ''}</td>
                   <td>{r.type}</td>
                   <td>{r.valide ? 'Oui' : 'Non'}</td>
+                  <td>
+                    {!r.valide && (
+                      <Button size="small" color="success" variant="contained" onClick={() => handleValidate(r.id)}>
+                        Valider
+                      </Button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
