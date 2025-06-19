@@ -46,6 +46,10 @@ export default function Home() {
           {/* <a href="/admin" style={styles.adminButton}>Admin</a> */}
         </div>
 
+        <p style={styles.badgeText}>
+          Inscrivez-vous, recevez votre badge par email
+        </p>
+
         <Box sx={{ display: 'flex', gap: 2, my: 3, justifyContent: 'center' }}>
           {/* Retiré les boutons de scan */}
         </Box>
@@ -124,5 +128,11 @@ const styles = {
     textDecoration: 'none',
     fontSize: '1rem',
     transition: '0.3s',
+  },
+  badgeText: {
+    fontSize: '1.1rem',
+    marginBottom: '2rem',
+    opacity: 0.9,
+    fontStyle: 'italic',
   },
 };

@@ -306,6 +306,17 @@ export default function AdminMasterclassPage() {
                   Exporter
                 </Button>
                 <Button
+                  variant={master.publie ? 'outlined' : 'contained'}
+                  color={master.publie ? 'warning' : 'success'}
+                  onClick={async () => {
+                    await supabase.from('masterclass').update({ publie: !master.publie }).eq('id', master.id)
+                    fetchMasterclass()
+                  }}
+                  fullWidth={isMobile}
+                >
+                  {master.publie ? 'Cacher' : 'Montrer'}
+                </Button>
+                <Button
                   variant="outlined"
                   color="error"
                   startIcon={<DeleteIcon />}

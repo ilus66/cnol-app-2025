@@ -332,6 +332,17 @@ export default function AdminAteliers() {
                   Exporter
                 </Button>
                 <Button
+                  variant={atelier.publie ? 'outlined' : 'contained'}
+                  color={atelier.publie ? 'warning' : 'success'}
+                  onClick={async () => {
+                    await supabase.from('ateliers').update({ publie: !atelier.publie }).eq('id', atelier.id)
+                    fetchAteliers()
+                  }}
+                  fullWidth={isMobile}
+                >
+                  {atelier.publie ? 'Cacher' : 'Montrer'}
+                </Button>
+                <Button
                   variant="outlined"
                   color="warning"
                   startIcon={<EditIcon />}
