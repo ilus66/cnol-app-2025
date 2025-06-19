@@ -12,10 +12,17 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
-  DialogActions
+  DialogActions,
+  Paper,
+  Stack,
+  CircularProgress
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
-import toast from 'react-hot-toast'
+import EditIcon from '@mui/icons-material/Edit'
+import ListIcon from '@mui/icons-material/List'
+import DownloadIcon from '@mui/icons-material/Download'
+import toast, { Toaster } from 'react-hot-toast'
+import Link from 'next/link'
 
 export default function AdminAteliers() {
   const [ateliers, setAteliers] = useState([])
@@ -37,6 +44,9 @@ export default function AdminAteliers() {
   const [listResas, setListResas] = useState([])
   const [addError, setAddError] = useState('')
   const [addSuccess, setAddSuccess] = useState('')
+
+  // Détection mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 600;
 
   useEffect(() => {
     fetchAteliers()
@@ -220,171 +230,289 @@ export default function AdminAteliers() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h5">Gestion des Ateliers</Typography>
-      <Box sx={{ my: 2, display: 'grid', gap: 2 }}>
-        <TextField label="Titre" value={newAtelier.titre} onChange={e => setNewAtelier({ ...newAtelier, titre: e.target.value })} />
-        <TextField label="Intervenant" value={newAtelier.intervenant} onChange={e => setNewAtelier({ ...newAtelier, intervenant: e.target.value })} />
-        <TextField type="datetime-local" label="Date et Heure" InputLabelProps={{ shrink: true }} value={newAtelier.date_heure} onChange={e => setNewAtelier({ ...newAtelier, date_heure: e.target.value })} />
-        <TextField label="Salle" value={newAtelier.salle} onChange={e => setNewAtelier({ ...newAtelier, salle: e.target.value })} />
-        <TextField type="number" label="Nombre de places" value={newAtelier.places} onChange={e => setNewAtelier({ ...newAtelier, places: e.target.value })} />
-        <Button variant="contained" onClick={handleAdd}>Ajouter</Button>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: { xs: 1, sm: 3 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Link href="/admin" passHref legacyBehavior>
+          <Button variant="outlined" component="a">Retour à l'admin</Button>
+        </Link>
       </Box>
-      {addError && <Typography color="error">{addError}</Typography>}
-      {addSuccess && <Typography color="success.main">{addSuccess}</Typography>}
-      <Divider sx={{ my: 2 }} />
-      <List>
-        {ateliers.map((a) => (
-          <ListItem key={a.id} secondaryAction={
-            <>
-              <Button
-                variant={a.publie ? 'outlined' : 'contained'}
-                color={a.publie ? 'warning' : 'success'}
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={async () => {
-                  await supabase.from('ateliers').update({ publie: !a.publie }).eq('id', a.id)
-                  fetchAteliers()
-                }}
-              >
-                {a.publie ? 'Cacher' : 'Publier'}
-              </Button>
-              <Button
-                variant="contained"
-                color="info"
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={() => handleOpenInternal(a.id)}
-              >
-                Réservations internes
-              </Button>
-              <Button
-                variant="outlined"
-                color="primary"
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={() => handleOpenEdit(a)}
-              >
-                Modifier
-              </Button>
-              <Button
-                variant="outlined"
-                color="secondary"
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={() => handleExport(a)}
-              >
-                Exporter liste
-              </Button>
-              <Button
-                variant="outlined"
-                color="success"
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={() => handleOpenList(a.id)}
-              >
-                Voir inscrits
-              </Button>
-              <a
-                href={`/reservation-ateliers?id=${a.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: 'none', marginRight: 8 }}
-              >
-                <Button variant="outlined" color="info" size="small">Tester réservation externe</Button>
-              </a>
-              <IconButton onClick={() => handleDelete(a.id)}><DeleteIcon /></IconButton>
-            </>
-          }>
-            {a.date_heure} — {a.titre} — {a.intervenant} — {a.salle} — {a.places} places
-            <span style={{ marginLeft: 16, color: a.publie ? 'green' : 'gray', fontWeight: 500 }}>
-              {a.publie ? 'Publié' : 'Non publié'}
-            </span>
-          </ListItem>
-        ))}
-      </List>
+      <Toaster position="top-right" />
 
-      <Dialog open={!!openAtelierId} onClose={() => setOpenAtelierId(null)}>
-        <DialogTitle>Réservations internes (max 15)</DialogTitle>
+      <Typography variant="h4" gutterBottom>Gestion des Ateliers</Typography>
+
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Ajouter un atelier</Typography>
+        <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+          <TextField
+            label="Titre"
+            value={newAtelier.titre}
+            onChange={(e) => setNewAtelier({ ...newAtelier, titre: e.target.value })}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Intervenant"
+            value={newAtelier.intervenant}
+            onChange={(e) => setNewAtelier({ ...newAtelier, intervenant: e.target.value })}
+            fullWidth
+            required
+          />
+        </Stack>
+        <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+          <TextField
+            label="Date et heure"
+            type="datetime-local"
+            value={newAtelier.date_heure}
+            onChange={(e) => setNewAtelier({ ...newAtelier, date_heure: e.target.value })}
+            fullWidth
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="Salle"
+            value={newAtelier.salle}
+            onChange={(e) => setNewAtelier({ ...newAtelier, salle: e.target.value })}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Places"
+            type="number"
+            value={newAtelier.places}
+            onChange={(e) => setNewAtelier({ ...newAtelier, places: e.target.value })}
+            fullWidth
+            required
+          />
+        </Stack>
+        {addError && <Typography color="error" sx={{ mb: 2 }}>{addError}</Typography>}
+        {addSuccess && <Typography color="success.main" sx={{ mb: 2 }}>{addSuccess}</Typography>}
+        <Button variant="contained" color="primary" onClick={handleAdd} fullWidth={isMobile}>
+          Ajouter l'atelier
+        </Button>
+      </Paper>
+
+      <Typography variant="h6" gutterBottom>Liste des ateliers</Typography>
+      <Stack spacing={2}>
+        {ateliers.map(atelier => (
+          <Paper key={atelier.id} sx={{ p: 2 }}>
+            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+              <Box flex={1}>
+                <Typography variant="h6">{atelier.titre}</Typography>
+                <Typography><b>Intervenant :</b> {atelier.intervenant}</Typography>
+                <Typography><b>Date/Heure :</b> {new Date(atelier.date_heure).toLocaleString()}</Typography>
+                <Typography><b>Salle :</b> {atelier.salle}</Typography>
+                <Typography><b>Places :</b> {atelier.places}</Typography>
+              </Box>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<ListIcon />}
+                  onClick={() => handleOpenInternal(atelier.id)}
+                  fullWidth={isMobile}
+                >
+                  Réservations internes
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  startIcon={<ListIcon />}
+                  onClick={() => handleOpenList(atelier.id)}
+                  fullWidth={isMobile}
+                >
+                  Voir inscrits
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  startIcon={<DownloadIcon />}
+                  onClick={() => handleExport(atelier)}
+                  fullWidth={isMobile}
+                >
+                  Exporter
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  startIcon={<EditIcon />}
+                  onClick={() => handleOpenEdit(atelier)}
+                  fullWidth={isMobile}
+                >
+                  Modifier
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => handleDelete(atelier.id)}
+                  fullWidth={isMobile}
+                >
+                  Supprimer
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
+        ))}
+      </Stack>
+
+      {/* Dialog Réservations internes */}
+      <Dialog open={!!openAtelierId} onClose={() => setOpenAtelierId(null)} maxWidth="md" fullWidth>
+        <DialogTitle>Réservations internes</DialogTitle>
         <DialogContent>
-          <div style={{ marginBottom: 12 }}>
-            <TextField label="Nom" value={internalForm.nom} onChange={e => setInternalForm(f => ({ ...f, nom: e.target.value }))} sx={{ mr: 1 }} />
-            <TextField label="Prénom" value={internalForm.prenom} onChange={e => setInternalForm(f => ({ ...f, prenom: e.target.value }))} sx={{ mr: 1 }} />
-            <TextField label="Email" value={internalForm.email} onChange={e => setInternalForm(f => ({ ...f, email: e.target.value }))} />
-            <TextField label="Téléphone" value={internalForm.telephone} onChange={e => setInternalForm(f => ({ ...f, telephone: e.target.value }))} sx={{ ml: 1 }} />
-            <Button variant="contained" color="success" onClick={handleAddInternal} sx={{ ml: 1 }}>Ajouter</Button>
-          </div>
-          {internalError && <div style={{ color: 'red', marginBottom: 8 }}>{internalError}</div>}
-          <ul>
-            {internalResas.map((r, i) => (
-              <li key={i}>{r.nom} {r.prenom} — {r.email}</li>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom>Ajouter une réservation interne</Typography>
+            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+              <TextField
+                label="Nom"
+                value={internalForm.nom}
+                onChange={(e) => setInternalForm({ ...internalForm, nom: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label="Prénom"
+                value={internalForm.prenom}
+                onChange={(e) => setInternalForm({ ...internalForm, prenom: e.target.value })}
+                fullWidth
+                required
+              />
+            </Stack>
+            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+              <TextField
+                label="Email"
+                type="email"
+                value={internalForm.email}
+                onChange={(e) => setInternalForm({ ...internalForm, email: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label="Téléphone"
+                value={internalForm.telephone}
+                onChange={(e) => setInternalForm({ ...internalForm, telephone: e.target.value })}
+                fullWidth
+                required
+              />
+            </Stack>
+            {internalError && <Typography color="error" sx={{ mb: 2 }}>{internalError}</Typography>}
+            <Button variant="contained" color="primary" onClick={handleAddInternal} fullWidth={isMobile}>
+              Ajouter
+            </Button>
+          </Box>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" gutterBottom>Liste des réservations internes</Typography>
+          <List>
+            {internalResas.map(resa => (
+              <ListItem key={resa.id} sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+                <Box flex={1}>
+                  <Typography><b>Nom :</b> {resa.nom} {resa.prenom}</Typography>
+                  <Typography><b>Email :</b> {resa.email}</Typography>
+                  <Typography><b>Téléphone :</b> {resa.telephone}</Typography>
+                </Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: { xs: 1, sm: 0 } }}>
+                  <Button variant="contained" color="error" size="small" onClick={() => handleDelete(resa.id)} fullWidth={isMobile}>
+                    Supprimer
+                  </Button>
+                </Stack>
+              </ListItem>
             ))}
-          </ul>
+          </List>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenAtelierId(null)}>Fermer</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={!!editAtelier} onClose={() => setEditAtelier(null)}>
-        <DialogTitle>Modifier Atelier</DialogTitle>
-        <DialogContent>
-          <TextField label="Titre" value={editForm.titre} onChange={e => setEditForm(f => ({ ...f, titre: e.target.value }))} fullWidth sx={{ mb: 2 }} />
-          <TextField label="Intervenant" value={editForm.intervenant} onChange={e => setEditForm(f => ({ ...f, intervenant: e.target.value }))} fullWidth sx={{ mb: 2 }} />
-          <TextField type="datetime-local" label="Date et Heure" InputLabelProps={{ shrink: true }} value={editForm.date_heure} onChange={e => setEditForm(f => ({ ...f, date_heure: e.target.value }))} fullWidth sx={{ mb: 2 }} />
-          <TextField label="Salle" value={editForm.salle} onChange={e => setEditForm(f => ({ ...f, salle: e.target.value }))} fullWidth sx={{ mb: 2 }} />
-          <TextField type="number" label="Nombre de places" value={editForm.places} onChange={e => setEditForm(f => ({ ...f, places: e.target.value }))} fullWidth sx={{ mb: 2 }} />
-          {editError && <div style={{ color: 'red', marginBottom: 8 }}>{editError}</div>}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditAtelier(null)}>Annuler</Button>
-          <Button variant="contained" onClick={handleEdit}>Enregistrer</Button>
-        </DialogActions>
-      </Dialog>
-
+      {/* Dialog Liste des inscrits */}
       <Dialog open={!!openListAtelierId} onClose={() => setOpenListAtelierId(null)} maxWidth="md" fullWidth>
         <DialogTitle>Liste des inscrits</DialogTitle>
         <DialogContent>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 10 }}>
-            <thead>
-              <tr style={{ background: '#f0f0f0' }}>
-                <th>Nom</th><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Type</th><th>Validé</th><th>Scanné</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listResas.map((r, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
-                  <td>{r.nom}</td>
-                  <td>{r.prenom}</td>
-                  <td>{r.email}</td>
-                  <td>{r.telephone || ''}</td>
-                  <td>{r.type}</td>
-                  <td>{r.valide ? 'Oui' : 'Non'}</td>
-                  <td>{r.scanned ? 'Oui' : 'Non'}</td>
-                  <td>
-                    {!r.valide && (
-                      <Button size="small" color="success" variant="contained" onClick={() => handleValidate(r.id)}>
+          <List>
+            {listResas.map(resa => (
+              <ListItem key={resa.id} sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+                <Box flex={1}>
+                  <Typography><b>Nom :</b> {resa.nom} {resa.prenom}</Typography>
+                  <Typography><b>Email :</b> {resa.email}</Typography>
+                  <Typography><b>Téléphone :</b> {resa.telephone}</Typography>
+                  <Typography><b>Type :</b> {resa.type}</Typography>
+                  <Typography><b>Statut :</b> <span style={{ color: resa.valide ? 'green' : 'red' }}>{resa.valide ? 'Validé' : 'Non validé'}</span></Typography>
+                  <Typography><b>Scanné :</b> {resa.scanned ? '✓' : '✗'}</Typography>
+                </Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: { xs: 1, sm: 0 } }}>
+                  {!resa.valide && resa.type === 'externe' && (
+                    <>
+                      <Button variant="contained" color="success" size="small" onClick={() => handleValidate(resa.id)} fullWidth={isMobile}>
                         Valider
                       </Button>
-                    )}
-                    {!r.valide && r.type === 'externe' && (
-                      <Button size="small" color="error" variant="outlined" onClick={() => handleRefuse(r.id)} style={{ marginLeft: 8 }}>
+                      <Button variant="contained" color="error" size="small" onClick={() => handleRefuse(resa.id)} fullWidth={isMobile}>
                         Refuser
                       </Button>
-                    )}
-                    {r.valide && (
-                      <Button size="small" color="info" variant="outlined" onClick={() => handleResendTicket(r.id)} style={{ marginLeft: 8 }}>
-                        Renvoyer ticket
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </>
+                  )}
+                  {resa.valide && (
+                    <Button variant="contained" color="info" size="small" onClick={() => handleResendTicket(resa.id)} fullWidth={isMobile}>
+                      Renvoyer ticket
+                    </Button>
+                  )}
+                </Stack>
+              </ListItem>
+            ))}
+          </List>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenListAtelierId(null)}>Fermer</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog Modification */}
+      <Dialog open={!!editAtelier} onClose={() => setEditAtelier(null)} maxWidth="sm" fullWidth>
+        <DialogTitle>Modifier l'atelier</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 2 }}>
+            <TextField
+              label="Titre"
+              value={editForm.titre}
+              onChange={(e) => setEditForm({ ...editForm, titre: e.target.value })}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Intervenant"
+              value={editForm.intervenant}
+              onChange={(e) => setEditForm({ ...editForm, intervenant: e.target.value })}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Date et heure"
+              type="datetime-local"
+              value={editForm.date_heure}
+              onChange={(e) => setEditForm({ ...editForm, date_heure: e.target.value })}
+              fullWidth
+              required
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="Salle"
+              value={editForm.salle}
+              onChange={(e) => setEditForm({ ...editForm, salle: e.target.value })}
+              fullWidth
+              required
+            />
+            <TextField
+              label="Places"
+              type="number"
+              value={editForm.places}
+              onChange={(e) => setEditForm({ ...editForm, places: e.target.value })}
+              fullWidth
+              required
+            />
+          </Stack>
+          {editError && <Typography color="error" sx={{ mt: 2 }}>{editError}</Typography>}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditAtelier(null)}>Annuler</Button>
+          <Button onClick={handleEdit} variant="contained" color="primary">Enregistrer</Button>
         </DialogActions>
       </Dialog>
     </Box>

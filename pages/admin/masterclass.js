@@ -1,10 +1,28 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '../../lib/supabaseClient'
 import {
-  Box, Button, TextField, Typography, List, ListItem, IconButton, Dialog, DialogTitle, DialogContent, DialogActions
+  Box,
+  Button,
+  TextField,
+  Typography,
+  List,
+  ListItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Paper,
+  Stack,
+  CircularProgress,
+  Divider
 } from '@mui/material'
 import DeleteIcon from '@mui/icons-material/Delete'
-import toast from 'react-hot-toast'
+import EditIcon from '@mui/icons-material/Edit'
+import ListIcon from '@mui/icons-material/List'
+import DownloadIcon from '@mui/icons-material/Download'
+import toast, { Toaster } from 'react-hot-toast'
+import Link from 'next/link'
 
 export default function AdminMasterclassPage() {
   const [masterclass, setMasterclass] = useState([])
@@ -19,6 +37,9 @@ export default function AdminMasterclassPage() {
   const [listResas, setListResas] = useState([])
   const [addError, setAddError] = useState('')
   const [addSuccess, setAddSuccess] = useState('')
+
+  // Détection mobile
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 600;
 
   const fetchMasterclass = async () => {
     const { data } = await supabase.from('masterclass').select('*').order('date_heure')
@@ -178,143 +199,230 @@ export default function AdminMasterclassPage() {
   }
 
   return (
-    <Box sx={{ p: 4 }}>
-      <Typography variant="h5" gutterBottom>Configuration des Masterclass</Typography>
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', mb: 3 }}>
-        <TextField label="Titre" name="titre" value={form.titre} onChange={handleChange} />
-        <TextField label="Intervenant" name="intervenant" value={form.intervenant} onChange={handleChange} />
-        <TextField type="datetime-local" name="date_heure" value={form.date_heure} onChange={handleChange} />
-        <TextField label="Salle" name="salle" value={form.salle} onChange={handleChange} />
-        <TextField label="Places" name="places" type="number" value={form.places} onChange={handleChange} />
-        <Button variant="contained" onClick={handleAdd}>Ajouter</Button>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: { xs: 1, sm: 3 } }}>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Link href="/admin" passHref legacyBehavior>
+          <Button variant="outlined" component="a">Retour à l'admin</Button>
+        </Link>
       </Box>
-      {addError && <Typography color="error">{addError}</Typography>}
-      {addSuccess && <Typography color="success.main">{addSuccess}</Typography>}
+      <Toaster position="top-right" />
 
-      <List>
-        {masterclass.map((m) => (
-          <ListItem key={m.id} secondaryAction={
-            <>
-              <Button
-                variant={m.publie ? 'outlined' : 'contained'}
-                color={m.publie ? 'warning' : 'success'}
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={async () => {
-                  await supabase.from('masterclass').update({ publie: !m.publie }).eq('id', m.id)
-                  fetchMasterclass()
-                }}
-              >
-                {m.publie ? 'Cacher' : 'Publier'}
-              </Button>
-              <Button
-                variant="contained"
-                color="info"
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={() => handleOpenInternal(m.id)}
-              >
-                Réservations internes
-              </Button>
-              <Button
-                variant="outlined"
-                color="secondary"
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={() => handleExport(m)}
-              >
-                Exporter liste
-              </Button>
-              <Button
-                variant="outlined"
-                color="success"
-                size="small"
-                sx={{ mr: 1 }}
-                onClick={() => handleOpenList(m.id)}
-              >
-                Voir inscrits
-              </Button>
-              <a
-                href={`/reservation-masterclass?id=${m.id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{ textDecoration: 'none', marginRight: 8 }}
-              >
-                <Button variant="outlined" color="info" size="small">Tester réservation externe</Button>
-              </a>
-              <IconButton onClick={() => handleDelete(m.id)}><DeleteIcon /></IconButton>
-            </>
-          }>
-            {m.titre} — {new Date(m.date_heure).toLocaleString()} — {m.places} places
-            <span style={{ marginLeft: 16, color: m.publie ? 'green' : 'gray', fontWeight: 500 }}>
-              {m.publie ? 'Publié' : 'Non publié'}
-            </span>
-          </ListItem>
+      <Typography variant="h4" gutterBottom>Gestion des Masterclass</Typography>
+
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Ajouter une masterclass</Typography>
+        <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+          <TextField
+            label="Titre"
+            name="titre"
+            value={form.titre}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Intervenant"
+            name="intervenant"
+            value={form.intervenant}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+        </Stack>
+        <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+          <TextField
+            label="Date et heure"
+            name="date_heure"
+            type="datetime-local"
+            value={form.date_heure}
+            onChange={handleChange}
+            fullWidth
+            required
+            InputLabelProps={{ shrink: true }}
+          />
+          <TextField
+            label="Salle"
+            name="salle"
+            value={form.salle}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+          <TextField
+            label="Places"
+            name="places"
+            type="number"
+            value={form.places}
+            onChange={handleChange}
+            fullWidth
+            required
+          />
+        </Stack>
+        {addError && <Typography color="error" sx={{ mb: 2 }}>{addError}</Typography>}
+        {addSuccess && <Typography color="success.main" sx={{ mb: 2 }}>{addSuccess}</Typography>}
+        <Button variant="contained" color="primary" onClick={handleAdd} fullWidth={isMobile}>
+          Ajouter la masterclass
+        </Button>
+      </Paper>
+
+      <Typography variant="h6" gutterBottom>Liste des masterclass</Typography>
+      <Stack spacing={2}>
+        {masterclass.map(master => (
+          <Paper key={master.id} sx={{ p: 2 }}>
+            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
+              <Box flex={1}>
+                <Typography variant="h6">{master.titre}</Typography>
+                <Typography><b>Intervenant :</b> {master.intervenant}</Typography>
+                <Typography><b>Date/Heure :</b> {new Date(master.date_heure).toLocaleString()}</Typography>
+                <Typography><b>Salle :</b> {master.salle}</Typography>
+                <Typography><b>Places :</b> {master.places}</Typography>
+              </Box>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                <Button
+                  variant="outlined"
+                  color="primary"
+                  startIcon={<ListIcon />}
+                  onClick={() => handleOpenInternal(master.id)}
+                  fullWidth={isMobile}
+                >
+                  Réservations internes
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  startIcon={<ListIcon />}
+                  onClick={() => handleOpenList(master.id)}
+                  fullWidth={isMobile}
+                >
+                  Voir inscrits
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="success"
+                  startIcon={<DownloadIcon />}
+                  onClick={() => handleExport(master)}
+                  fullWidth={isMobile}
+                >
+                  Exporter
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteIcon />}
+                  onClick={() => handleDelete(master.id)}
+                  fullWidth={isMobile}
+                >
+                  Supprimer
+                </Button>
+              </Stack>
+            </Stack>
+          </Paper>
         ))}
-      </List>
+      </Stack>
 
-      <Dialog open={!!openMasterId} onClose={() => setOpenMasterId(null)}>
-        <DialogTitle>Réservations internes (max 15)</DialogTitle>
+      {/* Dialog Réservations internes */}
+      <Dialog open={!!openMasterId} onClose={() => setOpenMasterId(null)} maxWidth="md" fullWidth>
+        <DialogTitle>Réservations internes</DialogTitle>
         <DialogContent>
-          <div style={{ marginBottom: 12 }}>
-            <TextField label="Nom" value={internalForm.nom} onChange={e => setInternalForm(f => ({ ...f, nom: e.target.value }))} sx={{ mr: 1 }} />
-            <TextField label="Prénom" value={internalForm.prenom} onChange={e => setInternalForm(f => ({ ...f, prenom: e.target.value }))} sx={{ mr: 1 }} />
-            <TextField label="Email" value={internalForm.email} onChange={e => setInternalForm(f => ({ ...f, email: e.target.value }))} />
-            <TextField label="Téléphone" value={internalForm.telephone} onChange={e => setInternalForm(f => ({ ...f, telephone: e.target.value }))} sx={{ ml: 1 }} />
-            <Button variant="contained" color="success" onClick={handleAddInternal} sx={{ ml: 1 }}>Ajouter</Button>
-          </div>
-          {internalError && <div style={{ color: 'red', marginBottom: 8 }}>{internalError}</div>}
-          <ul>
-            {internalResas.map((r, i) => (
-              <li key={i}>{r.nom} {r.prenom} — {r.email}</li>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h6" gutterBottom>Ajouter une réservation interne</Typography>
+            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+              <TextField
+                label="Nom"
+                value={internalForm.nom}
+                onChange={(e) => setInternalForm({ ...internalForm, nom: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label="Prénom"
+                value={internalForm.prenom}
+                onChange={(e) => setInternalForm({ ...internalForm, prenom: e.target.value })}
+                fullWidth
+                required
+              />
+            </Stack>
+            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+              <TextField
+                label="Email"
+                type="email"
+                value={internalForm.email}
+                onChange={(e) => setInternalForm({ ...internalForm, email: e.target.value })}
+                fullWidth
+                required
+              />
+              <TextField
+                label="Téléphone"
+                value={internalForm.telephone}
+                onChange={(e) => setInternalForm({ ...internalForm, telephone: e.target.value })}
+                fullWidth
+                required
+              />
+            </Stack>
+            {internalError && <Typography color="error" sx={{ mb: 2 }}>{internalError}</Typography>}
+            <Button variant="contained" color="primary" onClick={handleAddInternal} fullWidth={isMobile}>
+              Ajouter
+            </Button>
+          </Box>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6" gutterBottom>Liste des réservations internes</Typography>
+          <List>
+            {internalResas.map(resa => (
+              <ListItem key={resa.id} sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+                <Box flex={1}>
+                  <Typography><b>Nom :</b> {resa.nom} {resa.prenom}</Typography>
+                  <Typography><b>Email :</b> {resa.email}</Typography>
+                  <Typography><b>Téléphone :</b> {resa.telephone}</Typography>
+                </Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: { xs: 1, sm: 0 } }}>
+                  <Button variant="contained" color="error" size="small" onClick={() => handleDelete(resa.id)} fullWidth={isMobile}>
+                    Supprimer
+                  </Button>
+                </Stack>
+              </ListItem>
             ))}
-          </ul>
+          </List>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenMasterId(null)}>Fermer</Button>
         </DialogActions>
       </Dialog>
 
+      {/* Dialog Liste des inscrits */}
       <Dialog open={!!openListMasterId} onClose={() => setOpenListMasterId(null)} maxWidth="md" fullWidth>
         <DialogTitle>Liste des inscrits</DialogTitle>
         <DialogContent>
-          <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 10 }}>
-            <thead>
-              <tr style={{ background: '#f0f0f0' }}>
-                <th>Nom</th><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Type</th><th>Validé</th><th>Scanné</th>
-              </tr>
-            </thead>
-            <tbody>
-              {listResas.map((r, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #eee' }}>
-                  <td>{r.nom}</td>
-                  <td>{r.prenom}</td>
-                  <td>{r.email}</td>
-                  <td>{r.telephone || ''}</td>
-                  <td>{r.type}</td>
-                  <td>{r.valide ? 'Oui' : 'Non'}</td>
-                  <td>{r.scanned ? 'Oui' : 'Non'}</td>
-                  <td>
-                    {!r.valide && (
-                      <Button size="small" color="success" variant="contained" onClick={() => handleValidate(r.id)}>
+          <List>
+            {listResas.map(resa => (
+              <ListItem key={resa.id} sx={{ flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+                <Box flex={1}>
+                  <Typography><b>Nom :</b> {resa.nom} {resa.prenom}</Typography>
+                  <Typography><b>Email :</b> {resa.email}</Typography>
+                  <Typography><b>Téléphone :</b> {resa.telephone}</Typography>
+                  <Typography><b>Type :</b> {resa.type}</Typography>
+                  <Typography><b>Statut :</b> <span style={{ color: resa.valide ? 'green' : 'red' }}>{resa.valide ? 'Validé' : 'Non validé'}</span></Typography>
+                  <Typography><b>Scanné :</b> {resa.scanned ? '✓' : '✗'}</Typography>
+                </Box>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: { xs: 1, sm: 0 } }}>
+                  {!resa.valide && resa.type === 'externe' && (
+                    <>
+                      <Button variant="contained" color="success" size="small" onClick={() => handleValidate(resa.id)} fullWidth={isMobile}>
                         Valider
                       </Button>
-                    )}
-                    {!r.valide && r.type === 'externe' && (
-                      <Button size="small" color="error" variant="outlined" onClick={() => handleRefuse(r.id)} style={{ marginLeft: 8 }}>
+                      <Button variant="contained" color="error" size="small" onClick={() => handleRefuse(resa.id)} fullWidth={isMobile}>
                         Refuser
                       </Button>
-                    )}
-                    {r.valide && (
-                      <Button size="small" color="info" variant="outlined" onClick={() => handleResendTicket(r.id)} style={{ marginLeft: 8 }}>
-                        Renvoyer ticket
-                      </Button>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                    </>
+                  )}
+                  {resa.valide && (
+                    <Button variant="contained" color="info" size="small" onClick={() => handleResendTicket(resa.id)} fullWidth={isMobile}>
+                      Renvoyer ticket
+                    </Button>
+                  )}
+                </Stack>
+              </ListItem>
+            ))}
+          </List>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenListMasterId(null)}>Fermer</Button>

@@ -53,6 +53,8 @@ const AdminPage = () => {
     email: '',
     telephone: '',
     ville: '',
+    fonction: '',
+    organisation: ''
   })
   const [adding, setAdding] = useState(false)
   const [settings, setSettings] = useState({ ouverture_reservation_atelier: false, ouverture_reservation_masterclass: false })
@@ -131,7 +133,7 @@ const AdminPage = () => {
   async function handleAdd(e) {
     e.preventDefault()
     setAdding(true)
-    const { nom, prenom, participant_type, sponsoring_level, email, telephone, ville } = formData
+    const { nom, prenom, participant_type, sponsoring_level, email, telephone, ville, fonction, organisation } = formData
     if (!nom.trim() || !prenom.trim()) {
       toast.error('Nom et prénom sont obligatoires')
       setAdding(false)
@@ -144,9 +146,8 @@ const AdminPage = () => {
           prenom: prenom.trim(),
           participant_type,
           sponsoring_level: participant_type === 'exposant' ? sponsoring_level : null,
-          fonction:
-            participant_type.charAt(0).toUpperCase() +
-            participant_type.slice(1),
+          fonction: fonction.trim() || (participant_type.charAt(0).toUpperCase() + participant_type.slice(1)),
+          organisation: organisation.trim(),
           email: email.trim(),
           telephone: telephone.trim(),
           ville: ville.trim(),
@@ -167,6 +168,8 @@ const AdminPage = () => {
           email: '',
           telephone: '',
           ville: '',
+          fonction: '',
+          organisation: ''
         })
         fetchInscriptions()
       }
@@ -186,12 +189,14 @@ const AdminPage = () => {
   }
 
   const exportCSV = () => {
-    const header = ['Nom','Prénom','Type','Sponsoring','Statut','Email','Téléphone','Ville','Scanné']
+    const header = ['Nom','Prénom','Type','Sponsoring','Fonction','Organisation','Statut','Email','Téléphone','Ville','Scanné']
     const rows = inscriptions.map(i => [
       i.nom,
       i.prenom,
-      i.participant_type || i.fonction || '',
+      i.participant_type || '',
       i.participant_type==='exposant'? (i.sponsoring_level||'') : '',
+      i.fonction || '',
+      i.organisation || '',
       i.valide ? 'Validé' : 'Non validé',
       i.email || '',
       i.telephone || '',
@@ -277,6 +282,10 @@ const AdminPage = () => {
           <TextField label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} fullWidth />
           <TextField label="Ville" name="ville" value={formData.ville} onChange={handleChange} fullWidth />
         </Stack>
+        <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
+          <TextField label="Fonction" name="fonction" value={formData.fonction} onChange={handleChange} fullWidth />
+          <TextField label="Organisation" name="organisation" value={formData.organisation} onChange={handleChange} fullWidth />
+        </Stack>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" >
           <FormControl sx={{ minWidth: 180, width: { xs: '100%', sm: 'auto' } }}>
             <InputLabel>Type</InputLabel>
@@ -346,6 +355,8 @@ const AdminPage = () => {
                 <Typography><b>Prénom :</b> {inscrit.prenom}</Typography>
                 <Typography><b>Type :</b> {inscrit.participant_type || inscrit.fonction}</Typography>
                 <Typography><b>Sponsoring :</b> {inscrit.participant_type === 'exposant' ? inscrit.sponsoring_level : '-'}</Typography>
+                <Typography><b>Fonction :</b> {inscrit.fonction || '-'}</Typography>
+                <Typography><b>Organisation :</b> {inscrit.organisation || '-'}</Typography>
                 <Typography><b>Statut :</b> <span style={{ color: inscrit.valide ? 'green' : 'red' }}>{inscrit.valide ? 'Validé' : 'Non validé'}</span></Typography>
                 <Typography><b>Email :</b> {inscrit.email}</Typography>
                 <Typography><b>Téléphone :</b> {inscrit.telephone}</Typography>
@@ -374,6 +385,8 @@ const AdminPage = () => {
                 <TableCell>Prénom</TableCell>
                 <TableCell>Type</TableCell>
                 <TableCell>Sponsoring</TableCell>
+                <TableCell>Fonction</TableCell>
+                <TableCell>Organisation</TableCell>
                 <TableCell>Statut</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Téléphone</TableCell>
@@ -402,6 +415,8 @@ const AdminPage = () => {
                     <TableCell>{inscrit.prenom}</TableCell>
                     <TableCell>{inscrit.participant_type || inscrit.fonction}</TableCell>
                     <TableCell>{inscrit.participant_type === 'exposant' ? inscrit.sponsoring_level : '-'}</TableCell>
+                    <TableCell>{inscrit.fonction || '-'}</TableCell>
+                    <TableCell>{inscrit.organisation || '-'}</TableCell>
                     <TableCell sx={{ color: inscrit.valide ? 'green' : 'red' }}>
                       {inscrit.valide ? 'Validé' : 'Non validé'}
                     </TableCell>
