@@ -4,6 +4,7 @@ import {
   Box, Typography, Button, Card, CardContent, CircularProgress, TextField
 } from '@mui/material'
 import toast, { Toaster } from 'react-hot-toast'
+import { useRouter } from 'next/router'
 
 export default function ReservationMasterclassPage() {
   const [masterclass, setMasterclass] = useState([])
@@ -13,6 +14,31 @@ export default function ReservationMasterclassPage() {
   const [loading, setLoading] = useState(false)
   const [settings, setSettings] = useState({ ouverture_reservation_masterclass: false })
   const [loadingSettings, setLoadingSettings] = useState(true)
+  const router = useRouter();
+
+  useEffect(() => {
+    // Vérification du code badge
+    let badge = router.query.badge;
+    if (!badge && typeof window !== 'undefined') {
+      badge = localStorage.getItem('badge_code');
+    }
+    if (!badge) {
+      router.replace('/identification');
+      return;
+    }
+    // Stocker le code badge pour les accès suivants
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('badge_code', badge);
+    }
+    // Pré-remplir le formulaire avec les infos du badge
+    const fetchUser = async () => {
+      const { data } = await supabase.from('inscription').select('*').eq('identifiant_badge', badge).single();
+      if (data) {
+        setForm(f => ({ ...f, nom: data.nom, prenom: data.prenom, email: data.email, telephone: data.telephone }));
+      }
+    };
+    fetchUser();
+  }, [router.query.badge]);
 
   useEffect(() => {
     fetchMasterclass()
