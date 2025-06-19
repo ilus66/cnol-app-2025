@@ -25,6 +25,30 @@ export default async function handler(req, res) {
       if (user[field]) userToInsert[field] = user[field];
     }
 
+    // Génération d'un code badge unique (3 chiffres + 3 lettres)
+    function generateBadgeCode() {
+      const digits = Math.floor(100 + Math.random() * 900); // 3 chiffres
+      const letters = Array(3)
+        .fill(0)
+        .map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26)))
+        .join('');
+      return `${digits}${letters}`;
+    }
+
+    // Générer un code badge unique et vérifier unicité
+    let badgeCode;
+    let isUnique = false;
+    while (!isUnique) {
+      badgeCode = generateBadgeCode();
+      const { data: exists } = await supabase
+        .from('inscription')
+        .select('id')
+        .eq('identifiant_badge', badgeCode)
+        .single();
+      if (!exists) isUnique = true;
+    }
+    userToInsert.identifiant_badge = badgeCode;
+
     // Insert dans Supabase sans les champs parasites
     const { error } = await supabase.from('inscription').insert([userToInsert]);
     if (error) throw error
