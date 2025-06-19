@@ -15,6 +15,10 @@ export default async function handler(req, res) {
   const { data: atelier } = await supabase.from('ateliers').select('*').eq('id', resa.atelier_id).single()
   if (!atelier) return res.status(404).json({ message: 'Atelier introuvable' })
 
+  // DEBUG LOG
+  console.log('DEBUG RESA', resa);
+  console.log('DEBUG RESA.ID', resa?.id);
+
   // Générer ticket PDF
   const pdfBuffer = await generateTicket({
     nom: resa.nom,
