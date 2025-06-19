@@ -85,5 +85,10 @@ export default async function handler(req, res) {
     })
   }
 
-  return res.status(200).json({ success: true })
+  return res.status(200).json({
+    success: true,
+    message: type === 'interne'
+      ? "Inscription confirmée, ticket envoyé par email."
+      : "Inscription effectuée, en attente de validation. Vous recevrez votre ticket après validation."
+  })
 } 

@@ -61,7 +61,8 @@ export default function ReservationMasterclassPage() {
     })
     setSubmitLoading(false)
     if (res.ok) {
-      toast.success('Réservation confirmée !')
+      const data = await res.json()
+      toast.success(data.message || 'Réservation confirmée !')
       setForm({ nom: '', prenom: '', email: '', telephone: '', masterclass_id: '' })
     } else {
       let errorMsg = 'Erreur lors de la réservation'
