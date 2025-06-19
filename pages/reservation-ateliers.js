@@ -15,6 +15,7 @@ export default function ReservationAteliers() {
   const [submitLoading, setSubmitLoading] = useState(false)
   const [settings, setSettings] = useState({ ouverture_reservation_atelier: false })
   const [loadingSettings, setLoadingSettings] = useState(true)
+  const [errorMsg, setErrorMsg] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -76,6 +77,7 @@ export default function ReservationAteliers() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setSubmitLoading(true)
+    setErrorMsg('');
     const { nom, prenom, email, telephone, atelier_id } = form
     if (!nom || !prenom || !email || !telephone || !atelier_id) {
       toast.error('Tous les champs sont obligatoires')
@@ -92,12 +94,14 @@ export default function ReservationAteliers() {
       const data = await res.json()
       toast.success(data.message || 'Réservation confirmée !')
       setForm({ nom: '', prenom: '', email: '', telephone: '', atelier_id: '' })
+      setErrorMsg('');
     } else {
       let errorMsg = 'Erreur lors de la réservation'
       try {
         const data = await res.json()
         if (data && data.message) errorMsg = data.message
       } catch (e) {}
+      setErrorMsg(errorMsg);
       toast.error(errorMsg)
     }
   }
@@ -140,6 +144,7 @@ export default function ReservationAteliers() {
               {submitLoading ? 'Réservation…' : 'Valider la réservation'}
             </Button>
           </form>
+          {errorMsg && <Typography color="error" sx={{ mt: 2 }}>{errorMsg}</Typography>}
         </Box>
       )}
     </Box>
