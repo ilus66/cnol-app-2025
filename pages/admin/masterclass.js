@@ -148,6 +148,34 @@ export default function AdminMasterclassPage() {
     }
   }
 
+  const handleRefuse = async (resaId) => {
+    const res = await fetch('/api/refuser-reservation-masterclass', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: resaId })
+    })
+    if (res.ok) {
+      toast.success('Réservation refusée')
+      fetchInternalResas(openMasterId)
+      handleOpenList(openMasterId)
+    } else {
+      toast.error('Erreur lors de la refus')
+    }
+  }
+
+  const handleResendTicket = async (resaId) => {
+    const res = await fetch('/api/renvoyer-ticket-masterclass', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: resaId })
+    })
+    if (res.ok) {
+      toast.success('Ticket renvoyé !')
+    } else {
+      toast.error('Erreur lors du renvoi du ticket')
+    }
+  }
+
   return (
     <Box sx={{ p: 4 }}>
       <Typography variant="h5" gutterBottom>Configuration des Masterclass</Typography>
@@ -252,7 +280,7 @@ export default function AdminMasterclassPage() {
           <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: 10 }}>
             <thead>
               <tr style={{ background: '#f0f0f0' }}>
-                <th>Nom</th><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Type</th><th>Validé</th>
+                <th>Nom</th><th>Prénom</th><th>Email</th><th>Téléphone</th><th>Type</th><th>Validé</th><th>Scanné</th>
               </tr>
             </thead>
             <tbody>
@@ -264,10 +292,21 @@ export default function AdminMasterclassPage() {
                   <td>{r.telephone || ''}</td>
                   <td>{r.type}</td>
                   <td>{r.valide ? 'Oui' : 'Non'}</td>
+                  <td>{r.scanned ? 'Oui' : 'Non'}</td>
                   <td>
                     {!r.valide && (
                       <Button size="small" color="success" variant="contained" onClick={() => handleValidate(r.id)}>
                         Valider
+                      </Button>
+                    )}
+                    {!r.valide && r.type === 'externe' && (
+                      <Button size="small" color="error" variant="outlined" onClick={() => handleRefuse(r.id)} style={{ marginLeft: 8 }}>
+                        Refuser
+                      </Button>
+                    )}
+                    {r.valide && (
+                      <Button size="small" color="info" variant="outlined" onClick={() => handleResendTicket(r.id)} style={{ marginLeft: 8 }}>
+                        Renvoyer ticket
                       </Button>
                     )}
                   </td>
