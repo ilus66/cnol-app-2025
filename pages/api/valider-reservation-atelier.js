@@ -1,6 +1,6 @@
 import { supabase } from '../../lib/supabaseClient'
-import generateTicket from '../../lib/generateTicket'
-import sendTicketMail from '../../lib/sendBadgeEmail'
+import { generateTicket } from '../../lib/generateTicket'
+import { sendTicketMail } from '../../lib/mailer'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end()
