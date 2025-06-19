@@ -242,9 +242,14 @@ const AdminPage = () => {
       <Typography variant="h4" gutterBottom>Administration des Inscriptions</Typography>
 
       <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <Link href="/scan" passHref legacyBehavior>
-          <Button variant="contained" color="secondary" component="a">Scanner un badge</Button>
-        </Link>
+        <Box sx={{ display: 'flex', gap: 2, my: 2 }}>
+          <Button variant="contained" color="info" href="/scan">
+            Scanner un badge
+          </Button>
+          <Button variant="contained" color="success" href="/scan-ticket">
+            Scanner un ticket
+          </Button>
+        </Box>
         <Button variant="contained" color="primary" onClick={exportCSV}>Exporter CSV</Button>
         <Link href="/entrees" passHref legacyBehavior>
           <Button variant="outlined" color="success" component="a">Voir les entrées</Button>

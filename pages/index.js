@@ -46,12 +46,7 @@ export default function Home() {
         </div>
 
         <Box sx={{ display: 'flex', gap: 2, my: 3, justifyContent: 'center' }}>
-          <Button variant="outlined" color="info" href="/scan" sx={{ fontWeight: 'bold' }}>
-            Scanner un badge
-          </Button>
-          <Button variant="contained" color="success" href="/scan-ticket" sx={{ fontWeight: 'bold' }}>
-            Scanner un ticket atelier/masterclass
-          </Button>
+          {/* Retiré les boutons de scan */}
         </Box>
 
         <Box sx={{ display: 'flex', gap: 2, my: 3 }}>
