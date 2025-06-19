@@ -5,8 +5,8 @@ export default async function handler(req, res) {
   const { reservationId } = req.body
   if (!reservationId) return res.status(400).json({ message: 'ID de réservation manquant' })
 
-  // Chercher dans reservations_atelier
-  let { data: resa, error } = await supabase.from('reservations_atelier').select('*').eq('id', reservationId).single()
+  // Chercher dans reservations_ateliers
+  let { data: resa, error } = await supabase.from('reservations_ateliers').select('*').eq('id', reservationId).single()
   let eventType = 'Atelier'
   let event = null
   if (!resa) {
@@ -40,7 +40,7 @@ export default async function handler(req, res) {
 
   // Marquer comme scanné
   await supabase
-    .from(eventType === 'Atelier' ? 'reservations_atelier' : 'reservations_masterclass')
+    .from(eventType === 'Atelier' ? 'reservations_ateliers' : 'reservations_masterclass')
     .update({ scanned: true, scanned_at: new Date().toISOString() })
     .eq('id', reservationId)
 

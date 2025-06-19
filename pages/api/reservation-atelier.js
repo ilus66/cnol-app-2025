@@ -11,10 +11,21 @@ export default async function handler(req, res) {
   const { data: atelier, error: errAtelier } = await supabase.from('ateliers').select('*').eq('id', atelier_id).single()
   if (errAtelier || !atelier) return res.status(404).json({ message: 'Atelier introuvable' })
 
+  // Vérifier si déjà inscrit (même email, même atelier, même type)
+  const { data: existing } = await supabase.from('reservations_ateliers')
+    .select('id')
+    .eq('atelier_id', atelier_id)
+    .eq('email', email)
+    .eq('type', type)
+    .single()
+  if (existing) {
+    return res.status(400).json({ message: 'Vous êtes déjà inscrit à cet atelier.' })
+  }
+
   // Limite à 30 pour les externes
   if (type === 'externe') {
     const { count } = await supabase
-      .from('reservations_atelier')
+      .from('reservations_ateliers')
       .select('*', { count: 'exact', head: true })
       .eq('atelier_id', atelier_id)
       .eq('type', 'externe')

@@ -27,7 +27,7 @@ export default function AdminAteliers() {
   })
   const [openAtelierId, setOpenAtelierId] = useState(null)
   const [internalResas, setInternalResas] = useState([])
-  const [internalForm, setInternalForm] = useState({ nom: '', prenom: '', email: '' })
+  const [internalForm, setInternalForm] = useState({ nom: '', prenom: '', email: '', telephone: '' })
   const [internalError, setInternalError] = useState('')
   const [editAtelier, setEditAtelier] = useState(null)
   const [editForm, setEditForm] = useState({ titre: '', intervenant: '', date_heure: '', salle: '', places: '' })
@@ -70,7 +70,7 @@ export default function AdminAteliers() {
   }
 
   const fetchInternalResas = async (atelierId) => {
-    const { data } = await supabase.from('reservations_atelier').select('*').eq('atelier_id', atelierId).eq('type', 'interne')
+    const { data } = await supabase.from('reservations_ateliers').select('*').eq('atelier_id', atelierId).eq('type', 'interne')
     setInternalResas(data || [])
   }
 
@@ -81,7 +81,7 @@ export default function AdminAteliers() {
 
   const handleAddInternal = async () => {
     setInternalError('')
-    if (!internalForm.nom || !internalForm.prenom || !internalForm.email) {
+    if (!internalForm.nom || !internalForm.prenom || !internalForm.email || !internalForm.telephone) {
       setInternalError('Tous les champs sont obligatoires')
       return
     }
@@ -97,13 +97,14 @@ export default function AdminAteliers() {
         nom: internalForm.nom,
         prenom: internalForm.prenom,
         email: internalForm.email,
+        telephone: internalForm.telephone,
         type: 'interne'
       })
     })
     if (!res.ok) {
       setInternalError('Erreur lors de l\'ajout')
     } else {
-      setInternalForm({ nom: '', prenom: '', email: '' })
+      setInternalForm({ nom: '', prenom: '', email: '', telephone: '' })
       fetchInternalResas(openAtelierId)
     }
   }
@@ -138,7 +139,7 @@ export default function AdminAteliers() {
   const handleExport = async (atelier) => {
     // Récupérer toutes les réservations pour cet atelier
     const { data: resas } = await supabase
-      .from('reservations_atelier')
+      .from('reservations_ateliers')
       .select('*')
       .eq('atelier_id', atelier.id)
     // Générer le CSV
@@ -169,7 +170,7 @@ export default function AdminAteliers() {
 
   const handleOpenList = async (atelierId) => {
     setOpenListAtelierId(atelierId)
-    const { data } = await supabase.from('reservations_atelier').select('*').eq('atelier_id', atelierId)
+    const { data } = await supabase.from('reservations_ateliers').select('*').eq('atelier_id', atelierId)
     setListResas(data || [])
   }
 
@@ -265,6 +266,7 @@ export default function AdminAteliers() {
             <TextField label="Nom" value={internalForm.nom} onChange={e => setInternalForm(f => ({ ...f, nom: e.target.value }))} sx={{ mr: 1 }} />
             <TextField label="Prénom" value={internalForm.prenom} onChange={e => setInternalForm(f => ({ ...f, prenom: e.target.value }))} sx={{ mr: 1 }} />
             <TextField label="Email" value={internalForm.email} onChange={e => setInternalForm(f => ({ ...f, email: e.target.value }))} />
+            <TextField label="Téléphone" value={internalForm.telephone} onChange={e => setInternalForm(f => ({ ...f, telephone: e.target.value }))} sx={{ ml: 1 }} />
             <Button variant="contained" color="success" onClick={handleAddInternal} sx={{ ml: 1 }}>Ajouter</Button>
           </div>
           {internalError && <div style={{ color: 'red', marginBottom: 8 }}>{internalError}</div>}

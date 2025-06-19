@@ -16,7 +16,7 @@ export default function AdminReservationsAteliers() {
 
   const fetchData = async () => {
     const { data, error } = await supabase
-      .from('reservations_atelier')
+      .from('reservations_ateliers')
       .select(`
         id,
         atelier_id,

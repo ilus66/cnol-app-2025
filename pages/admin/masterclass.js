@@ -12,7 +12,7 @@ export default function AdminMasterclassPage() {
   })
   const [openMasterId, setOpenMasterId] = useState(null)
   const [internalResas, setInternalResas] = useState([])
-  const [internalForm, setInternalForm] = useState({ nom: '', prenom: '', email: '' })
+  const [internalForm, setInternalForm] = useState({ nom: '', prenom: '', email: '', telephone: '' })
   const [internalError, setInternalError] = useState('')
   const [openListMasterId, setOpenListMasterId] = useState(null)
   const [listResas, setListResas] = useState([])
@@ -66,7 +66,7 @@ export default function AdminMasterclassPage() {
 
   const handleAddInternal = async () => {
     setInternalError('')
-    if (!internalForm.nom || !internalForm.prenom || !internalForm.email) {
+    if (!internalForm.nom || !internalForm.prenom || !internalForm.email || !internalForm.telephone) {
       setInternalError('Tous les champs sont obligatoires')
       return
     }
@@ -82,13 +82,14 @@ export default function AdminMasterclassPage() {
         nom: internalForm.nom,
         prenom: internalForm.prenom,
         email: internalForm.email,
+        telephone: internalForm.telephone,
         type: 'interne'
       })
     })
     if (!res.ok) {
       setInternalError('Erreur lors de l\'ajout')
     } else {
-      setInternalForm({ nom: '', prenom: '', email: '' })
+      setInternalForm({ nom: '', prenom: '', email: '', telephone: '' })
       fetchInternalResas(openMasterId)
     }
   }
@@ -214,6 +215,7 @@ export default function AdminMasterclassPage() {
             <TextField label="Nom" value={internalForm.nom} onChange={e => setInternalForm(f => ({ ...f, nom: e.target.value }))} sx={{ mr: 1 }} />
             <TextField label="Prénom" value={internalForm.prenom} onChange={e => setInternalForm(f => ({ ...f, prenom: e.target.value }))} sx={{ mr: 1 }} />
             <TextField label="Email" value={internalForm.email} onChange={e => setInternalForm(f => ({ ...f, email: e.target.value }))} />
+            <TextField label="Téléphone" value={internalForm.telephone} onChange={e => setInternalForm(f => ({ ...f, telephone: e.target.value }))} sx={{ ml: 1 }} />
             <Button variant="contained" color="success" onClick={handleAddInternal} sx={{ ml: 1 }}>Ajouter</Button>
           </div>
           {internalError && <div style={{ color: 'red', marginBottom: 8 }}>{internalError}</div>}

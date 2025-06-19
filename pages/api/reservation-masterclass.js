@@ -11,6 +11,17 @@ export default async function handler(req, res) {
   const { data: masterclass, error: errMaster } = await supabase.from('masterclass').select('*').eq('id', masterclass_id).single()
   if (errMaster || !masterclass) return res.status(404).json({ message: 'Masterclass introuvable' })
 
+  // Vérifier si déjà inscrit (même email, même masterclass, même type)
+  const { data: existing } = await supabase.from('reservations_masterclass')
+    .select('id')
+    .eq('masterclass_id', masterclass_id)
+    .eq('email', email)
+    .eq('type', type)
+    .single()
+  if (existing) {
+    return res.status(400).json({ message: 'Vous êtes déjà inscrit à cette masterclass.' })
+  }
+
   // Limite à 30 pour les externes
   if (type === 'externe') {
     const { count } = await supabase

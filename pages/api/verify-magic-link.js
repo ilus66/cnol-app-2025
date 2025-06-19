@@ -14,7 +14,7 @@ export default async function handler(req, res) {
   }
 
   // Récupérer les réservations ateliers
-  const { data: ateliers } = await supabase.from('reservations_atelier').select('atelier_id, atelier:atelier_id (titre, date_heure)').eq('user_id', user.id)
+  const { data: ateliers } = await supabase.from('reservations_ateliers').select('atelier_id, atelier:atelier_id (titre, date_heure)').eq('user_id', user.id)
   // Récupérer les réservations masterclass
   const { data: masterclass } = await supabase.from('reservations_masterclass').select('masterclass_id, masterclass:masterclass_id (titre, date_heure)').eq('user_id', user.id)
 
