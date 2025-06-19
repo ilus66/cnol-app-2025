@@ -4,8 +4,8 @@ import { sendTicketMail } from '../../lib/mailer'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Méthode non autorisée' })
-  const { masterclass_id, nom, prenom, email, type } = req.body
-  if (!masterclass_id || !nom || !prenom || !email || !type) return res.status(400).json({ message: 'Champs manquants' })
+  const { masterclass_id, nom, prenom, email, telephone, type } = req.body
+  if (!masterclass_id || !nom || !prenom || !email || !telephone || !type) return res.status(400).json({ message: 'Champs manquants' })
 
   // Récupérer infos masterclass
   const { data: masterclass, error: errMaster } = await supabase.from('masterclass').select('*').eq('id', masterclass_id).single()
@@ -29,6 +29,7 @@ export default async function handler(req, res) {
     nom,
     prenom,
     email,
+    telephone,
     type
   }).select().single()
   if (error) return res.status(500).json({ message: 'Erreur insertion réservation' })

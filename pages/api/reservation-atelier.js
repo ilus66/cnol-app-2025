@@ -4,8 +4,8 @@ import { sendTicketMail } from '../../lib/mailer'
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Méthode non autorisée' })
-  const { atelier_id, nom, prenom, email, type } = req.body
-  if (!atelier_id || !nom || !prenom || !email || !type) return res.status(400).json({ message: 'Champs manquants' })
+  const { atelier_id, nom, prenom, email, telephone, type } = req.body
+  if (!atelier_id || !nom || !prenom || !email || !telephone || !type) return res.status(400).json({ message: 'Champs manquants' })
 
   // Récupérer infos atelier
   const { data: atelier, error: errAtelier } = await supabase.from('ateliers').select('*').eq('id', atelier_id).single()
@@ -24,11 +24,12 @@ export default async function handler(req, res) {
   }
 
   // Insérer réservation
-  const { data, error } = await supabase.from('reservations_atelier').insert({
+  const { data, error } = await supabase.from('reservations_ateliers').insert({
     atelier_id,
     nom,
     prenom,
     email,
+    telephone,
     type
   }).select().single()
   if (error) return res.status(500).json({ message: 'Erreur insertion réservation' })
