@@ -249,6 +249,9 @@ const AdminPage = () => {
           <Button variant="contained" color="success" href="/scan-ticket">
             Scanner un ticket
           </Button>
+          <Button variant="contained" color="warning" href="/admin/cnol-dor">
+            CNOL d'Or
+          </Button>
         </Box>
         <Button variant="contained" color="primary" onClick={exportCSV}>Exporter CSV</Button>
         <Link href="/entrees" passHref legacyBehavior>
