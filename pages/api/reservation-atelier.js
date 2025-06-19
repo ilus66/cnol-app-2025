@@ -35,23 +35,24 @@ export default async function handler(req, res) {
   }
 
   // Insérer réservation
-  const { data, error } = await supabase.from('reservations_ateliers').insert({
+  let reservation = {
     atelier_id,
     nom,
     prenom,
     email,
     telephone,
     type,
-    valide: false
-  }).select().single()
+    valide: type === 'interne' ? true : false
+  }
+  const { data, error } = await supabase.from('reservations_ateliers').insert(reservation).select().single()
   if (error) return res.status(500).json({ message: 'Erreur insertion réservation' })
 
   // Envoi email à l'utilisateur
   await sendMail({
     to: email,
     subject: "Confirmation d'inscription à un atelier - CNOL 2025",
-    text: `Bonjour ${prenom},\n\nMerci pour votre inscription à l'atelier : ${atelier.titre} !\nVotre inscription est bien reçue et sera validée par notre équipe.\n\nUne fois validée, votre ticket vous sera envoyé par email.\n\nÀ très bientôt !\nL'équipe CNOL 2025`,
-    html: `<div style=\"font-family: Arial, sans-serif; color: #333; line-height:1.6; max-width:600px; margin:auto; padding:20px; border:1px solid #ddd; border-radius:8px;\"><h2 style=\"color: #0070f3;\">Bonjour ${prenom},</h2><p>Merci pour votre inscription à l'atelier <strong>${atelier.titre}</strong> !</p><p>Votre inscription est bien reçue et sera <strong>validée par notre équipe</strong>.</p><p><strong>Une fois validée, votre ticket vous sera envoyé par email.</strong></p><p>Nous avons hâte de vous accueillir lors de cet événement incontournable de l'optique au Maroc.</p><hr style=\"border:none; border-top:1px solid #eee; margin:20px 0;\" /><p style=\"font-size: 0.9em; color: #666;\">Pour toute question, contactez-nous à <a href=\"mailto:cnol.maroc@gmail.com\">cnol.maroc@gmail.com</a><br />&copy; 2025 CNOL. Tous droits réservés.</p></div>`
+    text: `Bonjour ${prenom},\n\nMerci pour votre inscription à l'atelier : ${atelier.titre} !\nVotre inscription est bien reçue et ${type === 'interne' ? 'votre ticket est en pièce jointe.' : 'sera validée par notre équipe.'}\n\n${type === 'interne' ? 'Vous trouverez votre ticket PDF en pièce jointe.' : 'Une fois validée, votre ticket vous sera envoyé par email.'}\n\nÀ très bientôt !\nL'équipe CNOL 2025`,
+    html: `<div style=\"font-family: Arial, sans-serif; color: #333; line-height:1.6; max-width:600px; margin:auto; padding:20px; border:1px solid #ddd; border-radius:8px;\"><h2 style=\"color: #0070f3;\">Bonjour ${prenom},</h2><p>Merci pour votre inscription à l'atelier <strong>${atelier.titre}</strong> !</p><p>Votre inscription est bien reçue et ${type === 'interne' ? '<strong>votre ticket est en pièce jointe.</strong>' : 'sera <strong>validée par notre équipe</strong>.'}</p><p>${type === 'interne' ? '<strong>Vous trouverez votre ticket PDF en pièce jointe.</strong>' : '<strong>Une fois validée, votre ticket vous sera envoyé par email.</strong>'}</p><p>Nous avons hâte de vous accueillir lors de cet événement incontournable de l'optique au Maroc.</p><hr style=\"border:none; border-top:1px solid #eee; margin:20px 0;\" /><p style=\"font-size: 0.9em; color: #666;\">Pour toute question, contactez-nous à <a href=\"mailto:cnol.maroc@gmail.com\">cnol.maroc@gmail.com</a><br />&copy; 2025 CNOL. Tous droits réservés.</p></div>`
   })
 
   // Envoi email à l'admin
@@ -61,6 +62,28 @@ export default async function handler(req, res) {
     text: `Nouvelle inscription à un atelier :\n\nNom : ${nom}\nPrénom : ${prenom}\nEmail : ${email}\nTéléphone : ${telephone}\nAtelier : ${atelier.titre}\nType : ${type}\nDate : ${new Date().toLocaleString()}`,
     html: `<div style=\"font-family: Arial, sans-serif; color: #333; max-width:600px; margin:auto; padding:25px; border:1px solid #ddd; border-radius:10px; background:#ffffff;\"><h2 style=\"color:#0070f3;\">📥 Nouvelle inscription à un atelier</h2><table style=\"width:100%; border-collapse:collapse; margin-top:15px;\"><tr><td style=\"padding:8px; font-weight:bold;\">Nom :</td><td style=\"padding:8px;\">${nom}</td></tr><tr><td style=\"padding:8px; font-weight:bold;\">Prénom :</td><td style=\"padding:8px;\">${prenom}</td></tr><tr><td style=\"padding:8px; font-weight:bold;\">Email :</td><td style=\"padding:8px;\">${email}</td></tr><tr><td style=\"padding:8px; font-weight:bold;\">Téléphone :</td><td style=\"padding:8px;\">${telephone}</td></tr><tr><td style=\"padding:8px; font-weight:bold;\">Atelier :</td><td style=\"padding:8px;\">${atelier.titre}</td></tr><tr><td style=\"padding:8px; font-weight:bold;\">Type :</td><td style=\"padding:8px;\">${type}</td></tr><tr><td style=\"padding:8px; font-weight:bold;\">Date :</td><td style=\"padding:8px;\">${new Date().toLocaleString()}</td></tr></table></div>`
   })
+
+  // Si interne, générer et envoyer le ticket tout de suite
+  if (type === 'interne') {
+    const pdfBuffer = await generateTicket({
+      nom,
+      prenom,
+      email,
+      eventType: 'Atelier',
+      eventTitle: atelier.titre,
+      eventDate: atelier.date_heure,
+      reservationId: data.id
+    })
+    await sendTicketMail({
+      to: email,
+      nom,
+      prenom,
+      eventType: 'Atelier',
+      eventTitle: atelier.titre,
+      eventDate: atelier.date_heure,
+      pdfBuffer
+    })
+  }
 
   return res.status(200).json({ success: true })
 } 
