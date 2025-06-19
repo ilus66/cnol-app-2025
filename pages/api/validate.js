@@ -69,6 +69,7 @@ export default async function handler(req, res) {
       city: updated.ville,
       email: updated.email,
       userId: idStr,  // utiliser la version string de l'id
+      identifiant_badge: updated.identifiant_badge,
     });
 
     // Envoyer mail

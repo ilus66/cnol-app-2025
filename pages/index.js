@@ -45,6 +45,15 @@ export default function Home() {
           {/* <a href="/admin" style={styles.adminButton}>Admin</a> */}
         </div>
 
+        <Box sx={{ display: 'flex', gap: 2, my: 3, justifyContent: 'center' }}>
+          <Button variant="outlined" color="info" href="/scan" sx={{ fontWeight: 'bold' }}>
+            Scanner un badge
+          </Button>
+          <Button variant="contained" color="success" href="/scan-ticket" sx={{ fontWeight: 'bold' }}>
+            Scanner un ticket atelier/masterclass
+          </Button>
+        </Box>
+
         <Box sx={{ display: 'flex', gap: 2, my: 3 }}>
           {settings.ouverture_reservation_atelier && (
             <Button variant="contained" color="primary" href="/reservation-ateliers">Réserver un atelier</Button>

@@ -31,6 +31,7 @@ export default async function handler(req, res) {
       city: inscrit.ville,
       email: inscrit.email,
       userId: `cnol2025-${inscrit.id}`,
+      identifiant_badge: inscrit.identifiant_badge,
     }
 
     // Générer le PDF (Buffer)

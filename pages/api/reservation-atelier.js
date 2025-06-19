@@ -72,7 +72,8 @@ export default async function handler(req, res) {
       eventType: 'Atelier',
       eventTitle: atelier.titre,
       eventDate: atelier.date_heure,
-      reservationId: String(data.id)
+      reservationId: String(data.id),
+      salle: atelier.salle
     })
     await sendTicketMail({
       to: email,
