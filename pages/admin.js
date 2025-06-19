@@ -55,6 +55,7 @@ const AdminPage = () => {
     ville: '',
   })
   const [adding, setAdding] = useState(false)
+  const [settings, setSettings] = useState({ ouverture_reservation_atelier: false, ouverture_reservation_masterclass: false })
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -70,6 +71,10 @@ const AdminPage = () => {
   useEffect(() => {
     fetchInscriptions()
   }, [page, search, typeFilter, statusFilter])
+
+  useEffect(() => {
+    fetchSettings()
+  }, [])
 
   async function fetchInscriptions() {
     setLoading(true)
@@ -201,6 +206,21 @@ const AdminPage = () => {
     a.download = `inscriptions_page${page}.csv`
     a.click()
     URL.revokeObjectURL(url)
+  }
+
+  const fetchSettings = async () => {
+    const { data } = await supabase.from('settings').select('*').single()
+    if (data) setSettings(data)
+  }
+
+  const toggleAtelier = async () => {
+    await supabase.from('settings').update({ ouverture_reservation_atelier: !settings.ouverture_reservation_atelier }).eq('id', 1)
+    fetchSettings()
+  }
+
+  const toggleMasterclass = async () => {
+    await supabase.from('settings').update({ ouverture_reservation_masterclass: !settings.ouverture_reservation_masterclass }).eq('id', 1)
+    fetchSettings()
   }
 
   if (!isAuth) return null
@@ -353,6 +373,15 @@ const AdminPage = () => {
           </Select>
         </FormControl>
       </Stack>
+
+      <Box sx={{ mb: 2 }}>
+        <Button variant={settings.ouverture_reservation_atelier ? 'contained' : 'outlined'} color="primary" onClick={toggleAtelier} sx={{ mr: 2 }}>
+          {settings.ouverture_reservation_atelier ? 'Fermer les réservations ateliers' : 'Ouvrir les réservations ateliers'}
+        </Button>
+        <Button variant={settings.ouverture_reservation_masterclass ? 'contained' : 'outlined'} color="secondary" onClick={toggleMasterclass}>
+          {settings.ouverture_reservation_masterclass ? 'Fermer les réservations masterclass' : 'Ouvrir les réservations masterclass'}
+        </Button>
+      </Box>
 
       <TableContainer component={Paper}>
         <Table>

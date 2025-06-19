@@ -1,7 +1,20 @@
 import Head from 'next/head'
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import { supabase } from '../lib/supabaseClient'
+import { Box, Button } from '@mui/material'
 
 export default function Home() {
+  const [settings, setSettings] = useState({ ouverture_reservation_atelier: false, ouverture_reservation_masterclass: false })
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      const { data } = await supabase.from('settings').select('*').single()
+      if (data) setSettings(data)
+    }
+    fetchSettings()
+  }, [])
+
   return (
     <div style={styles.container}>
       <Head>
@@ -31,6 +44,15 @@ export default function Home() {
           <a href="/inscription" style={styles.button}>S'inscrire</a>
           {/* <a href="/admin" style={styles.adminButton}>Admin</a> */}
         </div>
+
+        <Box sx={{ display: 'flex', gap: 2, my: 3 }}>
+          {settings.ouverture_reservation_atelier && (
+            <Button variant="contained" color="primary" href="/reservation-ateliers">Réserver un atelier</Button>
+          )}
+          {settings.ouverture_reservation_masterclass && (
+            <Button variant="contained" color="secondary" href="/reservation-masterclass">Réserver une masterclass</Button>
+          )}
+        </Box>
       </main>
     </div>
   )
