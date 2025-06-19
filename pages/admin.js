@@ -232,8 +232,11 @@ const AdminPage = () => {
     }
   }
 
+  // TABLEAU/INSCRITS : version mobile = cartes, desktop = tableau
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 600;
+
   return (
-    <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', p: { xs: 1, sm: 3 } }}>
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
         <Button variant="outlined" color="error" onClick={handleLogout}>Déconnexion</Button>
       </Box>
@@ -241,140 +244,78 @@ const AdminPage = () => {
 
       <Typography variant="h4" gutterBottom>Administration des Inscriptions</Typography>
 
-      <Stack direction="row" spacing={2} sx={{ mb: 3 }}>
-        <Box sx={{ display: 'flex', gap: 2, my: 2 }}>
-          <Button variant="contained" color="info" href="/scan">
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3 }}>
+        <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2, my: 2 }}>
+          <Button variant="contained" color="info" href="/scan" fullWidth={isMobile}>
             Scanner un badge
           </Button>
-          <Button variant="contained" color="success" href="/scan-ticket">
+          <Button variant="contained" color="success" href="/scan-ticket" fullWidth={isMobile}>
             Scanner un ticket
           </Button>
-          <Button variant="contained" color="warning" href="/admin/cnol-dor">
+          <Button variant="contained" color="warning" href="/admin/cnol-dor" fullWidth={isMobile}>
             CNOL d'Or
           </Button>
         </Box>
-        <Button variant="contained" color="primary" onClick={exportCSV}>Exporter CSV</Button>
+        <Button variant="contained" color="primary" onClick={exportCSV} fullWidth={isMobile}>Exporter CSV</Button>
         <Link href="/entrees" passHref legacyBehavior>
-          <Button variant="outlined" color="success" component="a">Voir les entrées</Button>
+          <Button variant="outlined" color="success" component="a" fullWidth={isMobile}>Voir les entrées</Button>
         </Link>
         <Link href="/admin/ateliers" passHref legacyBehavior>
-          <Button variant="outlined" color="primary" component="a">Gérer les Ateliers</Button>
+          <Button variant="outlined" color="primary" component="a" fullWidth={isMobile}>Gérer les Ateliers</Button>
         </Link>
         <Link href="/admin/masterclass" passHref legacyBehavior>
-          <Button variant="outlined" color="secondary" component="a">Gérer les Masterclass</Button>
+          <Button variant="outlined" color="secondary" component="a" fullWidth={isMobile}>Gérer les Masterclass</Button>
         </Link>
       </Stack>
 
       <Box component="form" onSubmit={handleAdd} sx={{ mb: 4 }}>
         <Typography variant="h6" gutterBottom>Ajouter un participant interne</Typography>
         <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 2 }}>
-          <TextField
-            label="Nom"
-            name="nom"
-            value={formData.nom}
-            onChange={handleChange}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Prénom"
-            name="prenom"
-            value={formData.prenom}
-            onChange={handleChange}
-            required
-            fullWidth
-          />
-          <TextField
-            label="Email"
-            name="email"
-            type="email"
-            value={formData.email}
-            onChange={handleChange}
-            fullWidth
-          />
-          <TextField
-            label="Téléphone"
-            name="telephone"
-            value={formData.telephone}
-            onChange={handleChange}
-            fullWidth
-          />
-          <TextField
-            label="Ville"
-            name="ville"
-            value={formData.ville}
-            onChange={handleChange}
-            fullWidth
-          />
+          <TextField label="Nom" name="nom" value={formData.nom} onChange={handleChange} required fullWidth />
+          <TextField label="Prénom" name="prenom" value={formData.prenom} onChange={handleChange} required fullWidth />
+          <TextField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} fullWidth />
+          <TextField label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} fullWidth />
+          <TextField label="Ville" name="ville" value={formData.ville} onChange={handleChange} fullWidth />
         </Stack>
-
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="center" >
-          <FormControl sx={{ minWidth: 180 }}>
+          <FormControl sx={{ minWidth: 180, width: { xs: '100%', sm: 'auto' } }}>
             <InputLabel>Type</InputLabel>
-            <Select
-              label="Type"
-              name="participant_type"
-              value={formData.participant_type}
-              onChange={handleChange}
-            >
+            <Select label="Type" name="participant_type" value={formData.participant_type} onChange={handleChange}>
               {participantTypes.slice(0,3).map(opt => (
                 <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
               ))}
             </Select>
           </FormControl>
-
           {formData.participant_type === 'exposant' && (
-            <FormControl sx={{ minWidth: 180 }}>
+            <FormControl sx={{ minWidth: 180, width: { xs: '100%', sm: 'auto' } }}>
               <InputLabel>Sponsoring</InputLabel>
-              <Select
-                label="Sponsoring"
-                name="sponsoring_level"
-                value={formData.sponsoring_level}
-                onChange={handleChange}
-              >
+              <Select label="Sponsoring" name="sponsoring_level" value={formData.sponsoring_level} onChange={handleChange}>
                 {sponsoringLevels.map(opt => (
                   <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
                 ))}
               </Select>
             </FormControl>
           )}
-
-          <Button type="submit" variant="contained" color="success" disabled={adding}>
+          <Button type="submit" variant="contained" color="success" disabled={adding} fullWidth={isMobile}>
             {adding ? 'Ajout en cours…' : 'Ajouter'}
           </Button>
         </Stack>
       </Box>
 
       <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} sx={{ mb: 3 }}>
-        <TextField
-          label="Rechercher nom/prénom"
-          variant="outlined"
-          value={search}
-          onChange={e => { setSearch(e.target.value); setPage(1) }}
-          fullWidth
-        />
-
-        <FormControl sx={{ minWidth: 160 }}>
+        <TextField label="Rechercher nom/prénom" variant="outlined" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} fullWidth />
+        <FormControl sx={{ minWidth: 160, width: { xs: '100%', sm: 'auto' } }}>
           <InputLabel>Filtrer par type</InputLabel>
-          <Select
-            label="Filtrer par type"
-            value={typeFilter}
-            onChange={e => { setTypeFilter(e.target.value); setPage(1) }}
-          >
+          <Select label="Filtrer par type" value={typeFilter} onChange={e => { setTypeFilter(e.target.value); setPage(1) }}>
             <MenuItem value="">Tous types</MenuItem>
             {participantTypes.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
             ))}
           </Select>
         </FormControl>
-
-        <FormControl sx={{ minWidth: 160 }}>
+        <FormControl sx={{ minWidth: 160, width: { xs: '100%', sm: 'auto' } }}>
           <InputLabel>Filtrer par statut</InputLabel>
-          <Select
-            label="Filtrer par statut"
-            value={statusFilter}
-            onChange={e => { setStatusFilter(e.target.value); setPage(1) }}
-          >
+          <Select label="Filtrer par statut" value={statusFilter} onChange={e => { setStatusFilter(e.target.value); setPage(1) }}>
             {statusFilters.map(opt => (
               <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>
             ))}
@@ -383,86 +324,110 @@ const AdminPage = () => {
       </Stack>
 
       <Box sx={{ mb: 2 }}>
-        <Button variant={settings.ouverture_reservation_atelier ? 'contained' : 'outlined'} color="primary" onClick={toggleAtelier} sx={{ mr: 2 }}>
+        <Button variant={settings.ouverture_reservation_atelier ? 'contained' : 'outlined'} color="primary" onClick={toggleAtelier} sx={{ mr: 2, mb: { xs: 1, sm: 0 } }} fullWidth={isMobile}>
           {settings.ouverture_reservation_atelier ? 'Fermer les réservations ateliers' : 'Ouvrir les réservations ateliers'}
         </Button>
-        <Button variant={settings.ouverture_reservation_masterclass ? 'contained' : 'outlined'} color="secondary" onClick={toggleMasterclass}>
+        <Button variant={settings.ouverture_reservation_masterclass ? 'contained' : 'outlined'} color="secondary" onClick={toggleMasterclass} fullWidth={isMobile}>
           {settings.ouverture_reservation_masterclass ? 'Fermer les réservations masterclass' : 'Ouvrir les réservations masterclass'}
         </Button>
       </Box>
 
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Nom</TableCell>
-              <TableCell>Prénom</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell>Sponsoring</TableCell>
-              <TableCell>Statut</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Téléphone</TableCell>
-              <TableCell>Ville</TableCell>
-              <TableCell align="center">Scanné</TableCell>
-              <TableCell>Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell colSpan={10} align="center">
-                  <CircularProgress />
-                </TableCell>
-              </TableRow>
-            ) : inscriptions.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={10} align="center">
-                  Aucun inscrit trouvé
-                </TableCell>
-              </TableRow>
-            ) : (
-              inscriptions.map(inscrit => (
-                <TableRow key={inscrit.id}>
-                  <TableCell>{inscrit.nom}</TableCell>
-                  <TableCell>{inscrit.prenom}</TableCell>
-                  <TableCell>{inscrit.participant_type || inscrit.fonction}</TableCell>
-                  <TableCell>{inscrit.participant_type === 'exposant' ? inscrit.sponsoring_level : '-'}</TableCell>
-                  <TableCell sx={{ color: inscrit.valide ? 'green' : 'red' }}>
-                    {inscrit.valide ? 'Validé' : 'Non validé'}
-                  </TableCell>
-                  <TableCell>{inscrit.email}</TableCell>
-                  <TableCell>{inscrit.telephone}</TableCell>
-                  <TableCell>{inscrit.ville}</TableCell>
-                  <TableCell align="center">
-                    {inscrit.scanned ? '✓' : '✗'}
-                  </TableCell>
-                  <TableCell>
-                    {!inscrit.valide && (
-                      <Button
-                        variant="contained"
-                        color="success"
-                        size="small"
-                        sx={{ mr: 1 }}
-                        onClick={() => validerInscription(inscrit.id)}
-                      >
-                        Valider
-                      </Button>
-                    )}
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      size="small"
-                      onClick={() => handlePrintBadge(inscrit)}
-                    >
-                      Imprimer
+      {/* TABLEAU/INSCRITS : version mobile = cartes, desktop = tableau */}
+      {isMobile ? (
+        <Stack spacing={2}>
+          {loading ? (
+            <CircularProgress />
+          ) : inscriptions.length === 0 ? (
+            <Typography align="center">Aucun inscrit trouvé</Typography>
+          ) : (
+            inscriptions.map(inscrit => (
+              <Paper key={inscrit.id} sx={{ p: 2 }}>
+                <Typography><b>Nom :</b> {inscrit.nom}</Typography>
+                <Typography><b>Prénom :</b> {inscrit.prenom}</Typography>
+                <Typography><b>Type :</b> {inscrit.participant_type || inscrit.fonction}</Typography>
+                <Typography><b>Sponsoring :</b> {inscrit.participant_type === 'exposant' ? inscrit.sponsoring_level : '-'}</Typography>
+                <Typography><b>Statut :</b> <span style={{ color: inscrit.valide ? 'green' : 'red' }}>{inscrit.valide ? 'Validé' : 'Non validé'}</span></Typography>
+                <Typography><b>Email :</b> {inscrit.email}</Typography>
+                <Typography><b>Téléphone :</b> {inscrit.telephone}</Typography>
+                <Typography><b>Ville :</b> {inscrit.ville}</Typography>
+                <Typography><b>Scanné :</b> {inscrit.scanned ? '✓' : '✗'}</Typography>
+                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                  {!inscrit.valide && (
+                    <Button variant="contained" color="success" size="small" onClick={() => validerInscription(inscrit.id)}>
+                      Valider
                     </Button>
+                  )}
+                  <Button variant="contained" color="primary" size="small" onClick={() => handlePrintBadge(inscrit)}>
+                    Imprimer
+                  </Button>
+                </Box>
+              </Paper>
+            ))
+          )}
+        </Stack>
+      ) : (
+        <TableContainer component={Paper}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>Nom</TableCell>
+                <TableCell>Prénom</TableCell>
+                <TableCell>Type</TableCell>
+                <TableCell>Sponsoring</TableCell>
+                <TableCell>Statut</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell>Téléphone</TableCell>
+                <TableCell>Ville</TableCell>
+                <TableCell align="center">Scanné</TableCell>
+                <TableCell>Actions</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center">
+                    <CircularProgress />
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+              ) : inscriptions.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} align="center">
+                    Aucun inscrit trouvé
+                  </TableCell>
+                </TableRow>
+              ) : (
+                inscriptions.map(inscrit => (
+                  <TableRow key={inscrit.id}>
+                    <TableCell>{inscrit.nom}</TableCell>
+                    <TableCell>{inscrit.prenom}</TableCell>
+                    <TableCell>{inscrit.participant_type || inscrit.fonction}</TableCell>
+                    <TableCell>{inscrit.participant_type === 'exposant' ? inscrit.sponsoring_level : '-'}</TableCell>
+                    <TableCell sx={{ color: inscrit.valide ? 'green' : 'red' }}>
+                      {inscrit.valide ? 'Validé' : 'Non validé'}
+                    </TableCell>
+                    <TableCell>{inscrit.email}</TableCell>
+                    <TableCell>{inscrit.telephone}</TableCell>
+                    <TableCell>{inscrit.ville}</TableCell>
+                    <TableCell align="center">
+                      {inscrit.scanned ? '✓' : '✗'}
+                    </TableCell>
+                    <TableCell>
+                      {!inscrit.valide && (
+                        <Button variant="contained" color="success" size="small" sx={{ mr: 1 }} onClick={() => validerInscription(inscrit.id)}>
+                          Valider
+                        </Button>
+                      )}
+                      <Button variant="contained" color="primary" size="small" onClick={() => handlePrintBadge(inscrit)}>
+                        Imprimer
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
 
       <Box display="flex" justifyContent="center" mt={3}>
         <Pagination
@@ -472,6 +437,7 @@ const AdminPage = () => {
           color="primary"
           showFirstButton
           showLastButton
+          size={isMobile ? 'large' : 'medium'}
         />
       </Box>
     </Box>
