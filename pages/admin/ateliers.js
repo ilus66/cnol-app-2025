@@ -190,6 +190,21 @@ export default function AdminAteliers() {
     }
   }
 
+  const handleRefuse = async (resaId) => {
+    const res = await fetch('/api/refuser-reservation-atelier', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: resaId })
+    })
+    if (res.ok) {
+      toast.success('Réservation refusée')
+      fetchInternalResas(openAtelierId)
+      handleOpenList(openAtelierId)
+    } else {
+      toast.error('Erreur lors du refus')
+    }
+  }
+
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h5">Gestion des Ateliers</Typography>
@@ -332,7 +347,17 @@ export default function AdminAteliers() {
                   <td>{r.type}</td>
                   <td>{r.valide ? 'Oui' : 'Non'}</td>
                   <td>
-                    {!r.valide && (
+                    {!r.valide && r.type === 'externe' && (
+                      <>
+                        <Button size="small" color="success" variant="contained" onClick={() => handleValidate(r.id)}>
+                          Valider
+                        </Button>
+                        <Button size="small" color="error" variant="outlined" onClick={() => handleRefuse(r.id)} style={{marginLeft:8}}>
+                          Refuser
+                        </Button>
+                      </>
+                    )}
+                    {!r.valide && r.type !== 'externe' && (
                       <Button size="small" color="success" variant="contained" onClick={() => handleValidate(r.id)}>
                         Valider
                       </Button>
