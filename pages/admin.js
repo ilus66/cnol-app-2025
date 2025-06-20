@@ -336,6 +336,11 @@ const AdminPage = () => {
         </Button>
       </Box>
 
+      {/* Compteur nombre d'inscrits */}
+      <Typography variant="h6" sx={{ mb: 2 }}>
+        Nombre d'inscrits : {inscriptions.length}
+      </Typography>
+
       {/* TABLEAU/INSCRITS : version mobile = cartes, desktop = tableau */}
       {isMobile ? (
         <Stack spacing={2}>
