@@ -129,7 +129,7 @@ export default function MonEspace() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setScanError(data.message || 'Erreur lors de l'ajout du contact');
+        setScanError(data.message || "Erreur lors de l'ajout du contact");
       } else {
         setScanSuccess(data.message);
         setContacts((prev) => {
