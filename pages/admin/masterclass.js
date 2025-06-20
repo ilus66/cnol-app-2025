@@ -140,7 +140,8 @@ export default function AdminMasterclassPage() {
       r.scanned ? 'Oui' : 'Non'
     ])
     const csv = [header, ...rows].map(r => r.join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    // Ajout du BOM UTF-8 pour compatibilité Excel
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -268,72 +269,20 @@ export default function AdminMasterclassPage() {
       <Typography variant="h6" gutterBottom>Liste des masterclass</Typography>
       <Stack spacing={2}>
         {masterclass.map(master => (
-          <Paper key={master.id} sx={{ p: 2 }}>
-            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
-              <Box flex={1}>
-                <Typography variant="h6">{master.titre}</Typography>
-                <Typography><b>Intervenant :</b> {master.intervenant}</Typography>
-                <Typography><b>Date/Heure :</b> {new Date(master.date_heure).toLocaleString()}</Typography>
-                <Typography><b>Salle :</b> {master.salle}</Typography>
-                <Typography><b>Places :</b> {master.places}</Typography>
-                <Typography><b>Places restantes :</b> {master.places - (master.reservations_validated || 0)}</Typography>
-              </Box>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<ListIcon />}
-                  onClick={() => handleOpenInternal(master.id)}
-                  fullWidth={isMobile}
-                >
-                  Réservations internes
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="info"
-                  startIcon={<ListIcon />}
-                  onClick={() => handleOpenList(master.id)}
-                  fullWidth={isMobile}
-                >
-                  Voir inscrits
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="success"
-                  startIcon={<DownloadIcon />}
-                  onClick={() => handleExport(master)}
-                  fullWidth={isMobile}
-                >
-                  Exporter
-                </Button>
-                <Button
-                  variant={master.publie ? 'outlined' : 'contained'}
-                  color={master.publie ? 'warning' : 'success'}
-                  onClick={async () => {
-                    await supabase.from('masterclass').update({ publie: !master.publie }).eq('id', master.id)
-                    fetchMasterclass()
-                  }}
-                  fullWidth={isMobile}
-                >
-                  {master.publie ? 'Cacher' : 'Montrer'}
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => handleDelete(master.id)}
-                  fullWidth={isMobile}
-                >
-                  Supprimer
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  href={`/admin/masterclass/${master.id}`}
-                  fullWidth={isMobile}
-                >
-                  Liste inscrits
-                </Button>
+          <Paper key={master.id} sx={{ p: 2, mb: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="h6">{master.titre}</Typography>
+              <Typography><b>Intervenant :</b> {master.intervenant}</Typography>
+              <Typography><b>Date/Heure :</b> {new Date(master.date_heure).toLocaleString()}</Typography>
+              <Typography><b>Salle :</b> {master.salle}</Typography>
+              <Typography><b>Places :</b> {master.places}</Typography>
+              <Typography><b>Places restantes :</b> {master.places - (master.reservations_validated || 0)}</Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
+                <Button variant="outlined" color="primary" onClick={() => handleOpenInternal(master.id)} fullWidth={isMobile}>Réservations internes</Button>
+                <Button variant="outlined" color="secondary" href={`/admin/masterclass/${master.id}`} fullWidth={isMobile}>Liste inscrits</Button>
+                <Button variant="outlined" color="success" onClick={() => handleExport(master)} fullWidth={isMobile}>Exporter</Button>
+                <Button variant={master.publie ? 'outlined' : 'contained'} color={master.publie ? 'warning' : 'success'} onClick={async () => { await supabase.from('masterclass').update({ publie: !master.publie }).eq('id', master.id); fetchMasterclass(); }} fullWidth={isMobile}>{master.publie ? 'Cacher' : 'Publier'}</Button>
+                <Button variant="outlined" color="error" onClick={() => handleDelete(master.id)} fullWidth={isMobile}>Supprimer</Button>
               </Stack>
             </Stack>
           </Paper>

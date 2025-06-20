@@ -171,7 +171,8 @@ export default function AdminAteliers() {
       r.scanned ? 'Oui' : 'Non'
     ])
     const csv = [header, ...rows].map(r => r.join(',')).join('\n')
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    // Ajout du BOM UTF-8 pour compatibilité Excel
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' })
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -294,72 +295,21 @@ export default function AdminAteliers() {
       <Typography variant="h6" gutterBottom>Liste des ateliers</Typography>
       <Stack spacing={2}>
         {ateliers.map(atelier => (
-          <Paper key={atelier.id} sx={{ p: 2 }}>
-            <Stack spacing={2} direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between">
-              <Box flex={1}>
-                <Typography variant="h6">{atelier.titre}</Typography>
-                <Typography><b>Intervenant :</b> {atelier.intervenant}</Typography>
-                <Typography><b>Date/Heure :</b> {new Date(atelier.date_heure).toLocaleString()}</Typography>
-                <Typography><b>Salle :</b> {atelier.salle}</Typography>
-                <Typography><b>Places :</b> {atelier.places}</Typography>
-                <Typography><b>Places restantes :</b> {atelier.places - (atelier.reservations_validated || 0)}</Typography>
-              </Box>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<ListIcon />}
-                  onClick={() => handleOpenInternal(atelier.id)}
-                  fullWidth={isMobile}
-                >
-                  Réservations internes
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="secondary"
-                  href={`/admin/ateliers/${atelier.id}`}
-                  fullWidth={isMobile}
-                >
-                  Liste inscrits
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="success"
-                  startIcon={<DownloadIcon />}
-                  onClick={() => handleExport(atelier)}
-                  fullWidth={isMobile}
-                >
-                  Exporter
-                </Button>
-                <Button
-                  variant={atelier.publie ? 'outlined' : 'contained'}
-                  color={atelier.publie ? 'warning' : 'success'}
-                  onClick={async () => {
-                    await supabase.from('ateliers').update({ publie: !atelier.publie }).eq('id', atelier.id)
-                    fetchAteliers()
-                  }}
-                  fullWidth={isMobile}
-                >
-                  {atelier.publie ? 'Cacher' : 'Montrer'}
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="warning"
-                  startIcon={<EditIcon />}
-                  onClick={() => handleOpenEdit(atelier)}
-                  fullWidth={isMobile}
-                >
-                  Modifier
-                </Button>
-                <Button
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteIcon />}
-                  onClick={() => handleDelete(atelier.id)}
-                  fullWidth={isMobile}
-                >
-                  Supprimer
-                </Button>
+          <Paper key={atelier.id} sx={{ p: 2, mb: 2 }}>
+            <Stack spacing={1}>
+              <Typography variant="h6">{atelier.titre}</Typography>
+              <Typography><b>Intervenant :</b> {atelier.intervenant}</Typography>
+              <Typography><b>Date/Heure :</b> {new Date(atelier.date_heure).toLocaleString()}</Typography>
+              <Typography><b>Salle :</b> {atelier.salle}</Typography>
+              <Typography><b>Places :</b> {atelier.places}</Typography>
+              <Typography><b>Places restantes :</b> {atelier.places - (atelier.reservations_validated || 0)}</Typography>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mt: 1, flexWrap: 'wrap' }}>
+                <Button variant="outlined" color="primary" onClick={() => handleOpenInternal(atelier.id)} fullWidth={isMobile}>Réservations internes</Button>
+                <Button variant="outlined" color="secondary" href={`/admin/ateliers/${atelier.id}`} fullWidth={isMobile}>Liste inscrits</Button>
+                <Button variant="outlined" color="success" onClick={() => handleExport(atelier)} fullWidth={isMobile}>Exporter</Button>
+                <Button variant={atelier.publie ? 'outlined' : 'contained'} color={atelier.publie ? 'warning' : 'success'} onClick={async () => { await supabase.from('ateliers').update({ publie: !atelier.publie }).eq('id', atelier.id); fetchAteliers(); }} fullWidth={isMobile}>{atelier.publie ? 'Cacher' : 'Publier'}</Button>
+                <Button variant="outlined" color="warning" onClick={() => handleOpenEdit(atelier)} fullWidth={isMobile}>Modifier</Button>
+                <Button variant="outlined" color="error" onClick={() => handleDelete(atelier.id)} fullWidth={isMobile}>Supprimer</Button>
               </Stack>
             </Stack>
           </Paper>
