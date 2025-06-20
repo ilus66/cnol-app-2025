@@ -76,15 +76,7 @@ export default async function handler(req, res) {
     await sendMail({
       to: 'cnol.badge@gmail.com',
       subject: `📥 Nouvelle inscription - ${user.prenom} ${user.nom}`,
-      text: `Nouvelle inscription reçue :
-
-Nom : ${user.nom}
-Prénom : ${user.prenom}
-Email : ${user.email}
-Téléphone : ${user.telephone}
-Fonction : ${user.fonction}
-Ville : ${user.ville}
-Date : ${new Date().toLocaleString()}`,
+      text: `Nouvelle inscription reçue :\n\nNom : ${user.nom}\nPrénom : ${user.prenom}\nEmail : ${user.email}\nTéléphone : ${user.telephone}\nFonction : ${user.fonction}\nVille : ${user.ville}\nDate : ${new Date().toLocaleString()}`,
       html: `<div style="font-family: Arial, sans-serif; color: #333; max-width:600px; margin:auto; padding:25px; border:1px solid #ddd; border-radius:10px; background:#ffffff;">
         <h2 style="color:#0070f3;">📥 Nouvelle inscription reçue</h2>
         <table style="width:100%; border-collapse:collapse; margin-top:15px;">
@@ -98,6 +90,38 @@ Date : ${new Date().toLocaleString()}`,
         </table>
       </div>`
     })
+
+    // Envoi notification push (et insertion en base)
+    // Chercher l'utilisateur nouvellement inscrit pour récupérer son id
+    const { data: inscrit } = await supabase
+      .from('inscription')
+      .select('id, email')
+      .eq('email', user.email)
+      .single();
+    if (inscrit && inscrit.id) {
+      // Insérer la notification en base
+      await supabase.from('notifications').insert({
+        user_id: inscrit.id,
+        title: 'Inscription CNOL 2025',
+        body: "Merci pour votre inscription au CNOL 2025 ! Vous recevrez un email de confirmation.",
+        url: null
+      });
+      // Appeler l'API push/send
+      try {
+        await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/push/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: inscrit.id,
+            title: 'Inscription CNOL 2025',
+            body: "Merci pour votre inscription au CNOL 2025 ! Vous recevrez un email de confirmation.",
+            url: null
+          })
+        });
+      } catch (e) {
+        console.error('Erreur envoi notification push:', e);
+      }
+    }
 
     res.status(200).json({ message: 'Inscription enregistrée et emails envoyés' })
   } catch (err) {
