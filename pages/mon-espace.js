@@ -90,7 +90,7 @@ export default function MonEspace() {
       if (res.ok) {
         alert('Notifications push activées !');
       } else {
-        alert('Erreur lors de l'enregistrement de l'abonnement');
+        alert("Erreur lors de l'enregistrement de l'abonnement");
       }
     } catch (e) {
       alert('Erreur activation push : ' + e.message);

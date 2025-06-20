@@ -1,4 +1,4 @@
-import { supabase } from '../../lib/supabaseClient';
+// (Supprimer ou corriger l'import de supabaseClient ici si présent)
 import webpush from 'web-push';
 
 const VAPID_PUBLIC_KEY = 'BOr...remplace_ici_par_ta_cle_publique_VAPID...'; // À remplacer
