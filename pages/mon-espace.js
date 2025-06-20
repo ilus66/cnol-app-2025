@@ -158,8 +158,11 @@ export default function MonEspace() {
     }
   };
   const handleScanError = (err) => {
-    setScanError(err);
-    setShowScanner(false);
+    // Ne pas afficher les erreurs de "non-détection" qui sont constantes
+    if (err && !err.includes('No MultiFormat Readers')) {
+      setScanError(`Erreur de scan : ${err}`);
+    }
+    // On peut laisser le scanner ouvert pour que l'utilisateur réessaie
   };
 
   // Export CSV
@@ -339,9 +342,12 @@ export default function MonEspace() {
           {scanError && <Typography color="error">{scanError}</Typography>}
           {scanSuccess && <Typography color="success.main">{scanSuccess}</Typography>}
           {showScanner && (
-            <Box sx={{ my: 2 }}>
+            <Box sx={{ my: 2, p: 1, border: '1px dashed grey', borderRadius: 2, background: '#f5f5f5' }}>
+              <Typography sx={{ mb: 1, textAlign: 'center', color: 'text.secondary' }}>
+                Veuillez centrer le QR code dans la zone de scan.
+              </Typography>
               <QRCodeScanner onScanSuccess={handleScanSuccess} onScanError={handleScanError} />
-              <Button onClick={() => setShowScanner(false)} sx={{ mt: 1 }}>Annuler</Button>
+              <Button onClick={() => setShowScanner(false)} sx={{ mt: 1 }} fullWidth>Annuler</Button>
             </Box>
           )}
           <List>
