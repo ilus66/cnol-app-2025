@@ -302,6 +302,7 @@ export default function AdminAteliers() {
                 <Typography><b>Date/Heure :</b> {new Date(atelier.date_heure).toLocaleString()}</Typography>
                 <Typography><b>Salle :</b> {atelier.salle}</Typography>
                 <Typography><b>Places :</b> {atelier.places}</Typography>
+                <Typography><b>Places restantes :</b> {atelier.places - (atelier.reservations_validated || 0)}</Typography>
               </Box>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button
@@ -315,12 +316,11 @@ export default function AdminAteliers() {
                 </Button>
                 <Button
                   variant="outlined"
-                  color="info"
-                  startIcon={<ListIcon />}
-                  onClick={() => handleOpenList(atelier.id)}
+                  color="secondary"
+                  href={`/admin/ateliers/${atelier.id}`}
                   fullWidth={isMobile}
                 >
-                  Voir inscrits
+                  Liste inscrits
                 </Button>
                 <Button
                   variant="outlined"

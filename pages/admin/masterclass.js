@@ -276,6 +276,7 @@ export default function AdminMasterclassPage() {
                 <Typography><b>Date/Heure :</b> {new Date(master.date_heure).toLocaleString()}</Typography>
                 <Typography><b>Salle :</b> {master.salle}</Typography>
                 <Typography><b>Places :</b> {master.places}</Typography>
+                <Typography><b>Places restantes :</b> {master.places - (master.reservations_validated || 0)}</Typography>
               </Box>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
                 <Button
@@ -324,6 +325,14 @@ export default function AdminMasterclassPage() {
                   fullWidth={isMobile}
                 >
                   Supprimer
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="secondary"
+                  href={`/admin/masterclass/${master.id}`}
+                  fullWidth={isMobile}
+                >
+                  Liste inscrits
                 </Button>
               </Stack>
             </Stack>
