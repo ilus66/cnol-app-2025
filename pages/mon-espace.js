@@ -477,6 +477,29 @@ export default function MonEspace() {
               <Divider sx={{ my: 2 }} />
             </>
           )}
+
+          {/* --- NOUVEAU : Section Localisation --- */}
+          <Typography variant="h6">Localisation de l'événement</Typography>
+          <Typography sx={{ my: 1 }}>
+            Fondation Mohammed VI de Promotion des Œuvres Sociales de l'Education et de Formation, Rabat.
+          </Typography>
+          <Box sx={{ my: 2, borderRadius: 2, overflow: 'hidden', position: 'relative', paddingTop: '75%' /* 4:3 Aspect Ratio */ }}>
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d105873.81423935256!2d-7.0201603027343715!3d33.978232000000006!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xda76cdca2be509f%3A0x5737e47164ae0407!2sFondation%20Mohammed%20VI%20de%20Promotion%20des%20Oeuvres%20Sociales%20de%20l'Education%20et%20de%20Formation!5e0!3m2!1sfr!2sma!4v1750455243169!5m2!1sfr!2sma"
+              style={{
+                border: 0,
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                width: '100%',
+                height: '100%',
+              }}
+              allowFullScreen=""
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            ></iframe>
+          </Box>
+          <Divider sx={{ my: 2 }} />
         </Paper>
       </Box>
     );
