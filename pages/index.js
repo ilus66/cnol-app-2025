@@ -44,7 +44,6 @@ export default function Home() {
           <a href="/inscription" style={styles.button}>S'inscrire</a>
           <a href="/cnol-dor" style={styles.button}>CNOL d'Or 2025</a>
           <a href="/mon-espace" style={styles.button}>Mon espace</a>
-          <a href="/mon-espace" style={styles.button}>Espace exposant</a>
           {/* <a href="/admin" style={styles.adminButton}>Admin</a> */}
         </div>
 

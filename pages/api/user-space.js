@@ -59,6 +59,26 @@ export default async function handler(req, res) {
     visiteurs_stand = leads || [];
   }
 
+  // --- NOUVEAU : Récupérer les ateliers et masterclass disponibles ---
+  const { data: available_ateliers } = await supabase
+    .from('ateliers')
+    .select('*')
+    .eq('publie', true)
+    .order('date_heure', { ascending: true });
+
+  const { data: available_masterclass } = await supabase
+    .from('masterclass')
+    .select('*')
+    .eq('publie', true)
+    .order('date_heure', { ascending: true });
+
+  // --- NOUVEAU : Vérifier si l'utilisateur a déjà postulé au CNOL d'Or ---
+  const { data: cnol_dor_candidature, error: cnolDorError } = await supabase
+    .from('cnol_dor')
+    .select('id')
+    .eq('email', data.email)
+    .single();
+
   // On ne retourne que les infos utiles (pas de données sensibles)
   const user = {
     id: data.id,
@@ -71,5 +91,16 @@ export default async function handler(req, res) {
     identifiant_badge: data.identifiant_badge,
     valide: data.valide,
   };
-  return res.status(200).json({ user, ateliers: ateliers || [], masterclass: masterclass || [], notifications: notifications || [], contacts: contacts || [], stands_visites: stands_visites || [], visiteurs_stand });
+  return res.status(200).json({ 
+    user, 
+    ateliers: ateliers || [], 
+    masterclass: masterclass || [], 
+    notifications: notifications || [], 
+    contacts: contacts || [], 
+    stands_visites: stands_visites || [], 
+    visiteurs_stand,
+    available_ateliers: available_ateliers || [],
+    available_masterclass: available_masterclass || [],
+    has_applied_cnol_dor: !!cnol_dor_candidature
+  });
 } 

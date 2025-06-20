@@ -54,15 +54,20 @@ export default async function handler(req, res) {
     if (error) throw error
 
     // Envoi email à l'utilisateur
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
     await sendMail({
       to: user.email,
       subject: "Confirmation d'inscription - CNOL 2025",
-      text: `Bonjour ${user.prenom},\n\nMerci pour votre inscription au CNOL 2025 !\nVotre inscription est bien reçue et sera validée par notre équipe.\n\nUne fois validée, votre badge vous sera envoyé par email.\n\nÀ très bientôt !\nL'équipe CNOL 2025`,
+      text: `Bonjour ${user.prenom},\n\nMerci pour votre inscription au CNOL 2025 !\nVotre inscription est bien reçue et sera validée par notre équipe.\n\nVotre code d'identification est : ${badgeCode}\n\nUne fois validée, votre badge vous sera envoyé par email. Vous pourrez alors accéder à votre espace personnel.\n\nAccédez à votre espace personnel ici : ${baseUrl}/mon-espace\n\nÀ très bientôt !\nL'équipe CNOL 2025`,
       html: `<div style="font-family: Arial, sans-serif; color: #333; line-height:1.6; max-width:600px; margin:auto; padding:20px; border:1px solid #ddd; border-radius:8px;">
         <h2 style="color: #0070f3;">Bonjour ${user.prenom},</h2>
         <p>Merci pour votre inscription au <strong>CNOL 2025</strong> !</p>
         <p>Votre inscription est bien reçue et sera <strong>validée par notre équipe</strong>.</p>
-        <p><strong>Une fois validée, votre badge vous sera envoyé par email.</strong></p>
+        <p>Votre code d'identification personnel est : <strong style="font-size: 1.2em; color: #d32f2f;">${badgeCode}</strong>. Conservez-le précieusement.</p>
+        <p><strong>Une fois votre inscription validée, votre badge vous sera envoyé par email.</strong> Vous pourrez utiliser ce code et votre email pour vous connecter à votre espace personnel.</p>
+        <p style="text-align:center; margin: 25px 0;">
+          <a href="${baseUrl}/mon-espace" style="background-color: #0070f3; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Accéder à mon Espace Personnel</a>
+        </p>
         <p>Nous avons hâte de vous accueillir lors de cet événement incontournable de l'optique au Maroc.</p>
         <hr style="border:none; border-top:1px solid #eee; margin:20px 0;" />
         <p style="font-size: 0.9em; color: #666;">

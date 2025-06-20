@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Box, Button, TextField, Typography, Paper, Stack, Divider, List, ListItem, ListItemText } from '@mui/material';
 import QRCodeScanner from '../components/QRCodeScanner';
 
-const VAPID_PUBLIC_KEY = 'BOr...remplace_ici_par_ta_cle_publique_VAPID...'; // À remplacer par ta vraie clé VAPID
+const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 
 export default function MonEspace() {
   const [form, setForm] = useState({ code: '', email: '' });
@@ -18,6 +18,10 @@ export default function MonEspace() {
   const [scanSuccess, setScanSuccess] = useState('');
   const [standsVisites, setStandsVisites] = useState([]);
   const [visiteursStand, setVisiteursStand] = useState([]);
+  const [availableAteliers, setAvailableAteliers] = useState([]);
+  const [availableMasterclass, setAvailableMasterclass] = useState([]);
+  const [hasAppliedCnolDor, setHasAppliedCnolDor] = useState(false);
+  const [reservationMessage, setReservationMessage] = useState('');
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -44,11 +48,22 @@ export default function MonEspace() {
         setContacts((data.contacts || []).map(c => c.inscription));
         setStandsVisites(data.stands_visites || []);
         setVisiteursStand(data.visiteurs_stand || []);
+        setAvailableAteliers(data.available_ateliers || []);
+        setAvailableMasterclass(data.available_masterclass || []);
+        setHasAppliedCnolDor(data.has_applied_cnol_dor || false);
       }
     } catch (err) {
       setError('Erreur réseau');
     }
     setLoading(false);
+    setAteliers([]);
+    setMasterclass([]);
+    setNotifications([]);
+    setForm({ code: '', email: '' });
+    setAvailableAteliers([]);
+    setAvailableMasterclass([]);
+    setHasAppliedCnolDor(false);
+    setReservationMessage('');
   };
 
   const handleLogout = () => {
@@ -211,6 +226,33 @@ export default function MonEspace() {
     URL.revokeObjectURL(url);
   };
 
+  // --- NOUVEAU : Gérer la réservation en 1-clic ---
+  const handleReserve = async (type, eventId) => {
+    setReservationMessage('Réservation en cours...');
+    try {
+      const endpoint = type === 'atelier' ? '/api/reservation-atelier' : '/api/reservation-masterclass';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: user.email,
+          [type === 'atelier' ? 'atelierId' : 'masterclassId']: eventId,
+          // Pas besoin d'envoyer nom/prénom, l'API peut les retrouver via l'email
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setReservationMessage(`Erreur: ${data.message}`);
+      } else {
+        setReservationMessage(data.message);
+        // Re-fetch user data to update reservations list
+        handleSubmit(new Event('submit')); 
+      }
+    } catch (err) {
+      setReservationMessage('Erreur réseau lors de la réservation.');
+    }
+  };
+
   if (user) {
     const isExposant = user.participant_type === 'exposant';
     return (
@@ -364,6 +406,76 @@ export default function MonEspace() {
                 ))}
               </List>
             </Box>
+          )}
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6">Réserver un atelier</Typography>
+          {reservationMessage && <Typography color={reservationMessage.startsWith('Erreur') ? 'error' : 'success.main'} sx={{ my:1 }}>{reservationMessage}</Typography>}
+          <List>
+            {availableAteliers.filter(a => !ateliers.some(ra => ra['ateliers:titre'] === a.titre)).length === 0 && <ListItem><ListItemText primary="Aucun nouvel atelier disponible ou vous êtes déjà inscrit à tout." /></ListItem>}
+            {availableAteliers
+              .filter(a => !ateliers.some(ra => ra['ateliers:titre'] === a.titre)) // Exclure les ateliers déjà réservés
+              .map((a) => (
+              <ListItem key={a.id} alignItems="flex-start" sx={{ borderBottom: '1px solid #eee' }}>
+                <ListItemText
+                  primary={a.titre}
+                  secondary={<>
+                    <span>{new Date(a.date_heure).toLocaleString()} - Salle: {a.salle}</span><br/>
+                    <span>Intervenant: {a.intervenant}</span><br/>
+                    <span style={{ color: (a.places_internes_restantes + a.places_externes_restantes) > 0 ? 'green' : 'red' }}>
+                      Places restantes: {a.places_internes_restantes + a.places_externes_restantes}
+                    </span>
+                  </>}
+                />
+                <Button 
+                  variant="contained" 
+                  size="small" 
+                  onClick={() => handleReserve('atelier', a.id)}
+                  disabled={(a.places_internes_restantes + a.places_externes_restantes) === 0}
+                >
+                  Réserver
+                </Button>
+              </ListItem>
+            ))}
+          </List>
+          <Divider sx={{ my: 2 }} />
+          <Typography variant="h6">Réserver une masterclass</Typography>
+          <List>
+            {availableMasterclass.filter(m => !masterclass.some(rm => rm['masterclass:titre'] === m.titre)).length === 0 && <ListItem><ListItemText primary="Aucune nouvelle masterclass disponible ou vous êtes déjà inscrit à tout." /></ListItem>}
+            {availableMasterclass
+              .filter(m => !masterclass.some(rm => rm['masterclass:titre'] === m.titre)) // Exclure les masterclass déjà réservées
+              .map((m) => (
+              <ListItem key={m.id} alignItems="flex-start" sx={{ borderBottom: '1px solid #eee' }}>
+                <ListItemText
+                  primary={m.titre}
+                  secondary={<>
+                    <span>{new Date(m.date_heure).toLocaleString()} - Salle: {m.salle}</span><br/>
+                    <span>Intervenant: {m.intervenant}</span><br/>
+                    <span style={{ color: (m.places_internes_restantes + m.places_externes_restantes) > 0 ? 'green' : 'red' }}>
+                      Places restantes: {m.places_internes_restantes + m.places_externes_restantes}
+                    </span>
+                  </>}
+                />
+                <Button 
+                  variant="contained" 
+                  size="small" 
+                  onClick={() => handleReserve('masterclass', m.id)}
+                  disabled={(m.places_internes_restantes + m.places_externes_restantes) === 0}
+                >
+                  Réserver
+                </Button>
+              </ListItem>
+            ))}
+          </List>
+          <Divider sx={{ my: 2 }} />
+          {!hasAppliedCnolDor && (
+            <>
+              <Typography variant="h6">Postuler au CNOL d'Or</Typography>
+              <Typography sx={{ my: 1 }}>Tentez votre chance et devenez le lauréat du CNOL d'Or 2025.</Typography>
+              <Button variant="contained" color="warning" href="/cnol-dor">
+                Je postule
+              </Button>
+              <Divider sx={{ my: 2 }} />
+            </>
           )}
         </Paper>
       </Box>
