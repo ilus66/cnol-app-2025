@@ -1,0 +1,36 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "env": {
+    "SMTP_HOST": "mail.cnol.ma",
+    "SMTP_PORT": "465",
+    "SMTP_USER": "inscription@cnol.ma",
+    "SMTP_PASS": "BLh9Qhnlo2CH",
+    "SMTP_FROM": "inscription@cnol.ma"
+  },
+  "headers": [
+    {
+      "source": "/sw.js",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=0, must-revalidate"
+        }
+      ]
+    },
+    {
+      "source": "/manifest.json",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/manifest+json"
+        }
+      ]
+    }
+  ]
+} 

@@ -1,0 +1,5 @@
+# Placeholder pour splash-412x892.png
+# Taille: 412x892
+# Ce fichier doit être remplacé par une vraie image PNG
+# Utilisez un outil comme Figma, Photoshop ou un générateur en ligne
+# pour créer une image avec le logo CNOL et le design approprié

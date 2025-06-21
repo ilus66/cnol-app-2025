@@ -1,0 +1,138 @@
+{
+  "name": "CNOL 2025",
+  "short_name": "CNOL",
+  "description": "Congrès National d'Optique Lunetterie 2025",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d47a1",
+  "theme_color": "#1976d2",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo-cnol.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-cnol.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/splash/splash-320x568.png",
+      "sizes": "320x568",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-375x667.png",
+      "sizes": "375x667",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-414x736.png",
+      "sizes": "414x736",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-375x812.png",
+      "sizes": "375x812",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-414x896.png",
+      "sizes": "414x896",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-390x844.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-428x926.png",
+      "sizes": "428x926",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-768x1024.png",
+      "sizes": "768x1024",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/splash/splash-834x1112.png",
+      "sizes": "834x1112",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/splash/splash-834x1194.png",
+      "sizes": "834x1194",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/splash/splash-1024x1366.png",
+      "sizes": "1024x1366",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/splash/splash-360x640.png",
+      "sizes": "360x640",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-412x732.png",
+      "sizes": "412x732",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-412x915.png",
+      "sizes": "412x915",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-360x800.png",
+      "sizes": "360x800",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-384x854.png",
+      "sizes": "384x854",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-412x892.png",
+      "sizes": "412x892",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/splash/splash-1280x720.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/splash/splash-1920x1080.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}

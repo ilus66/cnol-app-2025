@@ -3,6 +3,8 @@ import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { Box, Button } from '@mui/material'
+import PWAInstallPrompt from '../components/PWAInstallPrompt'
+import AnimatedButton from '../components/AnimatedButton'
 
 export default function Home() {
   const [settings, setSettings] = useState({ ouverture_reservation_atelier: false, ouverture_reservation_masterclass: false })
@@ -31,7 +33,6 @@ export default function Home() {
             width={160}
             height={160}
             style={styles.logo}
-            priority
           />
         </div>
 
@@ -41,9 +42,15 @@ export default function Home() {
         </p>
 
         <div style={styles.buttonGroup}>
-          <a href="/inscription" style={styles.button}>S'inscrire</a>
-          <a href="/cnol-dor" style={styles.button}>CNOL d'Or 2025</a>
-          <a href="/mon-espace" style={styles.button}>Mon espace</a>
+          <AnimatedButton variant="contained" href="/inscription">
+            S'inscrire
+          </AnimatedButton>
+          <AnimatedButton variant="contained" href="/cnol-dor">
+            CNOL d'Or 2025
+          </AnimatedButton>
+          <AnimatedButton variant="contained" href="/mon-espace">
+            Mon espace
+          </AnimatedButton>
           {/* <a href="/admin" style={styles.adminButton}>Admin</a> */}
         </div>
 
@@ -57,13 +64,20 @@ export default function Home() {
 
         <Box sx={{ display: 'flex', gap: 2, my: 3 }}>
           {settings.ouverture_reservation_atelier && (
-            <Button variant="contained" color="primary" href="/reservation-ateliers">Réserver un atelier</Button>
+            <AnimatedButton variant="contained" color="primary" href="/reservation-ateliers">
+              Réserver un atelier
+            </AnimatedButton>
           )}
           {settings.ouverture_reservation_masterclass && (
-            <Button variant="contained" color="secondary" href="/reservation-masterclass">Réserver une masterclass</Button>
+            <AnimatedButton variant="contained" color="secondary" href="/reservation-masterclass">
+              Réserver une masterclass
+            </AnimatedButton>
           )}
         </Box>
       </main>
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   )
 }

@@ -5,10 +5,16 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "generate-splash": "node scripts/generate-splash-screens.js",
+    "pwa:build": "npm run build && npm run generate-splash",
+    "pwa:dev": "npm run dev",
+    "pwa:start": "npm run start"
   },
   "dependencies": {
+    "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.11.3",
+    "@emotion/server": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.15.10",
     "@mui/material": "^5.15.10",
