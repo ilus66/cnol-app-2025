@@ -12,7 +12,7 @@ const QRCodeScanner = dynamic(() => import('../components/QRCodeScanner'), {
 
 export default function ScanStandPage() {
   const router = useRouter()
-  const { stand_badge } = router.query; // Le badge de l'exposant qui scanne
+  const { stand_badge, staff_id } = router.query; // Le badge de l'exposant qui scanne + staff_id optionnel
 
   const [scanning, setScanning] = useState(false)
   const [lastResult, setLastResult] = useState(null)
@@ -45,14 +45,20 @@ export default function ScanStandPage() {
         throw new Error("Badge du visiteur non trouvé.");
       }
       
-      // 2. On appelle l'API pour enregistrer le lead
+      // 2. On appelle l'API pour enregistrer le lead avec staff_id optionnel
+      const apiBody = { 
+        visiteur_id: visiteur.id, 
+        identifiant_badge: stand_badge // Le badge de l'exposant
+      };
+      
+      if (staff_id) {
+        apiBody.staff_id = staff_id;
+      }
+      
       const res = await fetch('/api/scan-stand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          visiteur_id: visiteur.id, 
-          identifiant_badge: stand_badge // Le badge de l'exposant
-        }),
+        body: JSON.stringify(apiBody),
       });
       
       const resultData = await res.json();
@@ -61,7 +67,10 @@ export default function ScanStandPage() {
       }
 
       setLastResult(visiteur);
-      toast.success(`Visiteur enregistré : ${visiteur.prenom} ${visiteur.nom}`);
+      const successMessage = staff_id && resultData.staff_name 
+        ? `Visiteur enregistré par ${resultData.staff_name} : ${visiteur.prenom} ${visiteur.nom}`
+        : `Visiteur enregistré : ${visiteur.prenom} ${visiteur.nom}`;
+      toast.success(successMessage);
 
     } catch (err) {
       setErrorScan(err.message);

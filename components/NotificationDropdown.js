@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   IconButton,
   Badge,
@@ -11,19 +11,39 @@ import {
   Box,
   Button,
   Divider,
+  Fade,
+  Slide
 } from '@mui/material';
 import { Notifications } from '@mui/icons-material';
 
 export default function NotificationDropdown({ notifications, onMarkAllRead, onNotificationClick }) {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [pop, setPop] = useState(false);
+  const prevUnread = useRef(0);
   const unreadCount = notifications.filter(n => !n.lu).length;
+
+  useEffect(() => {
+    if (unreadCount > prevUnread.current) {
+      setPop(true);
+      setTimeout(() => setPop(false), 350);
+    }
+    prevUnread.current = unreadCount;
+  }, [unreadCount]);
+
   const handleOpen = (event) => setAnchorEl(event.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
   return (
     <Box>
       <IconButton color="inherit" onClick={handleOpen} size="large">
-        <Badge badgeContent={unreadCount} color="error">
+        <Badge
+          badgeContent={unreadCount}
+          color="error"
+          sx={{
+            transform: pop ? 'scale(1.25)' : 'scale(1)',
+            transition: 'transform 0.25s cubic-bezier(.4,1.3,.5,1)',
+          }}
+        >
           <Notifications />
         </Badge>
       </IconButton>
@@ -31,6 +51,7 @@ export default function NotificationDropdown({ notifications, onMarkAllRead, onN
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
         onClose={handleClose}
+        TransitionComponent={Fade}
         PaperProps={{
           sx: { width: 340, maxHeight: 400, p: 0 },
         }}

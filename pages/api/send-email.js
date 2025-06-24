@@ -5,15 +5,26 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Méthode non autorisée' });
   }
 
-  const { email, name } = req.body;
+  const { to, subject, text, email, name } = req.body;
 
   try {
-    await sendMail({
-      to: email,
-      subject: `Bienvenue ${name} au CNOL 2025`,
-      text: `Bonjour ${name}, votre inscription est confirmée.`,
-      html: `<h2>Bonjour ${name},</h2><p>Votre inscription au CNOL 2025 est bien confirmée.</p>`,
-    });
+    // Si c'est un formulaire de contact (avec 'to' spécifié)
+    if (to && subject && text) {
+      await sendMail({
+        to: to,
+        subject: subject,
+        text: text,
+        html: text.replace(/\n/g, '<br>'),
+      });
+    } else {
+      // Ancien format pour les inscriptions
+      await sendMail({
+        to: email,
+        subject: `Bienvenue ${name} au CNOL 2025`,
+        text: `Bonjour ${name}, votre inscription est confirmée.`,
+        html: `<h2>Bonjour ${name},</h2><p>Votre inscription au CNOL 2025 est bien confirmée.</p>`,
+      });
+    }
 
     res.status(200).json({ success: true, message: 'Email envoyé avec succès !' });
   } catch (err) {

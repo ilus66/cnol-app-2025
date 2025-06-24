@@ -1,14 +1,19 @@
-import { useState } from 'react';
-import { Box, Typography, Paper, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, Divider, CircularProgress } from '@mui/material';
+import { useState, useEffect } from 'react';
+import { Box, Typography, Paper, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, Divider, CircularProgress, Grid, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import { supabase } from '../../lib/supabaseClient';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
 
 export default function AdminStatistiques() {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [classement, setClassement] = useState([]);
   const [searchParticipant, setSearchParticipant] = useState('');
   const [standsVisites, setStandsVisites] = useState([]);
   const [searchExposant, setSearchExposant] = useState('');
   const [visiteursStand, setVisiteursStand] = useState([]);
+  const [stats, setStats] = useState({});
+  const [exposants, setExposants] = useState([]);
+  const [selectedExposant, setSelectedExposant] = useState('tous');
+  const [periode, setPeriode] = useState('7j'); // 7j, 30j, tout
 
   // Classement des stands les plus visités
   const fetchClassement = async () => {
@@ -85,8 +90,205 @@ export default function AdminStatistiques() {
     URL.revokeObjectURL(url);
   };
 
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      
+      // Charger la liste des exposants
+      const { data: exposantsList } = await supabase
+        .from('exposants')
+        .select('id, nom')
+        .order('nom');
+      setExposants(exposantsList || []);
+
+      // Calculer la période
+      const now = new Date();
+      let startDate;
+      switch (periode) {
+        case '7j':
+          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+          break;
+        case '30j':
+          startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+          break;
+        default:
+          startDate = new Date(0);
+      }
+
+      // Charger les scans
+      let query = supabase
+        .from('leads')
+        .select(`
+          *,
+          exposant:exposants(nom),
+          staff:staff_exposant(prenom, nom),
+          visiteur:inscription(prenom, nom)
+        `)
+        .gte('created_at', startDate.toISOString());
+
+      if (selectedExposant !== 'tous') {
+        query = query.eq('exposant_id', selectedExposant);
+      }
+
+      const { data: scans } = await query;
+
+      // Traiter les données pour les graphiques
+      const statsData = processStatsData(scans || []);
+      setStats(statsData);
+      
+      setLoading(false);
+    };
+    fetchData();
+  }, [selectedExposant, periode]);
+
+  const processStatsData = (scans) => {
+    // Scans par jour
+    const scansParJour = {};
+    scans.forEach(scan => {
+      const date = new Date(scan.created_at).toLocaleDateString();
+      scansParJour[date] = (scansParJour[date] || 0) + 1;
+    });
+
+    // Scans par exposant
+    const scansParExposant = {};
+    scans.forEach(scan => {
+      const nom = scan.exposant?.nom || 'Inconnu';
+      scansParExposant[nom] = (scansParExposant[nom] || 0) + 1;
+    });
+
+    // Scans par heure
+    const scansParHeure = {};
+    scans.forEach(scan => {
+      const heure = new Date(scan.created_at).getHours();
+      scansParHeure[heure] = (scansParHeure[heure] || 0) + 1;
+    });
+
+    return {
+      scansParJour: Object.entries(scansParJour).map(([date, count]) => ({ date, count })),
+      scansParExposant: Object.entries(scansParExposant).map(([nom, count]) => ({ nom, count })),
+      scansParHeure: Object.entries(scansParHeure).map(([heure, count]) => ({ heure: `${heure}h`, count })),
+      total: scans.length
+    };
+  };
+
+  const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
+
+  if (loading) return <Box sx={{ p: 4, textAlign: 'center' }}>Chargement...</Box>;
+
   return (
-    <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4 }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto', my: 4 }}>
+      <Typography variant="h4" fontWeight="bold" gutterBottom>
+        Statistiques avancées
+      </Typography>
+
+      <Paper sx={{ p: 3, mb: 3 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Exposant</InputLabel>
+              <Select
+                value={selectedExposant}
+                onChange={(e) => setSelectedExposant(e.target.value)}
+              >
+                <MenuItem value="tous">Tous les exposants</MenuItem>
+                {exposants.map((exp) => (
+                  <MenuItem key={exp.id} value={exp.id}>{exp.nom}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Période</InputLabel>
+              <Select
+                value={periode}
+                onChange={(e) => setPeriode(e.target.value)}
+              >
+                <MenuItem value="7j">7 derniers jours</MenuItem>
+                <MenuItem value="30j">30 derniers jours</MenuItem>
+                <MenuItem value="tout">Tout</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+          <Grid item xs={12} md={4}>
+            <Typography variant="h6" color="primary">
+              Total scans : {stats.total}
+            </Typography>
+          </Grid>
+        </Grid>
+      </Paper>
+
+      <Grid container spacing={3}>
+        {/* Scans par jour */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>Scans par jour</Typography>
+            <LineChart width={500} height={300} data={stats.scansParJour}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="date" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Line type="monotone" dataKey="count" stroke="#8884d8" />
+            </LineChart>
+          </Paper>
+        </Grid>
+
+        {/* Scans par exposant */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>Scans par exposant</Typography>
+            <BarChart width={500} height={300} data={stats.scansParExposant}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="nom" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#8884d8" />
+            </BarChart>
+          </Paper>
+        </Grid>
+
+        {/* Répartition par heure */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>Scans par heure</Typography>
+            <BarChart width={500} height={300} data={stats.scansParHeure}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="heure" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="count" fill="#82ca9d" />
+            </BarChart>
+          </Paper>
+        </Grid>
+
+        {/* Répartition par exposant (camembert) */}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h6" gutterBottom>Répartition par exposant</Typography>
+            <PieChart width={500} height={300}>
+              <Pie
+                data={stats.scansParExposant}
+                cx={250}
+                cy={150}
+                labelLine={false}
+                label={({ nom, percent }) => `${nom} ${(percent * 100).toFixed(0)}%`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="count"
+              >
+                {stats.scansParExposant.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </Paper>
+        </Grid>
+      </Grid>
+
       <Paper sx={{ p: 3, mb: 3 }}>
         <Typography variant="h4" gutterBottom>Statistiques - CNOL</Typography>
         <Button variant="contained" onClick={fetchClassement} sx={{ mb: 2 }}>Afficher classement stands les plus visités</Button>

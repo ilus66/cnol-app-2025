@@ -58,6 +58,16 @@ const lightTheme = createTheme({
           textTransform: 'none',
           borderRadius: 8,
           fontWeight: 600,
+          boxShadow: '0 2px 8px rgba(25, 118, 210, 0.08)',
+          transition: 'box-shadow 0.2s, background 0.2s',
+          '&:hover': {
+            boxShadow: '0 4px 16px rgba(25, 118, 210, 0.18)',
+            backgroundColor: '#e3f2fd',
+          },
+          '&:focus-visible': {
+            outline: '2px solid #1976d2',
+            outlineOffset: 2,
+          },
         },
       },
     },
@@ -133,6 +143,16 @@ const darkTheme = createTheme({
           textTransform: 'none',
           borderRadius: 8,
           fontWeight: 600,
+          boxShadow: '0 2px 8px rgba(144, 202, 249, 0.10)',
+          transition: 'box-shadow 0.2s, background 0.2s',
+          '&:hover': {
+            boxShadow: '0 4px 16px rgba(144, 202, 249, 0.22)',
+            backgroundColor: '#1e1e1e',
+          },
+          '&:focus-visible': {
+            outline: '2px solid #90caf9',
+            outlineOffset: 2,
+          },
         },
       },
     },

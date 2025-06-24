@@ -1,0 +1,38 @@
+[
+  {
+    "jour": "Vendredi 11 octobre 2024",
+    "salle": "SALLE ABDELAZIZ MEZIANE BELFKIH",
+    "sessions": [
+      { "heure": "10H00 – 10H30", "titre": "OUVERTURES DU CONGRES" },
+      { "heure": "10H30 – 11H00", "titre": "La lunetterie artisanale au service de l'écologie", "intervenant": "Charles Dagneaux (opticien lunetier MOF)" },
+      { "heure": "11H30 – 12H00", "titre": "L'éthique commerciale", "intervenant": "Raich Habib (opticien formateur)" },
+      { "heure": "15H00 – 15H30", "titre": "La solution Alcon: efficacité des lentilles souples toriques dans la prise en charge de l'astigmatisme", "intervenant": "Jihane Firdaoussi (opticienne contactologue)" },
+      { "heure": "16H00 – 16H30", "titre": "INDO : formation VS concept", "intervenant": "Afailal Sakina" },
+      { "heure": "17H00 – 17H30", "titre": "La prismation dans le cas des enfants TDA", "intervenant": "Hamza Marmari (opticien posturologue)" }
+    ]
+  },
+  {
+    "jour": "Samedi 12 octobre 2024",
+    "salle": "SALLE ABDELAZIZ MEZIANE BELFKIH",
+    "sessions": [
+      { "heure": "10H30 – 11H00", "titre": "Un dépistage bien fait = un échec scolaire évité.", "intervenant": "Laila Ibouyen (opticienne, master en contactologie)" },
+      { "heure": "11H30 – 12H00", "titre": "BIOLENS : update en adaptation de la lentille sclérale Biosafty", "intervenant": "Mustapha Ezzouhairi" },
+      { "heure": "12H30 – 13H00", "titre": "Gestion de la myopie rôle de l'opticien", "intervenant": "Raich Habib (opticien formateur)" },
+      { "heure": "15H00 – 15H30", "titre": "ALCON : les nouvelles technologies des lentilles de contact", "intervenant": "Sébastien Brahy" },
+      { "heure": "16H00 – 16H30", "titre": "Lumière et myopie : principe de freination", "intervenant": "Dr Khadija Chergui" },
+      { "heure": "17H00 – 17H30", "titre": "INDO : RODENSTOCK une nouvelle ère commence!", "intervenant": "Brini Zakaria et Afailal Sakina" }
+    ]
+  },
+  {
+    "jour": "Samedi 12 octobre 2024",
+    "salle": "SALLE ABDERRAHMAN CHENNAF (Orthoptie)",
+    "sessions": [
+      { "heure": "14H30 – 14H50", "titre": "Prise en charge optique du strabisme chez l'enfant", "intervenant": "Bouchkhi Khansae – Orthoptiste" },
+      { "heure": "14H50 – 15H10", "titre": "PEC orthoptique et prismatique des hétérophories", "intervenant": "Wafa Zouiher-Orthoptiste" },
+      { "heure": "15H10 – 15H30", "titre": "Réussir un équipement optique pour les patients malvoyants", "intervenant": "Said Houssaibi – opticien-orthoptiste-doctorant" },
+      { "heure": "15H50 – 16H10", "titre": "Prisme en orthoptie", "intervenant": "Sara Lahrik" },
+      { "heure": "16H10 – 16H30", "titre": "Les indications orthoptiques du port des lentilles de contact", "intervenant": "Reda Achaoui – orthoptiste" },
+      { "heure": "Déficience visuelle chez l'enfant pec pluridisciplinaire", "titre": "Déficience visuelle chez l'enfant pec pluridisciplinaire", "intervenant": "Laila Harjani chercheure clinique orthoptiste" }
+    ]
+  }
+] 

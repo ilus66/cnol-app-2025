@@ -4,7 +4,8 @@ import Head from 'next/head';
 import { Toaster } from 'react-hot-toast';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import UpdateNotification from '../components/UpdateNotification'; // Importez le nouveau composant
+import UpdateNotification from '../components/UpdateNotification';
+import MobileNavigation from '../components/MobileNavigation';
 
 const theme = createTheme({
   palette: {
@@ -74,6 +75,7 @@ function MyApp({ Component, pageProps }) {
       </Head>
       <Toaster position="top-center" reverseOrder={false} />
       <Component {...pageProps} />
+      <MobileNavigation />
       {isUpdateAvailable && <UpdateNotification onUpdate={handleUpdate} />}
     </ThemeProvider>
   );

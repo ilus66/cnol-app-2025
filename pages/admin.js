@@ -54,7 +54,8 @@ const AdminPage = () => {
     email: '',
     telephone: '',
     ville: '',
-    fonction: ''
+    fonction: '',
+    organisation: ''
   })
   const [adding, setAdding] = useState(false)
   const [settings, setSettings] = useState({ ouverture_reservation_atelier: false, ouverture_reservation_masterclass: false })
@@ -133,7 +134,7 @@ const AdminPage = () => {
   async function handleAdd(e) {
     e.preventDefault()
     setAdding(true)
-    const { nom, prenom, participant_type, sponsoring_level, email, telephone, ville, fonction } = formData
+    const { nom, prenom, participant_type, sponsoring_level, email, telephone, ville, fonction, organisation } = formData
     if (!nom.trim() || !prenom.trim()) {
       toast.error('Nom et prénom sont obligatoires')
       setAdding(false)
@@ -147,7 +148,7 @@ const AdminPage = () => {
           participant_type,
           sponsoring_level: participant_type === 'exposant' ? sponsoring_level : null,
           fonction: fonction.trim() || (participant_type.charAt(0).toUpperCase() + participant_type.slice(1)),
-          organisation: participant_type === 'organisation' ? fonction.trim() : null,
+          organisation: participant_type === 'exposant' ? organisation.trim() : null,
           email: email.trim(),
           telephone: telephone.trim(),
           ville: ville.trim(),
@@ -168,7 +169,8 @@ const AdminPage = () => {
           email: '',
           telephone: '',
           ville: '',
-          fonction: ''
+          fonction: '',
+          organisation: ''
         })
         fetchInscriptions()
       }
@@ -300,6 +302,16 @@ const AdminPage = () => {
                 ))}
               </Select>
             </FormControl>
+          )}
+          {formData.participant_type === 'exposant' && (
+            <TextField
+              label="Nom de la société"
+              name="organisation"
+              value={formData.organisation}
+              onChange={handleChange}
+              required
+              sx={{ mb: 2 }}
+            />
           )}
           <Button type="submit" variant="contained" color="success" disabled={adding} fullWidth={isMobile}>
             {adding ? 'Ajout en cours…' : 'Ajouter'}

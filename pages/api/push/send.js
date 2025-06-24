@@ -15,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Méthode non autorisée' });
   }
-  const { user_id, title, body, url } = req.body;
+  const { user_id, title, body, url, exposant_id } = req.body;
   if (!user_id || !title || !body) {
     return res.status(400).json({ message: 'Paramètres manquants' });
   }
@@ -46,6 +46,20 @@ export default async function handler(req, res) {
       console.error('Erreur envoi notification:', e);
       fail++;
     }
+  }
+  
+  // Enregistrer la notification dans l'historique avec exposant_id si fourni
+  if (success > 0) {
+    const notificationData = {
+      user_id,
+      title,
+      body,
+      url
+    };
+    if (exposant_id) {
+      notificationData.exposant_id = exposant_id;
+    }
+    await supabase.from('notifications').insert(notificationData);
   }
   
   return res.status(200).json({ 

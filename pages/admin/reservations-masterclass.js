@@ -1,102 +1,96 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '../../lib/supabaseClient'
-import {
-  Box, Typography, Table, TableHead, TableRow,
-  TableCell, TableBody, CircularProgress, Paper, List, ListItem, ListItemText, Button, Chip, Dialog, DialogTitle, DialogContent, DialogActions, TextField
-} from '@mui/material'
-import { CSVLink } from "react-csv"
-import { toast } from 'react-hot-toast'
+import { useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { Box, Typography, Paper, List, ListItem, ListItemText, Button, Chip, CircularProgress, Dialog, DialogTitle, DialogContent, DialogActions, TextField } from '@mui/material';
+import { toast } from 'react-hot-toast';
 
-export default function AdminReservationsAteliers() {
-  const [reservations, setReservations] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [motif, setMotif] = useState('')
-  const [open, setOpen] = useState(false)
-  const [selected, setSelected] = useState(null)
+export default function AdminReservationsMasterclass() {
+  const [reservations, setReservations] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [motif, setMotif] = useState('');
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(null);
 
   const fetchReservations = async () => {
-    setLoading(true)
+    setLoading(true);
     const { data } = await supabase
-      .from('reservations_ateliers')
-      .select('*, ateliers(*), user:inscription(*)')
+      .from('reservations_masterclass')
+      .select('*, masterclasses:masterclass(*), user:inscription(*)')
       .eq('annulation_demandee', true)
       .eq('annulation_validee', false)
-      .order('created_at', { ascending: false })
-    setReservations(data || [])
-    setLoading(false)
-  }
+      .order('created_at', { ascending: false });
+    setReservations(data || []);
+    setLoading(false);
+  };
 
-  useEffect(() => {
-    fetchReservations()
-  }, [])
+  useEffect(() => { fetchReservations(); }, []);
 
   const handleValidate = async (res) => {
-    setSelected(res)
-    setOpen(true)
-  }
+    setSelected(res);
+    setOpen(true);
+  };
 
   const confirmValidate = async () => {
-    setLoading(true)
-    await supabase.from('reservations_ateliers').update({ annulation_validee: true, annulation_date: new Date().toISOString(), annulation_motif: motif }).eq('id', selected.id)
+    setLoading(true);
+    await supabase.from('reservations_masterclass').update({ annulation_validee: true, annulation_date: new Date().toISOString(), annulation_motif: motif }).eq('id', selected.id);
     // Notification à l'utilisateur
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         to: selected.user.email,
-        subject: 'Annulation de votre réservation atelier',
-        text: `Votre demande d'annulation pour l'atelier "${selected.ateliers.titre}" a été validée. Motif : ${motif}`
+        subject: 'Annulation de votre réservation masterclass',
+        text: `Votre demande d'annulation pour la masterclass "${selected.masterclasses.titre}" a été validée. Motif : ${motif}`
       })
-    })
+    });
     await fetch('/api/push/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: selected.user_id,
         title: 'Annulation validée',
-        body: `Votre demande d'annulation pour l'atelier "${selected.ateliers.titre}" a été validée.`
+        body: `Votre demande d'annulation pour la masterclass "${selected.masterclasses.titre}" a été validée.`
       })
-    })
-    setOpen(false)
-    setMotif('')
-    setSelected(null)
-    toast.success('Annulation validée et notification envoyée')
-    fetchReservations()
-    setLoading(false)
-  }
+    });
+    setOpen(false);
+    setMotif('');
+    setSelected(null);
+    toast.success('Annulation validée et notification envoyée');
+    fetchReservations();
+    setLoading(false);
+  };
 
   const handleRefuse = async (res) => {
-    setLoading(true)
-    await supabase.from('reservations_ateliers').update({ annulation_demandee: false, annulation_motif: null }).eq('id', res.id)
+    setLoading(true);
+    await supabase.from('reservations_masterclass').update({ annulation_demandee: false, annulation_motif: null }).eq('id', res.id);
     // Notification à l'utilisateur
     await fetch('/api/send-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         to: res.user.email,
-        subject: 'Refus d\'annulation de votre réservation atelier',
-        text: `Votre demande d'annulation pour l'atelier "${res.ateliers.titre}" a été refusée.`
+        subject: 'Refus d\'annulation de votre réservation masterclass',
+        text: `Votre demande d'annulation pour la masterclass "${res.masterclasses.titre}" a été refusée.`
       })
-    })
+    });
     await fetch('/api/push/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userId: res.user_id,
         title: 'Annulation refusée',
-        body: `Votre demande d'annulation pour l'atelier "${res.ateliers.titre}" a été refusée.`
+        body: `Votre demande d'annulation pour la masterclass "${res.masterclasses.titre}" a été refusée.`
       })
-    })
-    toast.success('Refus enregistré et notification envoyée')
-    fetchReservations()
-    setLoading(false)
-  }
+    });
+    toast.success('Refus enregistré et notification envoyée');
+    fetchReservations();
+    setLoading(false);
+  };
 
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', my: 4 }}>
       <Paper sx={{ p: 3, mb: 2, borderRadius: 3, boxShadow: 1 }}>
         <Typography variant="h5" fontWeight="bold" gutterBottom>
-          Demandes d'annulation d'ateliers
+          Demandes d'annulation de masterclass
         </Typography>
         {loading ? <CircularProgress /> : (
           <List>
@@ -107,10 +101,10 @@ export default function AdminReservationsAteliers() {
               <ListItem key={res.id} alignItems="flex-start" divider>
                 <ListItemText
                   primary={<>
-                    <b>{res.ateliers?.titre}</b> — {res.user?.prenom} {res.user?.nom} ({res.user?.email})
+                    <b>{res.masterclasses?.titre}</b> — {res.user?.prenom} {res.user?.nom} ({res.user?.email})
                   </>}
                   secondary={<>
-                    <Typography variant="body2">Date : {new Date(res.ateliers?.date_heure).toLocaleString('fr-FR')}</Typography>
+                    <Typography variant="body2">Date : {new Date(res.masterclasses?.date_heure).toLocaleString('fr-FR')}</Typography>
                     {res.annulation_motif && <Typography variant="body2" color="text.secondary">Motif : {res.annulation_motif}</Typography>}
                   </>}
                 />
@@ -138,5 +132,5 @@ export default function AdminReservationsAteliers() {
         </DialogActions>
       </Dialog>
     </Box>
-  )
-}
+  );
+} 

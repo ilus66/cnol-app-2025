@@ -27,7 +27,9 @@ import {
   ListItemAvatar,
   Avatar,
   Badge,
-  CircularProgress
+  CircularProgress,
+  Fade,
+  FormGroup
 } from '@mui/material';
 import QRCode from 'qrcode.react';
 import Link from 'next/link';
@@ -45,11 +47,16 @@ import {
   School,
   EmojiEvents,
   Map,
-  AdminPanelSettings
+  AdminPanelSettings,
+  BarChart,
+  Group,
+  Delete
 } from '@mui/icons-material';
 import dynamic from 'next/dynamic';
 import { toast } from 'react-hot-toast';
 import NotificationDropdown from '../components/NotificationDropdown';
+import { ThemeToggle } from '../components/ThemeProvider';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 // On charge le QRCodeScanner de façon dynamique pour éviter les erreurs de build
 const QRCodeScanner = dynamic(() => import('../components/QRCodeScanner'), {
@@ -144,6 +151,13 @@ export default function MonEspace({ user }) {
   const [contacts, setContacts] = useState([]);
   const [settings, setSettings] = useState({});
   const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [clocheAnim, setClocheAnim] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ nom: user.nom, prenom: user.prenom, fonction: user.fonction || '', telephone: user.telephone || '', email: user.email });
+  const [editLoading, setEditLoading] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   // Détermine si l'utilisateur a le droit de voir les ateliers/masterclass
   const isAllowedForWorkshops = user && (user.fonction === 'Opticien' || user.fonction === 'Ophtalmologue');
@@ -282,6 +296,8 @@ export default function MonEspace({ user }) {
       // Afficher un indicateur de chargement
       alert('Génération de votre badge PDF en cours... Veuillez patienter.');
 
+      setLoading(true);
+
       const response = await fetch(`/api/generatedbadge?id=${user.id}`);
       
       if (!response.ok) {
@@ -302,6 +318,8 @@ export default function MonEspace({ user }) {
     } catch (error) {
       console.error('Erreur lors du téléchargement du badge PDF:', error);
       alert(`Erreur: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -355,12 +373,18 @@ export default function MonEspace({ user }) {
             color={user.valide ? "success" : "warning"}
             sx={{ mt: 1, mb: 2 }}
           />
+          <Button variant="outlined" color="primary" size="small" sx={{ mt: 1, mb: 1 }} onClick={() => setEditOpen(true)}>
+            Modifier mon profil
+          </Button>
         </Box>
-        <NotificationDropdown
-          notifications={notifications}
-          onMarkAllRead={markAllNotificationsRead}
-          onNotificationClick={handleNotificationClick}
-        />
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <NotificationDropdown
+            notifications={notifications}
+            onMarkAllRead={markAllNotificationsRead}
+            onNotificationClick={handleNotificationClick}
+          />
+          <ThemeToggle />
+        </Box>
       </Paper>
 
       <Paper sx={{ p: 3, mb: 2, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
@@ -400,6 +424,25 @@ export default function MonEspace({ user }) {
         )}
       </Paper>
 
+      <Paper sx={{ p: 3, mb: 2, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+        <Typography variant="h6" gutterBottom>
+          <Event sx={{ mr: 1, verticalAlign: 'middle' }} />
+          Programme général du congrès
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Consultez le programme complet des conférences et sessions plénières (sans réservation nécessaire).
+        </Typography>
+        <Button
+          variant="contained"
+          color="secondary"
+          href="/programme"
+          sx={{ fontWeight: 'bold', borderRadius: 3, letterSpacing: 1, py: 1.2, textTransform: 'none' }}
+          fullWidth
+        >
+          Voir le programme général
+        </Button>
+      </Paper>
+
       <Grid container spacing={3}>
         {/* Notifications */}
         <Grid item xs={12} md={6}>
@@ -432,65 +475,78 @@ export default function MonEspace({ user }) {
               </Typography>
               {user.reservations_ateliers && user.reservations_ateliers.filter(r => r.statut === 'confirmé').length > 0 ? (
                 <List>
-                  {user.reservations_ateliers.filter(r => r.statut === 'confirmé').map((reservation) => (
-                    <Paper key={reservation.id} sx={{ p: 2, mb: 2, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Event sx={{ mr: 1, color: 'primary.main' }} />
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', flex: 1 }}>
-                          {reservation.ateliers?.titre}
-                        </Typography>
-                        <Chip label="confirmé" color="success" size="small" sx={{ ml: 1 }} />
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {new Date(reservation.ateliers?.date_heure).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}
-                      </Typography>
-                      {reservation.ateliers?.intervenant && (
+                  {user.reservations_ateliers.filter(r => r.statut === 'confirmé').map((reservation, idx) => (
+                    <Fade in={true} timeout={500 + idx * 80} key={reservation.id}>
+                      <Paper sx={{ p: 2, mb: 2, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <Event sx={{ mr: 1, color: 'primary.main' }} />
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', flex: 1 }}>
+                            {reservation.ateliers?.titre}
+                          </Typography>
+                          <Chip label="confirmé" color="success" size="small" sx={{ ml: 1 }} />
+                        </Box>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          Intervenant : {reservation.ateliers.intervenant}
+                          {new Date(reservation.ateliers?.date_heure).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}
                         </Typography>
-                      )}
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<Download />}
-                        sx={{
-                          width: '100%',
-                          borderRadius: 3,
-                          fontWeight: 'bold',
-                          fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                          letterSpacing: 1,
-                          py: 1.2,
-                          mt: 2,
-                          textTransform: 'none'
-                        }}
-                        onClick={async () => {
-                          const toastId = toast.loading('Génération du ticket...');
-                          try {
-                            const res = await fetch(`/api/download-ticket-atelier?id=${reservation.id}`);
-                            if (!res.ok) {
-                              const errorData = await res.json();
-                              throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
-                            }
-                            const blob = await res.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            const titreSafe = reservation.ateliers?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                            link.setAttribute('download', `ticket-atelier-${titreSafe}.pdf`);
-                            document.body.appendChild(link);
-                            link.click();
-                            link.parentNode.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                            toast.success('Ticket téléchargé !', { id: toastId });
-                          } catch (e) {
-                            console.error("Erreur téléchargement ticket:", e);
-                            toast.error(`Erreur: ${e.message}`, { id: toastId });
-                          }
-                        }}
-                      >
-                        TÉLÉCHARGER LE TICKET
-                      </Button>
-                    </Paper>
+                        {reservation.ateliers?.intervenant && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Intervenant : {reservation.ateliers.intervenant}
+                          </Typography>
+                        )}
+                        {reservation.annulation_validee ? (
+                          <Chip label="Réservation annulée" color="error" sx={{ mt: 1 }} />
+                        ) : reservation.annulation_demandee ? (
+                          <Chip label="Annulation en attente" color="warning" sx={{ mt: 1 }} />
+                        ) : (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            sx={{ mt: 1, mb: 1 }}
+                            onClick={async () => {
+                              await supabase.from('reservations_ateliers').update({ annulation_demandee: true }).eq('id', reservation.id);
+                              toast.success('Demande d\'annulation envoyée');
+                              window.location.reload();
+                            }}
+                          >
+                            Demander l'annulation
+                          </Button>
+                        )}
+                        {!reservation.annulation_validee && !reservation.annulation_demandee && (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Download />}
+                            sx={{ width: '100%', borderRadius: 3, fontWeight: 'bold', fontSize: { xs: '0.95rem', sm: '1.05rem' }, letterSpacing: 1, py: 1.2, mt: 2, textTransform: 'none' }}
+                            onClick={async () => {
+                              const toastId = toast.loading('Génération du ticket...');
+                              try {
+                                const res = await fetch(`/api/download-ticket-atelier?id=${reservation.id}`);
+                                if (!res.ok) {
+                                  const errorData = await res.json();
+                                  throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
+                                }
+                                const blob = await res.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                const titreSafe = reservation.ateliers?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                                link.setAttribute('download', `ticket-atelier-${titreSafe}.pdf`);
+                                document.body.appendChild(link);
+                                link.click();
+                                link.parentNode.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                                toast.success('Ticket téléchargé !', { id: toastId });
+                              } catch (e) {
+                                console.error("Erreur téléchargement ticket:", e);
+                                toast.error(`Erreur: ${e.message}`, { id: toastId });
+                              }
+                            }}
+                          >
+                            TÉLÉCHARGER LE TICKET
+                          </Button>
+                        )}
+                      </Paper>
+                    </Fade>
                   ))}
                 </List>
               ) : (
@@ -533,65 +589,78 @@ export default function MonEspace({ user }) {
               </Typography>
               {user.reservations_masterclass && user.reservations_masterclass.filter(r => r.statut === 'confirmé').length > 0 ? (
                 <List>
-                  {user.reservations_masterclass.filter(r => r.statut === 'confirmé').map((reservation) => (
-                    <Paper key={reservation.id} sx={{ p: 2, mb: 2, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-                        <Event sx={{ mr: 1, color: 'primary.main' }} />
-                        <Typography variant="h6" sx={{ fontWeight: 'bold', flex: 1 }}>
-                          {reservation.masterclasses?.titre}
-                        </Typography>
-                        <Chip label="confirmé" color="success" size="small" sx={{ ml: 1 }} />
-                      </Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                        {new Date(reservation.masterclasses?.date_heure).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}
-                      </Typography>
-                      {reservation.masterclasses?.intervenant && (
+                  {user.reservations_masterclass.filter(r => r.statut === 'confirmé').map((reservation, idx) => (
+                    <Fade in={true} timeout={500 + idx * 80} key={reservation.id}>
+                      <Paper sx={{ p: 2, mb: 2, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                          <Event sx={{ mr: 1, color: 'primary.main' }} />
+                          <Typography variant="h6" sx={{ fontWeight: 'bold', flex: 1 }}>
+                            {reservation.masterclasses?.titre}
+                          </Typography>
+                          <Chip label="confirmé" color="success" size="small" sx={{ ml: 1 }} />
+                        </Box>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          Intervenant : {reservation.masterclasses.intervenant}
+                          {new Date(reservation.masterclasses?.date_heure).toLocaleString('fr-FR', { dateStyle: 'full', timeStyle: 'short' })}
                         </Typography>
-                      )}
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        startIcon={<Download />}
-                        sx={{
-                          width: '100%',
-                          borderRadius: 3,
-                          fontWeight: 'bold',
-                          fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                          letterSpacing: 1,
-                          py: 1.2,
-                          mt: 2,
-                          textTransform: 'none'
-                        }}
-                        onClick={async () => {
-                          const toastId = toast.loading('Génération du ticket...');
-                          try {
-                            const res = await fetch(`/api/download-ticket-masterclass?id=${reservation.id}`);
-                            if (!res.ok) {
-                              const errorData = await res.json();
-                              throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
-                            }
-                            const blob = await res.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            const titreSafe = reservation.masterclasses?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                            link.setAttribute('download', `ticket-masterclass-${titreSafe}.pdf`);
-                            document.body.appendChild(link);
-                            link.click();
-                            link.parentNode.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                            toast.success('Ticket téléchargé !', { id: toastId });
-                          } catch (e) {
-                            console.error("Erreur téléchargement ticket:", e);
-                            toast.error(`Erreur: ${e.message}`, { id: toastId });
-                          }
-                        }}
-                      >
-                        TÉLÉCHARGER LE TICKET
-                      </Button>
-                    </Paper>
+                        {reservation.masterclasses?.intervenant && (
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            Intervenant : {reservation.masterclasses.intervenant}
+                          </Typography>
+                        )}
+                        {reservation.annulation_validee ? (
+                          <Chip label="Réservation annulée" color="error" sx={{ mt: 1 }} />
+                        ) : reservation.annulation_demandee ? (
+                          <Chip label="Annulation en attente" color="warning" sx={{ mt: 1 }} />
+                        ) : (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            sx={{ mt: 1, mb: 1 }}
+                            onClick={async () => {
+                              await supabase.from('reservations_masterclass').update({ annulation_demandee: true }).eq('id', reservation.id);
+                              toast.success('Demande d\'annulation envoyée');
+                              window.location.reload();
+                            }}
+                          >
+                            Demander l'annulation
+                          </Button>
+                        )}
+                        {!reservation.annulation_validee && !reservation.annulation_demandee && (
+                          <Button
+                            variant="contained"
+                            color="primary"
+                            startIcon={<Download />}
+                            sx={{ width: '100%', borderRadius: 3, fontWeight: 'bold', fontSize: { xs: '0.95rem', sm: '1.05rem' }, letterSpacing: 1, py: 1.2, mt: 2, textTransform: 'none' }}
+                            onClick={async () => {
+                              const toastId = toast.loading('Génération du ticket...');
+                              try {
+                                const res = await fetch(`/api/download-ticket-masterclass?id=${reservation.id}`);
+                                if (!res.ok) {
+                                  const errorData = await res.json();
+                                  throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
+                                }
+                                const blob = await res.blob();
+                                const url = window.URL.createObjectURL(blob);
+                                const link = document.createElement('a');
+                                link.href = url;
+                                const titreSafe = reservation.masterclasses?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                                link.setAttribute('download', `ticket-masterclass-${titreSafe}.pdf`);
+                                document.body.appendChild(link);
+                                link.click();
+                                link.parentNode.removeChild(link);
+                                window.URL.revokeObjectURL(url);
+                                toast.success('Ticket téléchargé !', { id: toastId });
+                              } catch (e) {
+                                console.error("Erreur téléchargement ticket:", e);
+                                toast.error(`Erreur: ${e.message}`, { id: toastId });
+                              }
+                            }}
+                          >
+                            TÉLÉCHARGER LE TICKET
+                          </Button>
+                        )}
+                      </Paper>
+                    </Fade>
                   ))}
                 </List>
               ) : (
@@ -658,30 +727,32 @@ export default function MonEspace({ user }) {
               </Typography>
               {contacts.length > 0 ? (
                 <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                  {contacts.map((contact, index) => (
-                    <ListItem key={index} alignItems="flex-start" divider={index < contacts.length - 1}>
-                      <ListItemAvatar>
-                        <Avatar>
-                          <Person />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={`${contact.prenom} ${contact.nom}`}
-                        secondary={
-                          <>
-                            <Typography
-                              sx={{ display: 'block' }}
-                              component="span"
-                              variant="body2"
-                              color="text.primary"
-                            >
-                              {contact.fonction}
-                            </Typography>
-                            {`${contact.email} • ${contact.telephone || 'N/A'}`}
-                          </>
-                        }
-                      />
-                    </ListItem>
+                  {contacts.map((contact, idx) => (
+                    <Fade in={true} timeout={500 + idx * 60} key={contact.id || idx}>
+                      <ListItem alignItems="flex-start" divider={idx < contacts.length - 1}>
+                        <ListItemAvatar>
+                          <Avatar>
+                            <Person />
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={`${contact.prenom} ${contact.nom}`}
+                          secondary={
+                            <>
+                              <Typography
+                                sx={{ display: 'block' }}
+                                component="span"
+                                variant="body2"
+                                color="text.primary"
+                              >
+                                {contact.fonction}
+                              </Typography>
+                              {`${contact.email} • ${contact.telephone || 'N/A'}`}
+                            </>
+                          }
+                        />
+                      </ListItem>
+                    </Fade>
                   ))}
                 </List>
               ) : (
@@ -763,6 +834,143 @@ export default function MonEspace({ user }) {
           </Paper>
         </Grid>
       </Grid>
+      <Paper sx={{ p: 3, mt: 4, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+        <Typography variant="h6" fontWeight="bold" gutterBottom>
+          <BarChart sx={{ mr: 1, verticalAlign: 'middle', color: 'primary.main' }} />
+          Mes statistiques
+        </Typography>
+        <Grid container spacing={2}>
+          <Grid item xs={6} md={3}>
+            <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 3, boxShadow: 0 }}>
+              <School sx={{ color: 'primary.main', fontSize: 32, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold">{user.reservations_ateliers?.length || 0}</Typography>
+              <Typography variant="body2" color="text.secondary">Ateliers réservés</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 3, boxShadow: 0 }}>
+              <School sx={{ color: 'secondary.main', fontSize: 32, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold">{user.reservations_masterclass?.length || 0}</Typography>
+              <Typography variant="body2" color="text.secondary">Masterclass réservées</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 3, boxShadow: 0 }}>
+              <Group sx={{ color: 'success.main', fontSize: 32, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold">{contacts.length}</Typography>
+              <Typography variant="body2" color="text.secondary">Contacts collectés</Typography>
+            </Paper>
+          </Grid>
+          <Grid item xs={6} md={3}>
+            <Paper sx={{ p: 2, textAlign: 'center', borderRadius: 3, boxShadow: 0 }}>
+              <Notifications sx={{ color: 'warning.main', fontSize: 32, mb: 1 }} />
+              <Typography variant="h5" fontWeight="bold">{notifications.length}</Typography>
+              <Typography variant="body2" color="text.secondary">Notifications reçues</Typography>
+            </Paper>
+          </Grid>
+        </Grid>
+      </Paper>
+      <Paper sx={{ p: 3, mt: 4, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+        <Typography variant="h6" fontWeight="bold" gutterBottom>
+          Mes consentements
+        </Typography>
+        <FormGroup>
+          <FormControlLabel
+            control={<Switch checked={user.consent_notifications} onChange={async (e) => {
+              await supabase.from('inscription').update({ consent_notifications: e.target.checked }).eq('id', user.id);
+              toast.success('Préférence enregistrée');
+              window.location.reload();
+            }} />}
+            label="Je souhaite recevoir des notifications push"
+          />
+          <FormControlLabel
+            control={<Switch checked={user.consent_emails} onChange={async (e) => {
+              await supabase.from('inscription').update({ consent_emails: e.target.checked }).eq('id', user.id);
+              toast.success('Préférence enregistrée');
+              window.location.reload();
+            }} />}
+            label="J'accepte de recevoir des emails d'information"
+          />
+          <FormControlLabel
+            control={<Switch checked={user.consent_partners} onChange={async (e) => {
+              await supabase.from('inscription').update({ consent_partners: e.target.checked }).eq('id', user.id);
+              toast.success('Préférence enregistrée');
+              window.location.reload();
+            }} />}
+            label="J'accepte le partage de mes données avec les partenaires"
+          />
+          <FormControlLabel
+            control={<Switch checked={user.consent_stats} onChange={async (e) => {
+              await supabase.from('inscription').update({ consent_stats: e.target.checked }).eq('id', user.id);
+              toast.success('Préférence enregistrée');
+              window.location.reload();
+            }} />}
+            label="J'accepte l'utilisation de mes données à des fins statistiques anonymes"
+          />
+        </FormGroup>
+      </Paper>
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+        <Button variant="contained" color="info" href="/faq" sx={{ fontWeight: 'bold', borderRadius: 3, letterSpacing: 1, py: 1.2, px: 4, textTransform: 'none', mr: 2 }}>
+          Aide / FAQ
+        </Button>
+        <Button variant="outlined" color="error" startIcon={<Delete />} sx={{ fontWeight: 'bold', borderRadius: 3, letterSpacing: 1, py: 1.2, px: 4, textTransform: 'none' }} onClick={() => setDeleteOpen(true)}>
+          Supprimer mon compte
+        </Button>
+      </Box>
+      <LoadingSpinner open={loading} />
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="xs" fullWidth TransitionComponent={Fade}>
+        <DialogTitle>Modifier mon profil</DialogTitle>
+        <DialogContent>
+          <TextField label="Nom" name="nom" value={editForm.nom} onChange={e => setEditForm(f => ({ ...f, nom: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+          <TextField label="Prénom" name="prenom" value={editForm.prenom} onChange={e => setEditForm(f => ({ ...f, prenom: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+          <TextField label="Fonction" name="fonction" value={editForm.fonction} onChange={e => setEditForm(f => ({ ...f, fonction: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+          <TextField label="Téléphone" name="telephone" value={editForm.telephone} onChange={e => setEditForm(f => ({ ...f, telephone: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+          <TextField label="Email" name="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)}>Annuler</Button>
+          <Button variant="contained" disabled={editLoading} onClick={async () => {
+            setEditLoading(true);
+            const { error } = await supabase.from('inscription').update(editForm).eq('id', user.id);
+            setEditLoading(false);
+            if (!error) {
+              toast.success('Profil mis à jour !');
+              setEditOpen(false);
+              // Optionnel : recharger la page ou les infos utilisateur
+              window.location.reload();
+            } else {
+              toast.error('Erreur lors de la mise à jour');
+            }
+          }}>
+            Enregistrer
+          </Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={deleteOpen} onClose={() => setDeleteOpen(false)} maxWidth="xs" fullWidth TransitionComponent={Fade}>
+        <DialogTitle>Supprimer mon compte</DialogTitle>
+        <DialogContent>
+          <Typography color="error" fontWeight="bold" sx={{ mb: 2 }}>
+            Cette action est irréversible. Toutes vos données seront supprimées ou anonymisées.
+          </Typography>
+          <Typography>Êtes-vous sûr de vouloir continuer ?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteOpen(false)}>Annuler</Button>
+          <Button variant="contained" color="error" disabled={deleteLoading} onClick={async () => {
+            setDeleteLoading(true);
+            const res = await fetch('/api/delete-account', { method: 'POST' });
+            setDeleteLoading(false);
+            if (res.ok) {
+              toast.success('Compte supprimé.');
+              window.location.href = '/identification';
+            } else {
+              toast.error('Erreur lors de la suppression du compte.');
+            }
+          }}>
+            Supprimer définitivement
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
