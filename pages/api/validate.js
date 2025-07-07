@@ -72,22 +72,26 @@ export default async function handler(req, res) {
       identifiant_badge: updated.identifiant_badge,
     });
 
-    // Log des infos Supabase pour debug
-    console.log('SUPABASE_URL:', supabase?.restUrl || supabase?.supabaseUrl);
-    console.log('SUPABASE_KEY:', supabase?.auth?.api?.apikey || 'clé non accessible');
+    // Test upload avec la clé service_role
+    const { createClient } = require('@supabase/supabase-js');
+    const supabaseServiceRole = createClient(
+      'https://otmttpiqeehfquoqycol.supabase.co',
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    console.log('Test upload avec clé service_role:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'OK' : 'MISSING');
 
-    // Upload PDF dans Supabase Storage (bucket 'logos')
+    // Upload PDF dans Supabase Storage (bucket 'logos') avec service_role
     const safeName = `${updated.prenom} ${updated.nom}`.toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
     const fileName = `badge-cnol2025-${safeName}.pdf`;
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: uploadData, error: uploadError } = await supabaseServiceRole.storage
       .from('logos')
       .upload(fileName, pdfBuffer, {
         contentType: 'application/pdf',
         upsert: true
       });
     if (uploadError) {
-      console.error('Erreur upload badge PDF Supabase:', uploadError);
-      return res.status(500).json({ message: 'Erreur upload badge PDF' });
+      console.error('Erreur upload badge PDF Supabase (service_role):', uploadError);
+      return res.status(500).json({ message: 'Erreur upload badge PDF (service_role)' });
     }
     // Générer l'URL publique du PDF
     const { data: publicUrlData } = supabase.storage.from('logos').getPublicUrl(fileName);
