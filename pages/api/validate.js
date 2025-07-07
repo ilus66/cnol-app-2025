@@ -78,8 +78,8 @@ export default async function handler(req, res) {
       'https://otmttpiqeehfquoqycol.supabase.co',
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
-    console.log('Test upload avec clé service_role:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'OK' : 'MISSING');
-    console.log('Clé service_role utilisée:', process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    console.log('Début clé service_role:', key ? key.slice(0, 10) : 'MISSING', '...fin:', key ? key.slice(-10) : '');
 
     // Upload PDF dans Supabase Storage (bucket 'logos') avec service_role
     const safeName = `${updated.prenom} ${updated.nom}`.toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
