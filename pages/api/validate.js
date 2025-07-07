@@ -72,6 +72,10 @@ export default async function handler(req, res) {
       identifiant_badge: updated.identifiant_badge,
     });
 
+    // Log des infos Supabase pour debug
+    console.log('SUPABASE_URL:', supabase?.restUrl || supabase?.supabaseUrl);
+    console.log('SUPABASE_KEY:', supabase?.auth?.api?.apikey || 'clé non accessible');
+
     // Upload PDF dans Supabase Storage (bucket 'logos')
     const safeName = `${updated.prenom} ${updated.nom}`.toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
     const fileName = `badge-cnol2025-${safeName}.pdf`;
