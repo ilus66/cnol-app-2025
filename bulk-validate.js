@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 const { createClient } = require('@supabase/supabase-js');
 
-const API_URL = 'https://cnol-2025-v2.vercel.app/api/validate';
+const API_URL = 'https://cnol-2025.vercel.app/api/validate';
 const SUPABASE_URL = 'https://otmttpiqeehfquoqycol.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90bXR0cGlxZWVoZnF1b3F5Y29sIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc0OTcyNzM0OSwiZXhwIjoyMDY1MzAzMzQ5fQ.apn4cVizZwJ79WoIfHOGHuVAyfR90YRs8wXloFsNLNM'; // À remplacer par ta vraie clé service_role
 
