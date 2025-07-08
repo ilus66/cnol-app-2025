@@ -342,21 +342,6 @@ const AdminPage = () => {
       </Box>
       <Toaster position="top-right" />
 
-      <Box sx={{ mb: 2 }}>
-        <Typography variant="h6">Validation automatique des inscriptions</Typography>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Button variant="contained" color="success" onClick={() => setBulkValidate('start')} disabled={bulkRunning}>
-            Démarrer validation automatique
-          </Button>
-          <Button variant="contained" color="warning" onClick={() => setBulkValidate('pause')} disabled={!bulkRunning}>
-            Mettre en pause
-          </Button>
-          <Typography sx={{ ml: 2 }}>
-            État : {bulkRunning ? 'En cours' : 'En pause'}
-          </Typography>
-        </Stack>
-      </Box>
-
       <Typography variant="h4" gutterBottom>Administration des Inscriptions</Typography>
 
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 3, flexWrap: 'wrap', gap: 1 }}>
