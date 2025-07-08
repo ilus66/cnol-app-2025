@@ -182,20 +182,6 @@ export default function Administration() {
         {selected === 'Dashboard' && (
           <>
             <Typography variant="h4" gutterBottom sx={{ fontWeight: 700 }}>Dashboard d'administration</Typography>
-            <Box sx={{ mb: 2 }}>
-              <Typography variant="h6">Validation automatique des inscriptions</Typography>
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Button variant="contained" color="success" onClick={() => setBulkValidate('start')} disabled={bulkRunning}>
-                  Démarrer validation automatique
-                </Button>
-                <Button variant="contained" color="warning" onClick={() => setBulkValidate('pause')} disabled={!bulkRunning}>
-                  Mettre en pause
-                </Button>
-                <Typography sx={{ ml: 2 }}>
-                  État : {bulkRunning ? 'En cours' : 'En pause'}
-                </Typography>
-              </Stack>
-            </Box>
             {/* Tuiles statistiques clés - À remplacer */}
             <Box sx={{ display: 'flex', gap: 2, mb: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
               <Button variant="contained" color="primary" size="medium" sx={{ minWidth: 160, minHeight: 48, fontSize: 17, borderRadius: 2, boxShadow: 1 }} onClick={() => window.open('/scan-badge', '_blank')}>Scanner badge</Button>
