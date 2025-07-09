@@ -152,6 +152,9 @@ export default function MonEspace({ user }) {
   const [programme, setProgramme] = useState('');
   const [programmeDate, setProgrammeDate] = useState(null);
   const [programmeLoading, setProgrammeLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   // Détermine si l'utilisateur a le droit de voir les ateliers/masterclass
   const isAllowedForWorkshops = user && (user.fonction === 'Opticien' || user.fonction === 'Ophtalmologue');
@@ -490,6 +493,54 @@ export default function MonEspace({ user }) {
           />
         </Box>
       </Paper>
+
+      {/* Ajout du formulaire de changement de fonction pour les étudiants */}
+      {(user.fonction?.toLowerCase() === 'étudiant' || user.participant_type?.toLowerCase() === 'etudiant') && (
+        <Paper sx={{ p: 3, mb: 3, borderRadius: 4, background: '#fffbe6', border: '1px solid #ffe082' }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Vous n'êtes plus étudiant ? Choisissez votre nouvelle fonction :
+          </Typography>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              const newFonction = e.target.fonction.value;
+              setLoading(true);
+              setError('');
+              setSuccess('');
+              const { error } = await supabase
+                .from('inscription')
+                .update({ fonction: newFonction, participant_type: newFonction.toLowerCase() })
+                .eq('id', user.id);
+              if (error) {
+                setError("Erreur lors de la mise à jour : " + error.message);
+              } else {
+                setSuccess('Votre fonction a bien été mise à jour.');
+                // Optionnel : recharger la page ou mettre à jour le state local
+                router.reload();
+              }
+              setLoading(false);
+            }}
+          >
+            <Stack direction="row" spacing={2} alignItems="center">
+              <TextField
+                select
+                name="fonction"
+                label="Nouvelle fonction"
+                defaultValue="Opticien"
+                sx={{ minWidth: 180 }}
+              >
+                <option value="Opticien">Opticien</option>
+                <option value="Orthoptiste">Orthoptiste</option>
+              </TextField>
+              <Button type="submit" variant="contained" color="primary" disabled={loading}>
+                {loading ? 'Mise à jour...' : 'Sauvegarder'}
+              </Button>
+            </Stack>
+            {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+            {success && <Alert severity="success" sx={{ mt: 2 }}>{success}</Alert>}
+          </form>
+        </Paper>
+      )}
 
       <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
         <Typography variant="h6" gutterBottom>
