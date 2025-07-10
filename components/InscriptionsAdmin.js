@@ -277,6 +277,7 @@ export default function InscriptionsAdmin() {
         <TextField label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} />
         <TextField label="Ville" name="ville" value={formData.ville} onChange={handleChange} />
         <TextField label="Fonction" name="fonction" value={formData.fonction} onChange={handleChange} />
+        <TextField label="Organisation (optionnel)" name="organisation" value={formData.organisation} onChange={handleChange} />
         <FormControl sx={{ minWidth: 120 }}>
           <InputLabel>Type</InputLabel>
           <Select name="participant_type" value={formData.participant_type} label="Type" onChange={handleChange}>
