@@ -86,7 +86,7 @@ export default async function handler(req, res) {
     // 1. Vérifier que l'exposant existe
     const { data: exposantData, error: exposantError } = await supabase
       .from('exposants')
-      .select('id, nom, type_produits, logo_url')
+      .select('id, nom, type_produits, logo_url, identifiant_badge')
       .eq('id', exposant_id)
       .single();
     
@@ -100,11 +100,11 @@ export default async function handler(req, res) {
     
     console.log('✅ Exposant trouvé:', exposantData);
     
-    // 2. Vérifier que le visiteur existe dans inscription
+    // 2. Vérifier que le visiteur existe dans inscription (par identifiant_badge)
     const { data: visiteurData, error: visiteurError } = await supabase
       .from('inscription')
-      .select('id, nom, prenom, email, participant_type')
-      .eq('id', session.id)
+      .select('id, nom, prenom, email, participant_type, identifiant_badge')
+      .eq('identifiant_badge', session.identifiant_badge)
       .single();
     
     if (visiteurError || !visiteurData) {
@@ -122,7 +122,7 @@ export default async function handler(req, res) {
       .from('leads')
       .select('id, created_at')
       .eq('exposant_id', exposant_id)
-      .eq('visiteur_id', session.id)
+      .eq('visiteur_identifiant_badge', session.identifiant_badge)
       .single();
 
     if (leadCheckError && leadCheckError.code !== 'PGRST116') {
@@ -160,7 +160,9 @@ export default async function handler(req, res) {
       .from('leads')
       .insert({
         exposant_id: exposant_id,
-        visiteur_id: session.id,
+        exposant_identifiant_badge: exposantData.identifiant_badge,
+        visiteur_id: visiteurData.id,
+        visiteur_identifiant_badge: visiteurData.identifiant_badge,
         created_at: new Date().toISOString()
       });
       

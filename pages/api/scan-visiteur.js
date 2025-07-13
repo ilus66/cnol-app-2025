@@ -13,7 +13,7 @@ export default async function handler(req, res) {
     // 1. Trouver l'id de l'exposant via son badge/ID
     let exposantQuery = supabase
       .from('inscription')
-      .select('id')
+      .select('id, identifiant_badge')
       .eq('participant_type', 'Exposant');
     
     const idMatch = stand_badge.match(/^cnol2025-(\d+)$/);
@@ -30,11 +30,11 @@ export default async function handler(req, res) {
       return res.status(404).json({ message: 'Badge Exposant non trouvé.' });
     }
 
-    // 2. Vérifier que le visiteur existe
+    // 2. Vérifier que le visiteur existe (par identifiant_badge)
     const { data: visiteur, error: visiteurError } = await supabase
       .from('inscription')
-      .select('id, nom, prenom, email')
-      .eq('id', visiteur_id)
+      .select('id, nom, prenom, email, identifiant_badge')
+      .eq('identifiant_badge', visiteur_id)
       .single();
     
     if (visiteurError || !visiteur) {
@@ -46,7 +46,9 @@ export default async function handler(req, res) {
       .from('scan_contacts')
       .insert({
         exposant_id: exposant.id,
-        participant_id: visiteur_id,
+        exposant_identifiant_badge: exposant.identifiant_badge,
+        participant_id: visiteur.id,
+        participant_identifiant_badge: visiteur.identifiant_badge,
       });
 
     if (insertError) {
