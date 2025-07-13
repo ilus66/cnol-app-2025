@@ -33,7 +33,9 @@ export default async function handler(req, res) {
   try {
     // Préparer les données pour le badge
     const userData = {
-      name: `${inscrit.prenom} ${inscrit.nom}`,
+      name: (inscrit.prenom && inscrit.nom)
+        ? `${inscrit.prenom} ${inscrit.nom}`
+        : inscrit.nom || inscrit.prenom || 'Inconnu',
       function: inscrit.fonction,
       city: inscrit.ville,
       email: inscrit.email,
@@ -44,11 +46,20 @@ export default async function handler(req, res) {
     // Générer le PDF (Buffer)
     const pdfBuffer = await generateBadge(userData)
 
-    // Envoyer le PDF en binaire
+    // Générer un nom de fichier robuste
     function toAscii(str) {
-      return str.normalize('NFD').replace(/[^\x00-\x7F]/g, '').replace(/[^a-zA-Z0-9-_]/g, '');
+      return (str || '').normalize('NFD').replace(/[^\x00-\x7F]/g, '').replace(/[^a-zA-Z0-9-_]/g, '');
     }
-    const filename = `badge-${toAscii(inscrit.prenom.toLowerCase())}-${toAscii(inscrit.nom.toLowerCase())}.pdf`;
+    const prenom = inscrit.prenom || '';
+    const nom = inscrit.nom || '';
+    let filename = '';
+    if (prenom && nom) {
+      filename = `badge-${toAscii(prenom.toLowerCase())}-${toAscii(nom.toLowerCase())}.pdf`;
+    } else if (!prenom && nom) {
+      filename = `badge-${toAscii(nom.toLowerCase())}.pdf`;
+    } else {
+      filename = `badge-inconnu.pdf`;
+    }
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader(
       'Content-Disposition',
