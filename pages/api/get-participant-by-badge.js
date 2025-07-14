@@ -11,6 +11,10 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
+  if (req.method === 'POST') {
+    console.log('POST body reçu:', req.body);
+  }
+
   // Note: Idéalement, cette route devrait être protégée pour s'assurer 
   // que seul un utilisateur authentifié peut l'appeler.
 
