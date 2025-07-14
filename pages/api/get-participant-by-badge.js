@@ -14,7 +14,9 @@ export default async function handler(req, res) {
   // Note: Idéalement, cette route devrait être protégée pour s'assurer 
   // que seul un utilisateur authentifié peut l'appeler.
 
-  const badge_code = req.method === 'POST' ? req.body.badge_code : req.query.badge_code;
+  const badge_code = req.method === 'POST'
+    ? (req.body.badge_code || req.body.code)
+    : req.query.badge_code;
 
   if (!badge_code) {
     return res.status(400).json({ message: 'Le paramètre badge_code est manquant.' });
