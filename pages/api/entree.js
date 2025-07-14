@@ -29,9 +29,14 @@ export default async function handler(req, res) {
   }
 
   // Sinon, enregistrer l’entrée
+  const isAncien = code === user.ancien_identifiant_badge;
   const { error: insertError } = await supabase
     .from('entrees')
-    .insert({ user_id: user.id, identifiant_badge: user.identifiant_badge })
+    .insert({ 
+      user_id: user.id, 
+      identifiant_badge: user.identifiant_badge,
+      ancien_identifiant_badge: isAncien ? code : null
+    })
 
   if (insertError) {
     return res.status(500).json({ message: 'Erreur lors de l’enregistrement' })
