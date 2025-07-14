@@ -31,17 +31,8 @@ export default async function handler(req, res) {
       .from('inscription')
       .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge');
 
-    // Détecter si le code est un ID (cnol2025-XX) ou un identifiant de badge
-    const idMatch = badge_code.match(/^cnol2025-(\d+)$/);
-    
-    if (idMatch) {
-      // C'est un ID, on cherche par la colonne 'id'
-      const userId = parseInt(idMatch[1], 10);
-      query = query.eq('id', userId);
-    } else {
-      // Sinon, on cherche par la colonne 'identifiant_badge'
-      query = query.eq('identifiant_badge', badge_code);
-    }
+    // Recherche sur identifiant_badge OU ancien_identifiant_badge
+    query = query.or(`identifiant_badge.eq.${badge_code},ancien_identifiant_badge.eq.${badge_code}`);
 
     const { data, error } = await query.single();
 
