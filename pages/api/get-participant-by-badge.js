@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   // que seul un utilisateur authentifié peut l'appeler.
 
   const badge_code = req.method === 'POST'
-    ? (req.body.badge_code || req.body.code)
+    ? (req.body.badge_code || req.body.code || req.body.badge)
     : req.query.badge_code;
 
   if (!badge_code) {
