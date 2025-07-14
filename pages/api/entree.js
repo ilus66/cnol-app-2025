@@ -6,12 +6,26 @@ export default async function handler(req, res) {
   const { code } = req.body
   if (!code) return res.status(400).json({ message: 'Code QR manquant' })
 
-  // On suppose que le code scanné est l'identifiant_badge, ancien_identifiant_badge ou l'email de la personne
+  // 1. Chercher dans ancien_identifiant_badge
   let { data: user, error } = await supabase
     .from('inscription')
     .select('id, nom, prenom, email, identifiant_badge, ancien_identifiant_badge')
-    .or(`identifiant_badge.eq.${code},ancien_identifiant_badge.eq.${code},email.eq.${code}`)
+    .eq('ancien_identifiant_badge', code)
     .single()
+
+  // 2. Si non trouvé et code de la forme cnol2025-XX, chercher dans id
+  if ((!user || error) && /^cnol2025-(\d+)$/i.test(code)) {
+    const id = parseInt(code.match(/^cnol2025-(\d+)$/i)[1], 10);
+    let { data: userById, error: errorById } = await supabase
+      .from('inscription')
+      .select('id, nom, prenom, email, identifiant_badge, ancien_identifiant_badge')
+      .eq('id', id)
+      .single();
+    if (userById && !errorById) {
+      user = userById;
+      error = null;
+    }
+  }
 
   if (error || !user) {
     return res.status(404).json({ message: 'Utilisateur introuvable' })
