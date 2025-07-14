@@ -845,7 +845,7 @@ export default function MonEspace({ user }) {
                         </Avatar>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={`${contact.prenom} ${contact.nom}`}
+                        primary={contact.prenom ? `${contact.prenom} ${contact.nom}` : contact.nom}
                         secondary={
                           <>
                             <Typography
