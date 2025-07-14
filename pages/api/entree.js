@@ -44,15 +44,17 @@ export default async function handler(req, res) {
 
   // Sinon, enregistrer l’entrée
   const isAncien = code === user.ancien_identifiant_badge;
+  const insertData = {
+    user_id: user.id,
+    identifiant_badge: user.identifiant_badge,
+    ancien_identifiant_badge: isAncien ? code : null
+  };
   const { error: insertError } = await supabase
     .from('entrees')
-    .insert({ 
-      user_id: user.id, 
-      identifiant_badge: user.identifiant_badge,
-      ancien_identifiant_badge: isAncien ? code : null
-    })
+    .insert(insertData)
 
   if (insertError) {
+    console.error('Erreur insertion entrees:', insertError, 'Données:', insertData);
     return res.status(500).json({ message: 'Erreur lors de l’enregistrement' })
   }
 
