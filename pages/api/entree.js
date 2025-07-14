@@ -58,5 +58,14 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Erreur lors de l’enregistrement' })
   }
 
-  return res.status(200).json({ message: `Bienvenue ${user.prenom} ${user.nom} 👋` })
+  return res.status(200).json({ 
+    message: `Bienvenue ${user.prenom} ${user.nom} 👋`,
+    nom: user.nom,
+    prenom: user.prenom,
+    email: user.email,
+    fonction: user.fonction,
+    ville: user.ville,
+    participant_type: user.participant_type,
+    scanned_at: new Date().toISOString()
+  })
 }
