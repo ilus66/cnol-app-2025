@@ -6,11 +6,11 @@ export default async function handler(req, res) {
   const { code } = req.body
   if (!code) return res.status(400).json({ message: 'Code QR manquant' })
 
-  // On suppose que le code scanné est l'identifiant_badge ou l'email de la personne
+  // On suppose que le code scanné est l'identifiant_badge, ancien_identifiant_badge ou l'email de la personne
   let { data: user, error } = await supabase
     .from('inscription')
-    .select('id, nom, prenom, email, identifiant_badge')
-    .or(`identifiant_badge.eq.${code},email.eq.${code}`)
+    .select('id, nom, prenom, email, identifiant_badge, ancien_identifiant_badge')
+    .or(`identifiant_badge.eq.${code},ancien_identifiant_badge.eq.${code},email.eq.${code}`)
     .single()
 
   if (error || !user) {
