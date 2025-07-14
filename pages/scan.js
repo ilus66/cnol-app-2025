@@ -35,63 +35,23 @@ export default function ScanPage() {
     setLastResult(null)
     setLastQr(decodedText)
     setErrorScan('')
-    // Ajout : détection du type d'URL QR code
-    if (decodedText.includes('/storage/v1/object/public/logos/')) {
-      // Nouveau badge (Supabase Storage) : ouvrir le PDF directement
-      window.open(decodedText, '_blank')
-      setLoading(false)
-      return
-    }
-    if (decodedText.includes('/api/generatedbadge?id=')) {
-      // Ancien badge : ouvrir l'URL dynamique
-      window.open(decodedText, '_blank')
-      setLoading(false)
-      return
-    }
     try {
-      let id = null
-      // Logique robuste pour extraire l'ID
-      if (decodedText.startsWith('cnol2025-')) {
-        const extractedId = decodedText.split('-')[1]
-        if (/^\d+$/.test(extractedId)) {
-          id = parseInt(extractedId, 10)
-        }
-      }
-      if (!id && /^\d+$/.test(decodedText)) {
-        id = parseInt(decodedText, 10)
-      }
-      if (!id && decodedText.includes('id=')) {
-        try {
-          const url = new URL(decodedText)
-          const paramId = url.searchParams.get('id')
-          if (paramId && /^\d+$/.test(paramId)) {
-            id = parseInt(paramId, 10)
-          }
-        } catch {}
-      }
-      if (!id) {
+      // Appel à l'API d'enregistrement
+      const res = await fetch('/api/entree', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: decodedText })
+      })
+      const result = await res.json()
+      if (!res.ok) {
         playSound('error')
-        setErrorScan('Format du QR code non valide.')
-        throw new Error("Format du QR code non valide.")
+        setErrorScan(result.message || 'Erreur lors de l\'enregistrement.')
+        throw new Error(result.message)
       }
-      // --- Enregistrement dans la table 'entrees' ---
-      const { data, error } = await supabase
-        .from('entrees')
-        .insert({ user_id: id })
-        .select('*, inscription(*)')
-        .single()
-      if (error) {
-        playSound('error')
-        setErrorScan(error.message || 'Erreur lors de l\'enregistrement.')
-        throw error
-      }
-      const scanResult = {
-        ...data.inscription,
-        scanned_at: data.scanned_at
-      }
-      setLastResult(scanResult)
+      // Affichage du message et infos participant si dispo
+      setLastResult(result)
       playSound('success')
-      toast.success(`Entrée enregistrée pour ${scanResult.prenom} ${scanResult.nom}`)
+      toast.success(result.message)
     } catch (err) {
       toast.error(err.message || 'Erreur lors du scan')
     }
