@@ -27,21 +27,33 @@ export default async function handler(req, res) {
   }
 
   try {
-    let query = supabaseAdmin
+    // 1. Chercher dans ancien_identifiant_badge
+    let { data: user, error } = await supabaseAdmin
       .from('inscription')
-      .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge');
+      .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge')
+      .eq('ancien_identifiant_badge', badge_code)
+      .single();
 
-    // Recherche sur identifiant_badge OU ancien_identifiant_badge
-    query = query.or(`identifiant_badge.eq.${badge_code},ancien_identifiant_badge.eq.${badge_code}`);
+    // 2. Si non trouvé et code de la forme cnol2025-XX, chercher dans id
+    if ((!user || error) && /^cnol2025-(\d+)$/i.test(badge_code)) {
+      const id = parseInt(badge_code.match(/^cnol2025-(\d+)$/i)[1], 10);
+      let { data: userById, error: errorById } = await supabaseAdmin
+        .from('inscription')
+        .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge')
+        .eq('id', id)
+        .single();
+      if (userById && !errorById) {
+        user = userById;
+        error = null;
+      }
+    }
 
-    const { data, error } = await query.single();
-
-    if (error || !data) {
+    if (error || !user) {
       console.error('Erreur Supabase Admin (recherche badge):', error);
       return res.status(404).json({ message: 'Participant non trouvé.' });
     }
 
-    return res.status(200).json(data);
+    return res.status(200).json(user);
 
   } catch (err) {
     console.error('Erreur API get-participant-by-badge:', err);
