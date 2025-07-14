@@ -155,6 +155,7 @@ export default function MonEspace({ user }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [contactsModalOpen, setContactsModalOpen] = useState(false);
 
   // Détermine si l'utilisateur a le droit de voir les ateliers/masterclass
   const isAllowedForWorkshops = user && (user.fonction === 'Opticien' || user.fonction === 'Ophtalmologue');
@@ -428,6 +429,17 @@ export default function MonEspace({ user }) {
     const text = encodeURIComponent('Programme scientifique CNOL 2025 : ' + url);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   };
+
+  function downloadVCard(contact) {
+    const vCard = `BEGIN:VCARD\nVERSION:3.0\nFN:${contact.prenom ? contact.prenom + ' ' : ''}${contact.nom}\nN:${contact.nom};${contact.prenom || ''}\nEMAIL:${contact.email || ''}\nTEL:${contact.telephone || ''}\nEND:VCARD`;
+    const blob = new Blob([vCard], { type: 'text/vcard' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${contact.nom}.vcf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
 
   return (
     <Box sx={{ maxWidth: 900, mx: 'auto', p: { xs: 1, sm: 3 } }}>
@@ -834,11 +846,16 @@ export default function MonEspace({ user }) {
                 <ContactPhone sx={{ mr: 1, verticalAlign: 'middle' }} />
                 Contacts Collectés
                 <Badge badgeContent={contacts.length} color="primary" sx={{ ml: 2 }} />
+                {contacts.length > 5 && (
+                  <Button size="small" sx={{ ml: 2 }} onClick={() => setContactsModalOpen(true)}>
+                    Voir tous les contacts
+                  </Button>
+                )}
               </Typography>
               {contacts.length > 0 ? (
                 <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                  {contacts.map((contact, index) => (
-                    <ListItem key={index} alignItems="flex-start" divider={index < contacts.length - 1}>
+                  {contacts.slice(0, 5).map((contact, index) => (
+                    <ListItem key={index} alignItems="flex-start" divider={index < Math.min(contacts.length, 5) - 1}>
                       <ListItemAvatar>
                         <Avatar>
                           <Person />
@@ -860,6 +877,9 @@ export default function MonEspace({ user }) {
                           </>
                         }
                       />
+                      <Button size="small" onClick={() => downloadVCard(contact)} sx={{ ml: 2 }}>
+                        Ajouter au contacts
+                      </Button>
                     </ListItem>
                   ))}
                 </List>
@@ -868,6 +888,45 @@ export default function MonEspace({ user }) {
                   Aucun contact collecté. Scannez un badge pour commencer !
                 </Typography>
               )}
+              {/* Modal pour tous les contacts */}
+              <Dialog open={contactsModalOpen} onClose={() => setContactsModalOpen(false)} maxWidth="sm" fullWidth>
+                <DialogTitle>Tous les contacts collectés</DialogTitle>
+                <DialogContent>
+                  <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
+                    {contacts.map((contact, index) => (
+                      <ListItem key={index} alignItems="flex-start" divider={index < contacts.length - 1}>
+                        <ListItemAvatar>
+                          <Avatar>
+                            <Person />
+                          </Avatar>
+                        </ListItemAvatar>
+                        <ListItemText
+                          primary={contact.prenom ? `${contact.prenom} ${contact.nom}` : contact.nom}
+                          secondary={
+                            <>
+                              <Typography
+                                sx={{ display: 'block' }}
+                                component="span"
+                                variant="body2"
+                                color="text.primary"
+                              >
+                                {contact.fonction}
+                              </Typography>
+                              {`${contact.email} • ${contact.telephone || 'N/A'}`}
+                            </>
+                          }
+                        />
+                        <Button size="small" onClick={() => downloadVCard(contact)} sx={{ ml: 2 }}>
+                          Ajouter au contacts
+                        </Button>
+                      </ListItem>
+                    ))}
+                  </List>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setContactsModalOpen(false)}>Fermer</Button>
+                </DialogActions>
+              </Dialog>
             </Paper>
           </Grid>
         )}
