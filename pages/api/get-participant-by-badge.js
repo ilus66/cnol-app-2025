@@ -7,14 +7,14 @@ const supabaseAdmin = createClient(
 );
 
 export default async function handler(req, res) {
-  if (req.method !== 'GET') {
+  if (req.method !== 'POST' && req.method !== 'GET') {
     return res.status(405).json({ message: 'Method Not Allowed' });
   }
 
   // Note: Idéalement, cette route devrait être protégée pour s'assurer 
   // que seul un utilisateur authentifié peut l'appeler.
 
-  const { badge_code } = req.query;
+  const badge_code = req.method === 'POST' ? req.body.badge_code : req.query.badge_code;
 
   if (!badge_code) {
     return res.status(400).json({ message: 'Le paramètre badge_code est manquant.' });
