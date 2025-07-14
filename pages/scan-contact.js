@@ -4,6 +4,7 @@ import { Box, Typography, Paper, Button, CircularProgress, Alert, Avatar } from 
 import toast, { Toaster } from 'react-hot-toast';
 import { supabase } from '../lib/supabaseClient';
 import { Person, ArrowBack } from '@mui/icons-material';
+import { useSoundEffects } from '../components/SoundEffects';
 
 const QRCodeScanner = dynamic(() => import('../components/QRCodeScanner'), {
   ssr: false,
@@ -38,6 +39,7 @@ export default function ScanContactPage({ user }) {
   const [loading, setLoading] = useState(false);
   const [errorScan, setErrorScan] = useState('');
   const [lastQr, setLastQr] = useState('');
+  const { playSuccess, playError } = useSoundEffects();
 
   const handleScanSuccess = (decodedText) => {
     setScanning(false);
@@ -94,6 +96,7 @@ export default function ScanContactPage({ user }) {
       
       if (existingContact) {
         setLastResult(scannedUserData);
+        playError();
         throw new Error('Ce contact a déjà été ajouté.');
       }
 
@@ -101,13 +104,18 @@ export default function ScanContactPage({ user }) {
         .from('contacts_collected')
         .insert({ collector_id: user.id, scanned_badge_code: scannedUserData.identifiant_badge });
 
-      if (insertError) throw new Error(insertError.message);
+      if (insertError) {
+        playError();
+        throw new Error(insertError.message);
+      }
 
       setLastResult(scannedUserData);
+      playSuccess();
       toast.success(`Contact ajouté : ${scannedUserData.prenom} ${scannedUserData.nom}`);
 
     } catch (err) {
       setErrorScan(err.message);
+      playError();
       toast.error(err.message);
     } finally {
       setLoading(false);
