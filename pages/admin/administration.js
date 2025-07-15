@@ -206,6 +206,9 @@ export default function Administration() {
               <Grid item xs={12} sm={6} md={3}><Button fullWidth variant="contained" onClick={handleToggleMasterclass} color={settings.ouverture_reservation_masterclass ? 'success' : 'warning'}>{settings.ouverture_reservation_masterclass ? 'Fermer réservations masterclass' : 'Ouvrir réservations masterclass'}</Button></Grid>
               <Grid item xs={12} sm={6} md={3}><Button fullWidth variant="contained" onClick={() => setSelected('Intervenants')}>Gérer les intervenants</Button></Grid>
               <Grid item xs={12} sm={6} md={3}><Button fullWidth variant="contained" color="info" href="/admin/badges-bulk">Badges en masse (CSV)</Button></Grid>
+              <Grid item xs={12} sm={6} md={3}><Button variant="outlined" color="success" href="/admin/entrees-whatsapp" fullWidth={false}>
+                Entrées WhatsApp (validation/envoi badge)
+              </Button></Grid>
             </Grid>
             {/* Placeholder logs récents */}
             <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>Dernières actions</Typography>
