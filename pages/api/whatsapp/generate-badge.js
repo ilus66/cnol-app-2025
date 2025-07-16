@@ -54,11 +54,11 @@ export default async function handler(req, res) {
   const safeName = (contact.telephone || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
   const fileName = `badge-whatsapp-${safeName}.pdf`;
 
-  // Upload dans le bucket 'badges' avec le client service_role
+  // Upload dans le bucket 'logos' avec le client service_role
   try {
-    console.log('[whatsapp/generate-badge] Tentative upload dans badges:', fileName);
+    console.log('[whatsapp/generate-badge] Tentative upload dans logos:', fileName);
     const { data: uploadData, error: uploadError } = await supabaseServiceRole.storage
-      .from('badges')
+      .from('logos')
       .upload(fileName, pdfBuffer, {
         contentType: 'application/pdf',
         upsert: true
@@ -76,7 +76,7 @@ export default async function handler(req, res) {
   // Récupérer l'URL publique
   let badgeUrl = null;
   try {
-    const { data: publicUrlData } = supabaseServiceRole.storage.from('badges').getPublicUrl(fileName);
+    const { data: publicUrlData } = supabaseServiceRole.storage.from('logos').getPublicUrl(fileName);
     badgeUrl = publicUrlData?.publicUrl;
     console.log('[whatsapp/generate-badge] URL publique:', badgeUrl);
   } catch (e) {
