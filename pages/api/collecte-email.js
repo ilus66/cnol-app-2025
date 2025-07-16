@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     .from('whatsapp')
     .update({ email })
     .eq('telephone', telephone)
-    .eq('code_identification', code_identification);
+    .eq('identifiant_badge', code_identification);
 
   if (updateError) {
     return res.status(500).json({ success: false, message: "Erreur lors de la mise à jour de l'email dans WhatsApp." });

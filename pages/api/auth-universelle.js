@@ -9,15 +9,18 @@ export default async function handler(req, res) {
   if (!identifiant || !code) return res.status(400).json({ message: 'Champs requis manquants.' });
 
   const isEmail = identifiant.includes('@');
-  let query = supabase.from('inscription').select('*').eq('code_identification', code);
+  let data = null;
+  let error = null;
   if (isEmail) {
-    query = query.eq('email', identifiant);
-  } else {
-    // Normaliser le téléphone (supprimer espaces, +, etc.)
-    const tel = identifiant.replace(/\D/g, '');
-    query = query.ilike('telephone', `%${tel}`);
+    // Recherche par email ET identifiant_badge (code)
+    const { data: found, error: err } = await supabase
+      .from('inscription')
+      .select('*')
+      .eq('email', identifiant)
+      .eq('identifiant_badge', code);
+    data = (found && found.length > 0) ? found[0] : null;
+    error = err;
   }
-  const { data, error } = await query.single();
   console.log('[AUTH-UNIVERSELLE] Recherche inscription:', { identifiant, code, isEmail, data, error });
   if (data && !error) {
     return res.status(200).json({ success: true, message: 'Connexion réussie.', user: { id: data.id, nom: data.nom, prenom: data.prenom } });
@@ -37,13 +40,13 @@ export default async function handler(req, res) {
       const codeNorm = (code || '').toString().trim().toLowerCase();
       const contact = (whatsappRows || []).find(r => {
         const telDb = (r.telephone || '').replace(/\D/g, '');
-        const codeDb = (r.code_identification || '').toString().trim().toLowerCase();
+        const codeDb = (r.identifiant_badge || '').toString().trim().toLowerCase();
         return telDb.endsWith(tel) && codeDb === codeNorm;
       });
       console.log('[AUTH-UNIVERSELLE] Recherche WhatsApp:', { tel, codeNorm, contact });
       if (contact) {
         if (!contact.email || contact.email.trim() === '') {
-          return res.status(200).json({ success: false, needEmail: true, message: 'Email requis', contact: { nom: contact.nom, prenom: contact.prenom, telephone: contact.telephone, code_identification: contact.code_identification } });
+          return res.status(200).json({ success: false, needEmail: true, message: 'Email requis', contact: { nom: contact.nom, prenom: contact.prenom, telephone: contact.telephone, identifiant_badge: contact.identifiant_badge } });
         } else {
           return res.status(200).json({ success: true, fromWhatsapp: true, contact });
         }
