@@ -52,7 +52,7 @@ export default function EntreesWhatsAppAdmin() {
         return;
       }
       // 2. Générer le message WhatsApp
-      const whatsappMessage = `\nBonjour ${row.prenom} ${row.nom},\n\nVotre badge nominatif CNOL 2025 est en pièce jointe (PDF).\n\nVous pouvez également le télécharger ici :\n${badgeData.badgeUrl}\n\nPour accéder à l'application CNOL 2025 (programme, notifications, espace personnel…), téléchargez-la ici :\nhttps://www.app.cnol.ma\n\nVos identifiants d'accès :\nNuméro de téléphone : ${row.telephone}\nCode badge : ${row.code_badge || 'À compléter'}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.\n\nÀ bientôt !\n\nSuivez CNOL sur Instagram @cnol_maroc\n`;
+      const whatsappMessage = `\nBonjour ${row.prenom} ${row.nom},\n\nVotre badge nominatif CNOL 2025 est en pièce jointe (PDF).\n\nVous pouvez également le télécharger ici :\n${badgeData.badgeUrl}\n\nPour accéder à l'application CNOL 2025 (programme, notifications, espace personnel…), téléchargez-la ici :\nhttps://www.app.cnol.ma\n\nVos identifiants d'accès :\nNuméro de téléphone : ${row.telephone}\nCode badge : ${badgeData.badgeCode}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.\n\nÀ bientôt !\n\nSuivez CNOL sur Instagram @cnol_maroc\n`;
       // 3. Envoyer via WhatsApp
       const sendRes = await fetch('/api/send-whatsapp', {
         method: 'POST',
