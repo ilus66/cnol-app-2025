@@ -12,31 +12,54 @@ export default function IdentificationUniverselle() {
     setLoading(true);
     setError('');
     setSuccess('');
-    const res = await fetch('/api/auth-universelle', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifiant, code })
-    });
-    const data = await res.json();
-    if (res.ok && data.success) {
-      setSuccess('Connexion réussie ! Redirection...');
-      // Créer la session côté serveur
-      let sessionPayload = {};
-      if (data.user && data.user.id) sessionPayload.id = data.user.id;
-      else if (identifiant.includes('@')) sessionPayload.email = identifiant;
-      fetch('/api/session', {
+
+    const isEmail = identifiant.includes('@');
+    
+    if (isEmail) {
+      // Utiliser directement /api/login pour les emails (même processus que identification classique)
+      const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(sessionPayload)
-      }).then(() => {
+        body: JSON.stringify({ email: identifiant, badgeCode: code })
+      });
+      const data = await res.json();
+      
+      if (res.ok) {
+        setSuccess('Connexion réussie ! Redirection...');
         setTimeout(() => {
           window.location.href = '/mon-espace';
         }, 1200);
-      });
-      return;
+      } else {
+        setError(data.message || 'Erreur lors de la connexion.');
+      }
     } else {
-      setError(data.message || 'Erreur lors de la connexion.');
+      // Pour les téléphones, utiliser l'API universelle pour chercher dans WhatsApp
+      const res = await fetch('/api/auth-universelle', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifiant, code })
+      });
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        setSuccess('Connexion réussie ! Redirection...');
+        setTimeout(() => {
+          window.location.href = '/mon-espace';
+        }, 1200);
+      } else if (data.needEmail) {
+        // Rediriger vers la page de collecte d'email
+        const params = new URLSearchParams({
+          nom: data.contact.nom,
+          prenom: data.contact.prenom,
+          telephone: data.contact.telephone,
+          identifiant_badge: data.contact.identifiant_badge
+        });
+        window.location.href = `/collecte-email?${params.toString()}`;
+      } else {
+        setError(data.message || 'Erreur lors de la connexion.');
+      }
     }
+    
     setLoading(false);
   };
 
