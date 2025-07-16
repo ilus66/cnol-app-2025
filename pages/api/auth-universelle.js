@@ -18,28 +18,38 @@ export default async function handler(req, res) {
     query = query.ilike('telephone', `%${tel}`);
   }
   const { data, error } = await query.single();
+  console.log('[AUTH-UNIVERSELLE] Recherche inscription:', { identifiant, code, isEmail, data, error });
   if (data && !error) {
     return res.status(200).json({ success: true, message: 'Connexion réussie.', user: { id: data.id, nom: data.nom, prenom: data.prenom } });
   }
 
-  // Si non trouvé dans inscription et identifiant = téléphone, chercher dans whatsapp.csv
+  // Si non trouvé dans inscription et identifiant = téléphone, chercher dans whatsapp
   if (!isEmail) {
     try {
-      const whatsappPath = path.join(process.cwd(), 'whatsapp.csv');
-      const csvContent = fs.readFileSync(whatsappPath, 'utf8');
-      const records = parse(csvContent, { columns: true, skip_empty_lines: true });
       const tel = identifiant.replace(/\D/g, '');
-      const contact = records.find(r => (r.telephone || '').replace(/\D/g, '').endsWith(tel) && r.code_identification === code);
+      const { data: whatsappRows, error: whatsappError } = await supabase
+        .from('whatsapp')
+        .select('*');
+      if (whatsappError) {
+        console.log('[AUTH-UNIVERSELLE] Erreur lecture WhatsApp:', whatsappError);
+        return res.status(500).json({ success: false, message: 'Erreur lecture WhatsApp.' });
+      }
+      const codeNorm = (code || '').toString().trim().toLowerCase();
+      const contact = (whatsappRows || []).find(r => {
+        const telDb = (r.telephone || '').replace(/\D/g, '');
+        const codeDb = (r.code_identification || '').toString().trim().toLowerCase();
+        return telDb.endsWith(tel) && codeDb === codeNorm;
+      });
+      console.log('[AUTH-UNIVERSELLE] Recherche WhatsApp:', { tel, codeNorm, contact });
       if (contact) {
         if (!contact.email || contact.email.trim() === '') {
-          // Email manquant, demander la saisie
           return res.status(200).json({ success: false, needEmail: true, message: 'Email requis', contact: { nom: contact.nom, prenom: contact.prenom, telephone: contact.telephone, code_identification: contact.code_identification } });
         } else {
-          // Email présent, prêt à créer dans inscription (à faire dans la suite du flux)
           return res.status(200).json({ success: true, fromWhatsapp: true, contact });
         }
       }
     } catch (e) {
+      console.log('[AUTH-UNIVERSELLE] Exception WhatsApp:', e);
       return res.status(500).json({ success: false, message: 'Erreur lecture WhatsApp.' });
     }
   }
