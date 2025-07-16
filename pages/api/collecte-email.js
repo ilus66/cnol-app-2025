@@ -1,4 +1,5 @@
 import { supabase } from '../../lib/supabaseClient';
+const cookie = require('cookie');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Méthode non autorisée' });
@@ -19,28 +20,51 @@ export default async function handler(req, res) {
   }
 
   // 2. Créer l'entrée dans inscription (si non existante)
-  // On vérifie d'abord si l'email existe déjà
   const { data: existing, error: existError } = await supabase
     .from('inscription')
     .select('*')
     .eq('email', email)
     .single();
 
+  let userId = null;
   if (!existing) {
-    const { error: insertError } = await supabase
+    const { data: inserted, error: insertError } = await supabase
       .from('inscription')
       .insert({
         nom,
         prenom,
         telephone,
         email,
-        code_identification,
+        identifiant_badge: code_identification,
         origine: 'whatsapp'
-      });
+      })
+      .select('id')
+      .single();
     if (insertError) {
       return res.status(500).json({ success: false, message: "Erreur lors de la création dans inscription." });
     }
+    userId = inserted.id;
+  } else {
+    userId = existing.id;
   }
 
-  return res.status(200).json({ success: true, message: 'Email enregistré et utilisateur migré.' });
+  // 3. Créer directement la session (comme /api/login)
+  const sessionData = {
+    id: userId,
+    email: email,
+    prenom: prenom,
+    valide: true, // Par défaut pour les utilisateurs WhatsApp
+    participant_type: 'opticien', // Par défaut
+  };
+
+  const sessionCookie = cookie.serialize('cnol-session', JSON.stringify(sessionData), {
+    httpOnly: true,
+    secure: true,
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
+    sameSite: 'none',
+  });
+
+  res.setHeader('Set-Cookie', sessionCookie);
+  return res.status(200).json({ success: true, message: 'Email enregistré et session créée.' });
 } 
