@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 
 export default function CollecteEmail() {
   const router = useRouter();
-  const { nom, prenom, telephone, code_identification } = router.query;
+  const { nom, prenom, telephone, identifiant_badge } = router.query;
   const [email, setEmail] = useState('');
   const [email2, setEmail2] = useState('');
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export default function CollecteEmail() {
     const res = await fetch('/api/collecte-email', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ nom, prenom, telephone, code_identification, email })
+      body: JSON.stringify({ nom, prenom, telephone, code_identification: identifiant_badge, email })
     });
     const data = await res.json();
     if (res.ok && data.success) {
