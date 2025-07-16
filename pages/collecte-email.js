@@ -30,9 +30,17 @@ export default function CollecteEmail() {
     const data = await res.json();
     if (res.ok && data.success) {
       setSuccess('Email enregistré, accès en cours...');
-      setTimeout(() => {
-        window.location.href = '/identification-universelle';
-      }, 1500);
+      // Créer la session côté serveur
+      fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      }).then(() => {
+        setTimeout(() => {
+          window.location.href = '/mon-espace';
+        }, 1200);
+      });
+      return;
     } else {
       setError(data.message || 'Erreur lors de l’enregistrement.');
     }

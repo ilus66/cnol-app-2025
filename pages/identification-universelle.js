@@ -20,8 +20,20 @@ export default function IdentificationUniverselle() {
     const data = await res.json();
     if (res.ok && data.success) {
       setSuccess('Connexion réussie ! Redirection...');
-      // Rediriger vers l'espace personnel ou autre action
-      // window.location.href = '/mon-espace';
+      // Créer la session côté serveur
+      let sessionPayload = {};
+      if (data.user && data.user.id) sessionPayload.id = data.user.id;
+      else if (identifiant.includes('@')) sessionPayload.email = identifiant;
+      fetch('/api/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sessionPayload)
+      }).then(() => {
+        setTimeout(() => {
+          window.location.href = '/mon-espace';
+        }, 1200);
+      });
+      return;
     } else {
       setError(data.message || 'Erreur lors de la connexion.');
     }
