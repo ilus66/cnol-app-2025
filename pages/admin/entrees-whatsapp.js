@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 export default function EntreesWhatsAppAdmin() {
   const [contacts, setContacts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loadingId, setLoadingId] = useState(null);
   const [refresh, setRefresh] = useState(false);
   const [previewMessage, setPreviewMessage] = useState('');
   const [selectedContact, setSelectedContact] = useState(null);
@@ -20,7 +20,7 @@ export default function EntreesWhatsAppAdmin() {
 
   // Handler pour valider et envoyer (après confirmation)
   const handleValidateAndSendConfirmed = async (contact) => {
-    setLoading(true);
+    setLoadingId(contact.id);
     // 1. Générer le badge (API à créer si besoin)
     const badgeRes = await fetch('/api/whatsapp/generate-badge', {
       method: 'POST',
@@ -30,7 +30,7 @@ export default function EntreesWhatsAppAdmin() {
     const badgeData = await badgeRes.json();
     if (!badgeData.success) {
       alert('Erreur génération badge');
-      setLoading(false);
+      setLoadingId(null);
       return;
     }
     // 2. Générer le message WhatsApp
@@ -59,7 +59,7 @@ export default function EntreesWhatsAppAdmin() {
     } else {
       alert('Erreur lors de l\'envoi WhatsApp');
     }
-    setLoading(false);
+    setLoadingId(null);
     setShowPreview(false);
     setSelectedContact(null);
     setPreviewMessage('');
@@ -67,7 +67,7 @@ export default function EntreesWhatsAppAdmin() {
 
   // Handler pour ouvrir le modal d'aperçu
   const handlePreview = async (contact) => {
-    setLoading(true);
+    setLoadingId(contact.id);
     // Générer le badge pour obtenir l'URL (mais ne pas envoyer tout de suite)
     const badgeRes = await fetch('/api/whatsapp/generate-badge', {
       method: 'POST',
@@ -77,14 +77,14 @@ export default function EntreesWhatsAppAdmin() {
     const badgeData = await badgeRes.json();
     if (!badgeData.success) {
       alert('Erreur génération badge');
-      setLoading(false);
+      setLoadingId(null);
       return;
     }
     const whatsappMessage = buildWhatsappMessage(contact, badgeData.badgeUrl);
     setPreviewMessage(whatsappMessage);
     setSelectedContact(contact);
     setShowPreview(true);
-    setLoading(false);
+    setLoadingId(null);
   };
 
   return (
@@ -109,7 +109,7 @@ export default function EntreesWhatsAppAdmin() {
               <td>
                 <button
                   onClick={() => handlePreview(contact)}
-                  disabled={loading || contact.badge_envoye}
+                  disabled={loadingId === contact.id || contact.badge_envoye}
                   style={{ padding: '6px 12px', background: '#25D366', color: '#fff', border: 'none', borderRadius: 4 }}
                 >
                   Valider & Envoyer badge WhatsApp
