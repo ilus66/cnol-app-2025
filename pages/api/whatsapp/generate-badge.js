@@ -32,12 +32,12 @@ export default async function handler(req, res) {
   try {
     // Générer le PDF du badge
     const userData = {
-      name: contact.prenom ? `${contact.prenom} ${contact.nom}` : contact.nom,
-      function: '',
-      city: '',
-      email: '',
-      userId: contact.telephone,
-      identifiant_badge: contact.code_badge || contact.telephone,
+      name: (contact.prenom ? `${contact.prenom} ` : '') + (contact.nom || ''),
+      function: contact.fonction || '',
+      city: contact.ville || '',
+      email: contact.email || '',
+      userId: contact.telephone || '',
+      identifiant_badge: contact.code_identification || contact.telephone || '',
     };
     console.log('[generate-badge] Données pour generateBadge', userData);
     const pdfBuffer = await generateBadge(userData);
