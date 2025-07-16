@@ -6,6 +6,12 @@ const supabaseServiceRole = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+function generateBadgeCode() {
+  const digits = Math.floor(100 + Math.random() * 900); // 3 chiffres
+  const letters = Array(3).fill(0).map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
+  return `${digits}${letters}`;
+}
+
 export default async function handler(req, res) {
   console.log('[whatsapp/generate-badge] Handler called');
   if (req.method !== 'POST') {
@@ -31,6 +37,20 @@ export default async function handler(req, res) {
   }
   console.log('[whatsapp/generate-badge] Contact trouvé', contact);
 
+  // Générer ou récupérer le code badge au bon format
+  let badgeCode = contact.code_identification;
+  if (!badgeCode || !/^[0-9]{3}[A-Z]{3}$/.test(badgeCode)) {
+    badgeCode = generateBadgeCode();
+    // Mettre à jour la table whatsapp avec ce code
+    await supabaseServiceRole
+      .from('whatsapp')
+      .update({ code_identification: badgeCode })
+      .eq('id', id);
+    console.log('[whatsapp/generate-badge] Nouveau code badge généré et stocké:', badgeCode);
+  } else {
+    console.log('[whatsapp/generate-badge] Code badge existant et valide:', badgeCode);
+  }
+
   // Générer le badge PDF
   let pdfBuffer;
   try {
@@ -40,7 +60,7 @@ export default async function handler(req, res) {
       city: contact.ville || '',
       email: contact.email || '',
       userId: contact.telephone || '',
-      identifiant_badge: contact.code_identification || contact.telephone || '',
+      identifiant_badge: badgeCode,
     };
     console.log('[whatsapp/generate-badge] Données pour generateBadge', userData);
     pdfBuffer = await generateBadge(userData);
@@ -100,10 +120,9 @@ export default async function handler(req, res) {
   }
 
   // Envoi WhatsApp avec le badge (optionnel, à activer si besoin)
-  /*
   try {
-    const whatsappText = `Bonjour ${contact.nom},\n\nVoici votre badge nominatif CNOL 2025 en pièce jointe (PDF).\nVous pouvez aussi le télécharger ici : ${badgeUrl}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.`;
-    console.log('[whatsapp/generate-badge] Envoi WhatsApp', { to: contact.telephone, fileName, badgeUrl });
+    const whatsappText = `Bonjour ${contact.nom},\n\nVoici votre badge nominatif CNOL 2025 en pièce jointe (PDF).\n\nCode badge : ${badgeCode}\n\nVous pouvez aussi le télécharger ici : ${badgeUrl}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.`;
+    console.log('[whatsapp/generate-badge] Envoi WhatsApp', { to: contact.telephone, fileName, badgeUrl, badgeCode });
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-whatsapp`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -118,7 +137,6 @@ export default async function handler(req, res) {
   } catch (e) {
     console.error('[whatsapp/generate-badge] Erreur envoi WhatsApp badge:', e);
   }
-  */
 
-  res.status(200).json({ success: true, badgeUrl });
+  res.status(200).json({ success: true, badgeUrl, badgeCode });
 } 
