@@ -1,9 +1,9 @@
-import { createClient } from '@supabase/supabase-js';
 import { generateBadge } from '../../lib/generateBadge';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.SUPABASE_SERVICE_ROLE_KEY // Utilise la clé service pour update et storage
+const { createClient } = require('@supabase/supabase-js');
+const supabaseServiceRole = createClient(
+  'https://otmttpiqeehfquoqycol.supabase.co', // même URL que dans validate.js
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 export default async function handler(req, res) {
@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   }
 
   // Récupérer le participant WhatsApp
-  const { data: user, error: fetchError } = await supabase
+  const { data: user, error: fetchError } = await supabaseServiceRole
     .from('whatsapp')
     .select('*')
     .eq('id', id)
@@ -45,8 +45,8 @@ export default async function handler(req, res) {
   const safeName = (user.nom || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
   const fileName = `badge-cnol2025-${safeName}.pdf`;
 
-  // Upload dans le bucket 'logos'
-  const { data: uploadData, error: uploadError } = await supabase.storage
+  // Upload dans le bucket 'logos' avec le client service_role
+  const { data: uploadData, error: uploadError } = await supabaseServiceRole.storage
     .from('logos')
     .upload(fileName, pdfBuffer, {
       contentType: 'application/pdf',
@@ -57,13 +57,13 @@ export default async function handler(req, res) {
   }
 
   // Récupérer l'URL publique
-  const { data: publicUrlData } = supabase.storage.from('logos').getPublicUrl(fileName);
+  const { data: publicUrlData } = supabaseServiceRole.storage.from('logos').getPublicUrl(fileName);
   const badgeUrl = publicUrlData?.publicUrl;
 
   // Met à jour le statut du participant WhatsApp dans la table 'whatsapp'
-  const { error } = await supabase
+  const { error } = await supabaseServiceRole
     .from('whatsapp')
-    .update({ badge_envoye: true, badge_url: badgeUrl }) // Ajoute badge_url si tu veux garder la trace
+    .update({ badge_envoye: true, badge_url: badgeUrl })
     .eq('id', id);
   if (error) {
     return res.status(500).json({ message: 'Erreur lors de la validation', error: error.message });
