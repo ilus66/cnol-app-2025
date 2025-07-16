@@ -30,19 +30,24 @@ export default function CollecteEmail() {
     const data = await res.json();
     if (res.ok && data.success) {
       setSuccess('Email enregistré, accès en cours...');
-      // Utiliser /api/login pour créer la session (même processus que identification classique)
-      const loginRes = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, badgeCode: identifiant_badge })
-      });
-      if (loginRes.ok) {
-        setTimeout(() => {
-          window.location.href = '/mon-espace';
-        }, 1200);
-      } else {
-        setError('Erreur lors de la création de la session.');
-      }
+      // Attendre un peu que l'insertion dans inscription soit terminée
+      setTimeout(async () => {
+        try {
+          // Utiliser /api/login pour créer la session (même processus que identification classique)
+          const loginRes = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, badgeCode: identifiant_badge })
+          });
+          if (loginRes.ok) {
+            window.location.href = '/mon-espace';
+          } else {
+            setError('Erreur lors de la création de la session.');
+          }
+        } catch (err) {
+          setError('Erreur lors de la création de la session.');
+        }
+      }, 2000); // Attendre 2 secondes
       return;
     } else {
       setError(data.message || 'Erreur lors de l’enregistrement.');
