@@ -59,6 +59,9 @@ export default function EntreesWhatsAppAdmin() {
     setLoadingId(null);
   };
 
+  // Log pour debug
+  console.log('contacts:', contacts);
+
   return (
     <div style={{ maxWidth: 900, margin: '40px auto', padding: 24 }}>
       <h1>Validation & Envoi badge WhatsApp</h1>
@@ -73,25 +76,28 @@ export default function EntreesWhatsAppAdmin() {
           </tr>
         </thead>
         <tbody>
-          {contacts.map(contact => (
-            <tr key={contact.id} style={{ background: contact.badge_envoye ? '#e0ffe0' : 'inherit' }}>
-              <td>{contact.nom}</td>
-              <td>{contact.prenom}</td>
-              <td>{contact.telephone}</td>
-              <td>
-                <button
-                  onClick={() => handleValidateAndSend(contact)}
-                  disabled={loadingId === contact.id || contact.badge_envoye}
-                  style={{ padding: '6px 12px', background: '#25D366', color: '#fff', border: 'none', borderRadius: 4 }}
-                >
-                  Valider & Envoyer badge WhatsApp
-                </button>
-              </td>
-              <td>
-                {contact.badge_envoye ? 'Envoyé' : 'À traiter'}
-              </td>
-            </tr>
-          ))}
+          {contacts.map(contact => {
+            console.log(contact.nom, 'disabled:', loadingId === contact.id, 'badge_envoye:', contact.badge_envoye);
+            return (
+              <tr key={contact.id} style={{ background: contact.badge_envoye ? '#e0ffe0' : 'inherit' }}>
+                <td>{contact.nom}</td>
+                <td>{contact.prenom}</td>
+                <td>{contact.telephone}</td>
+                <td>
+                  <button
+                    onClick={() => handleValidateAndSend(contact)}
+                    disabled={loadingId === contact.id || contact.badge_envoye}
+                    style={{ padding: '6px 12px', background: '#25D366', color: '#fff', border: 'none', borderRadius: 4 }}
+                  >
+                    Valider & Envoyer badge WhatsApp
+                  </button>
+                </td>
+                <td>
+                  {contact.badge_envoye ? 'Envoyé' : 'À traiter'}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
