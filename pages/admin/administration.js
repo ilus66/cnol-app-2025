@@ -213,6 +213,9 @@ export default function Administration() {
             {/* Placeholder logs récents */}
             <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>Dernières actions</Typography>
             <Paper sx={{ p: 2, minHeight: 80 }}>Aucune action récente.</Paper>
+            <a href="/identification-universelle" style={{ display: 'block', margin: '20px 0', color: '#1976d2', fontWeight: 'bold' }}>
+              Test Identification Universelle
+            </a>
           </>
         )}
         {selected === 'Inscriptions' && <InscriptionsAdmin />}
