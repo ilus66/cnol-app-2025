@@ -41,7 +41,7 @@ export default async function handler(req, res) {
       .select('id')
       .single();
     if (insertError) {
-      return res.status(500).json({ success: false, message: "Erreur lors de la création dans inscription." });
+      return res.status(500).json({ success: false, message: "Erreur lors de la création dans inscription.", details: insertError.message, code: insertError.code });
     }
     userId = inserted.id;
   } else {
