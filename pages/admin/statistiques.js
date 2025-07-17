@@ -23,6 +23,11 @@ export default function AdminStatistiques() {
   const [totalWhatsapp, setTotalWhatsapp] = useState(0);
   const [successWhatsapp, setSuccessWhatsapp] = useState(0);
   const [errorWhatsapp, setErrorWhatsapp] = useState(0);
+  const [topVilles, setTopVilles] = useState([]);
+  const [totalOpticiens, setTotalOpticiens] = useState(0);
+  const [totalOrthoptistes, setTotalOrthoptistes] = useState(0);
+  const [totalOphtalmos, setTotalOphtalmos] = useState(0);
+  const [totalEtudiantsAutres, setTotalEtudiantsAutres] = useState(0);
 
   useEffect(() => {
     // Total inscrits
@@ -51,6 +56,30 @@ export default function AdminStatistiques() {
       setTotalWhatsapp(data.length);
       setSuccessWhatsapp(data.filter(e => e.status === 'success').length);
       setErrorWhatsapp(data.filter(e => e.status === 'error').length);
+    });
+    // Top 10 villes (inscription + whatsapp)
+    Promise.all([
+      supabase.from('inscription').select('ville'),
+      supabase.from('whatsapp').select('ville')
+    ]).then(([insc, whats]) => {
+      const villes = [...(insc.data || []), ...(whats.data || [])]
+        .map(r => (r.ville || '').toUpperCase().trim())
+        .filter(v => v && v !== 'NON RENSEIGNÉE');
+      const countByVille = {};
+      villes.forEach(v => { countByVille[v] = (countByVille[v] || 0) + 1; });
+      setTopVilles(Object.entries(countByVille).sort((a, b) => b[1] - a[1]).slice(0, 10));
+    });
+    // Totaux par fonction (inscription + whatsapp)
+    Promise.all([
+      supabase.from('inscription').select('fonction'),
+      supabase.from('whatsapp').select('fonction')
+    ]).then(([insc, whats]) => {
+      const fonctions = [...(insc.data || []), ...(whats.data || [])]
+        .map(r => (r.fonction || '').toLowerCase().trim());
+      setTotalOpticiens(fonctions.filter(f => f.includes('opticien')).length);
+      setTotalOrthoptistes(fonctions.filter(f => f.includes('orthopt')).length);
+      setTotalOphtalmos(fonctions.filter(f => f.includes('ophtalm')).length);
+      setTotalEtudiantsAutres(fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length);
     });
   }, []);
 
@@ -225,12 +254,26 @@ export default function AdminStatistiques() {
         <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Villes<br/><b>{totalVilles}</b></Paper></Grid>
         <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Réservations<br/><b>{totalReservations}</b></Paper></Grid>
       </Grid>
-      {/* Bloc stats WhatsApp */}
+      {/* Bloc stats WhatsApp (bleu ciel) */}
       <Paper sx={{ p: 2, mb: 3, background: '#e5f6fd', border: '1px solid #b3e0f7' }}>
         <Typography variant="h6" sx={{ mb: 1 }}>Envois WhatsApp</Typography>
         <div>Total envois WhatsApp : <b>{totalWhatsapp}</b></div>
         <div>Succès : <b>{successWhatsapp}</b> &nbsp;|&nbsp; Échecs : <b>{errorWhatsapp}</b></div>
         <div>Taux de succès : <b>{totalWhatsapp ? Math.round((successWhatsapp/totalWhatsapp)*100) : 0}%</b></div>
+      </Paper>
+      {/* Bloc stats Emails + WhatsApp (vert) */}
+      <Paper sx={{ p: 2, mb: 3, background: '#e6f9ed', border: '1px solid #b2e5c2' }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>Envois emails & WhatsApp</Typography>
+        <div>Total emails envoyés (validés) : <b>{totalValides}</b></div>
+        <div>Total WhatsApp : <b>{totalWhatsapp}</b></div>
+        <div>Total global (emails + WhatsApp) : <b>{totalValides + totalWhatsapp}</b></div>
+      </Paper>
+      {/* Bloc total global (rouge) */}
+      <Paper sx={{ p: 2, mb: 3, background: '#ffeaea', border: '1px solid #ffb3b3' }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>Total des envois (global)</Typography>
+        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Total global : {totalValides + totalWhatsapp}</div>
+        <div style={{ marginBottom: 8 }}><b>Top 10 villes :</b> {topVilles.map(([ville, count]) => `${ville} (${count})`).join(', ')}</div>
+        <div><b>Opticiens :</b> {totalOpticiens} &nbsp;|&nbsp; <b>Orthoptistes :</b> {totalOrthoptistes} &nbsp;|&nbsp; <b>Ophtalmologues :</b> {totalOphtalmos} &nbsp;|&nbsp; <b>Étudiants + autres :</b> {totalEtudiantsAutres}</div>
       </Paper>
       {/* Recherche & filtres */}
       <Box sx={{ mb: 3 }}>
