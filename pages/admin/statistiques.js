@@ -20,6 +20,9 @@ export default function AdminStatistiques() {
   const [totalExposants, setTotalExposants] = useState(0);
   const [totalVilles, setTotalVilles] = useState(0);
   const [totalReservations, setTotalReservations] = useState(0);
+  const [totalWhatsapp, setTotalWhatsapp] = useState(0);
+  const [successWhatsapp, setSuccessWhatsapp] = useState(0);
+  const [errorWhatsapp, setErrorWhatsapp] = useState(0);
 
   useEffect(() => {
     // Total inscrits
@@ -43,6 +46,12 @@ export default function AdminStatistiques() {
     fetchStatsFonction();
     fetchStatsPeriodes();
     fetchClassement();
+    // Stats WhatsApp
+    supabase.from('whatsapp_envois').select('id, status').then(({ data }) => {
+      setTotalWhatsapp(data.length);
+      setSuccessWhatsapp(data.filter(e => e.status === 'success').length);
+      setErrorWhatsapp(data.filter(e => e.status === 'error').length);
+    });
   }, []);
 
   // Classement des stands les plus visités
@@ -216,6 +225,13 @@ export default function AdminStatistiques() {
         <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Villes<br/><b>{totalVilles}</b></Paper></Grid>
         <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Réservations<br/><b>{totalReservations}</b></Paper></Grid>
       </Grid>
+      {/* Bloc stats WhatsApp */}
+      <Paper sx={{ p: 2, mb: 3, background: '#e5f6fd', border: '1px solid #b3e0f7' }}>
+        <Typography variant="h6" sx={{ mb: 1 }}>Envois WhatsApp</Typography>
+        <div>Total envois WhatsApp : <b>{totalWhatsapp}</b></div>
+        <div>Succès : <b>{successWhatsapp}</b> &nbsp;|&nbsp; Échecs : <b>{errorWhatsapp}</b></div>
+        <div>Taux de succès : <b>{totalWhatsapp ? Math.round((successWhatsapp/totalWhatsapp)*100) : 0}%</b></div>
+      </Paper>
       {/* Recherche & filtres */}
       <Box sx={{ mb: 3 }}>
         <TextField label="Recherche globale" sx={{ mr: 2 }} />
