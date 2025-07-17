@@ -1,4 +1,9 @@
 import fetch from 'node-fetch';
+import { createClient } from '@supabase/supabase-js';
+const supabaseServiceRole = createClient(
+  'https://otmttpiqeehfquoqycol.supabase.co',
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Méthode non autorisée' });
@@ -29,9 +34,25 @@ export default async function handler(req, res) {
     console.log('Wasender response:', JSON.stringify(data));
     console.log('Wasender status:', response.status, response.statusText);
     if (!response.ok) {
+      // Log envoi WhatsApp (échec)
+      await supabaseServiceRole.from('whatsapp_envois').insert({
+        telephone: to,
+        date_envoi: new Date().toISOString(),
+        status: 'error',
+        message: text,
+        file_name: fileName
+      });
       console.error('Wasender error:', data);
       throw new Error(data.error || data.message || JSON.stringify(data) || 'Erreur Wasender');
     }
+    // Log envoi WhatsApp (succès)
+    await supabaseServiceRole.from('whatsapp_envois').insert({
+      telephone: to,
+      date_envoi: new Date().toISOString(),
+      status: 'success',
+      message: text,
+      file_name: fileName
+    });
     console.log('Wasender: envoi terminé');
     res.status(200).json({ success: true, data });
   } catch (err) {
