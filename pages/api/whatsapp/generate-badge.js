@@ -70,9 +70,10 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, message: 'Erreur génération badge PDF', error: err.message });
   }
 
-  // Construire le nom de fichier safe
-  const safeName = (contact.telephone || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
-  const fileName = `badge-whatsapp-${safeName}.pdf`;
+  // Construire le nom de fichier safe (nom-prenom)
+  const safeNom = (contact.nom || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
+  const safePrenom = (contact.prenom || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
+  const fileName = `badge-cnol2025-${safeNom}-${safePrenom}.pdf`;
 
   // Upload dans le bucket 'logos' avec le client service_role
   try {
@@ -119,9 +120,9 @@ export default async function handler(req, res) {
     return res.status(500).json({ success: false, message: 'Exception update whatsapp', error: e.message });
   }
 
-  // Envoi WhatsApp avec le badge (optionnel, à activer si besoin)
+  // Envoi WhatsApp avec le badge (nouveau message complet)
   try {
-    const whatsappText = `Bonjour ${contact.nom},\n\nVoici votre badge nominatif CNOL 2025 en pièce jointe (PDF).\n\nCode badge : ${badgeCode}\n\nVous pouvez aussi le télécharger ici : ${badgeUrl}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.`;
+    const whatsappText = `Bonjour ${contact.nom?.toUpperCase()} ${contact.prenom ? contact.prenom.toUpperCase() : ''},\n\nVotre badge nominatif CNOL 2025 est en pièce jointe (PDF).\n\nVous pouvez également le télécharger ici :\n${badgeUrl}\n\nPour accéder à l'application CNOL 2025 (programme, notifications, espace personnel...), téléchargez-la ici :\nhttps://www.app.cnol.ma\n\nVos identifiants d'accès :\nTéléphone : ${contact.telephone}\nCode badge : ${badgeCode}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.\n\nÀ bientôt !\n\nSuivez CNOL sur Instagram @cnol_maroc`;
     console.log('[whatsapp/generate-badge] Envoi WhatsApp', { to: contact.telephone, fileName, badgeUrl, badgeCode });
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-whatsapp`, {
       method: 'POST',
