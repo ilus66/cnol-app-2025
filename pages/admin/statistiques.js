@@ -93,11 +93,9 @@ export default function AdminStatistiques() {
         const orthoptistes = fonctions.filter(f => f.includes('orthopt')).length;
         const ophtalmos = fonctions.filter(f => f.includes('ophtalm')).length;
         const etudiantsAutres = fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length;
-        const opticiens = fonctions.filter(f => f.includes('opticien')).length;
         const totalGlobal = personnes.length;
-        const nonRepertories = totalGlobal - (opticiens + orthoptistes + ophtalmos + etudiantsAutres);
-        const opticiensElargis = opticiens + nonRepertories;
-        setTotalOpticiens(opticiensElargis);
+        const opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres;
+        setTotalOpticiens(opticiens);
         setTotalOrthoptistes(orthoptistes);
         setTotalOphtalmos(ophtalmos);
         setTotalEtudiantsAutres(etudiantsAutres);
