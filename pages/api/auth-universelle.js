@@ -29,7 +29,10 @@ export default async function handler(req, res) {
   // Si non trouvé dans inscription et identifiant = téléphone, chercher dans whatsapp
   if (!isEmail) {
     try {
-      const tel = identifiant.replace(/\D/g, '');
+      let tel = identifiant.replace(/\D/g, '');
+      if (tel.length === 10 && tel.startsWith('0')) {
+        tel = '212' + tel.slice(1);
+      }
       const { data: whatsappRows, error: whatsappError } = await supabase
         .from('whatsapp')
         .select('*');
