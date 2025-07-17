@@ -36,7 +36,8 @@ export default async function handler(req, res) {
         telephone,
         email,
         identifiant_badge: code_identification,
-        origine: 'whatsapp'
+        origine: 'whatsapp',
+        fonction: 'opticien'
       })
       .select('id')
       .single();
