@@ -2,7 +2,7 @@ import { supabase } from '../../lib/supabaseClient';
 import fs from 'fs';
 import path from 'path';
 import { parse, stringify } from 'csv-parse/sync';
-import cookie from 'cookie';
+const cookie = require('cookie');
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Méthode non autorisée' });
