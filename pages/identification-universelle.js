@@ -64,36 +64,38 @@ export default function IdentificationUniverselle() {
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: '40px auto', padding: 24, border: '1px solid #eee', borderRadius: 8 }}>
-      <h2>Identification (Email ou Téléphone)</h2>
-      <form onSubmit={handleSubmit}>
+    <div style={{ maxWidth: 400, margin: '40px auto', padding: 16, border: '1px solid #eee', borderRadius: 8, boxSizing: 'border-box', width: '95%', minWidth: 0 }}>
+      <h2 style={{ fontSize: 22, textAlign: 'center', marginBottom: 24 }}>Identification (Email ou Téléphone)</h2>
+      <form onSubmit={handleSubmit} style={{ width: '100%' }}>
         <div style={{ marginBottom: 16 }}>
-          <label>Email ou Téléphone :</label>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>Email ou Téléphone :</label>
           <input
             type="text"
             value={identifiant}
             onChange={e => setIdentifiant(e.target.value)}
             required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
+            style={{ width: '100%', padding: 10, marginTop: 2, fontSize: 16, borderRadius: 4, border: '1px solid #ccc', boxSizing: 'border-box' }}
             placeholder="Votre email ou numéro de téléphone"
+            autoComplete="username"
           />
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label>Code d'identification :</label>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 4 }}>Code d'identification :</label>
           <input
             type="text"
             value={code}
             onChange={e => setCode(e.target.value)}
             required
-            style={{ width: '100%', padding: 8, marginTop: 4 }}
+            style={{ width: '100%', padding: 10, marginTop: 2, fontSize: 16, borderRadius: 4, border: '1px solid #ccc', boxSizing: 'border-box' }}
             placeholder="Code reçu"
+            autoComplete="one-time-code"
           />
         </div>
-        <button type="submit" disabled={loading} style={{ width: '100%', padding: 10, background: '#0070f3', color: '#fff', border: 'none', borderRadius: 4 }}>
+        <button type="submit" disabled={loading} style={{ width: '100%', padding: 12, background: '#0070f3', color: '#fff', border: 'none', borderRadius: 4, fontSize: 17, fontWeight: 600, marginTop: 8 }}>
           {loading ? 'Connexion...' : 'Se connecter'}
         </button>
-        {error && <div style={{ color: 'red', marginTop: 16 }}>{error}</div>}
-        {success && <div style={{ color: 'green', marginTop: 16 }}>{success}</div>}
+        {error && <div style={{ color: 'red', marginTop: 16, fontSize: 15, textAlign: 'center' }}>{error}</div>}
+        {success && <div style={{ color: 'green', marginTop: 16, fontSize: 15, textAlign: 'center' }}>{success}</div>}
       </form>
     </div>
   );
