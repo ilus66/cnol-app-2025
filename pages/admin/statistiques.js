@@ -93,17 +93,14 @@ export default function AdminStatistiques() {
         const orthoptistes = fonctions.filter(f => f.includes('orthopt')).length;
         const ophtalmos = fonctions.filter(f => f.includes('ophtalm')).length;
         const etudiantsAutres = fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length;
+        const opticiens = fonctions.filter(f => f.includes('opticien')).length;
         const totalGlobal = personnes.length;
-        let opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres;
-        // Si la somme est inférieure au total global, ajouter la différence à opticiens
-        const somme = opticiens + orthoptistes + ophtalmos + etudiantsAutres;
-        if (somme < totalGlobal) {
-          opticiens += (totalGlobal - somme);
-        }
+        const nonRepertories = totalGlobal - (opticiens + orthoptistes + ophtalmos + etudiantsAutres);
         setTotalOpticiens(opticiens);
         setTotalOrthoptistes(orthoptistes);
         setTotalOphtalmos(ophtalmos);
         setTotalEtudiantsAutres(etudiantsAutres);
+        setStatsFonction(prev => ({ ...prev, nonRepertories }));
         // Synchroniser le total global affiché (emails + WhatsApp)
         setTotalWhatsapp(whatsappSuccessPhones.length);
         // Afficher le total global fusionné dans une variable dédiée si besoin
