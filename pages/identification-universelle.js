@@ -84,9 +84,9 @@ export default function IdentificationUniverselle() {
           <input
             type="text"
             value={code}
-            onChange={e => setCode(e.target.value)}
+            onChange={e => setCode(e.target.value.toUpperCase())}
             required
-            style={{ width: '100%', padding: 10, marginTop: 2, fontSize: 16, borderRadius: 4, border: '1px solid #ccc', boxSizing: 'border-box' }}
+            style={{ width: '100%', padding: 10, marginTop: 2, fontSize: 16, borderRadius: 4, border: '1px solid #ccc', boxSizing: 'border-box', textTransform: 'uppercase' }}
             placeholder="Code reçu"
             autoComplete="one-time-code"
           />
