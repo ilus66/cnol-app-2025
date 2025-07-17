@@ -71,13 +71,15 @@ export default async function handler(req, res) {
           .single();
         if (user) {
           const identifiant = user.email?.toLowerCase().trim() || normalizePhone(user.telephone);
+          let fonctionValue = user.fonction;
+          if (!fonctionValue || fonctionValue.trim() === '') fonctionValue = 'Opticien';
           await supabaseServiceRole.from('statistiques_participants').upsert([{
             identifiant,
             email: user.email,
             telephone: user.telephone,
             nom: user.nom,
             prenom: user.prenom,
-            fonction: user.fonction,
+            fonction: fonctionValue,
             ville: user.ville,
             source: 'whatsapp'
           }], { onConflict: 'identifiant' });
@@ -111,13 +113,15 @@ export default async function handler(req, res) {
       .single();
     if (user) {
       const identifiant = user.email?.toLowerCase().trim() || normalizePhone(user.telephone);
+      let fonctionValue = user.fonction;
+      if (!fonctionValue || fonctionValue.trim() === '') fonctionValue = 'Opticien';
       await supabaseServiceRole.from('statistiques_participants').upsert([{
         identifiant,
         email: user.email,
         telephone: user.telephone,
         nom: user.nom,
         prenom: user.prenom,
-        fonction: user.fonction,
+        fonction: fonctionValue,
         ville: user.ville,
         source: 'whatsapp'
       }], { onConflict: 'identifiant' });

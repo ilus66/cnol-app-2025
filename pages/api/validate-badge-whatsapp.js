@@ -115,6 +115,8 @@ export default async function handler(req, res) {
     else if (!p.startsWith('+')) p = '+' + p;
     return p;
   }
+  let fonctionValue = user.fonction;
+  if (!fonctionValue || fonctionValue.trim() === '') fonctionValue = 'Opticien';
   const identifiant = user.email?.toLowerCase().trim() || normalizePhone(user.telephone);
   await supabaseServiceRole.from('statistiques_participants').upsert([{
     identifiant,
@@ -122,7 +124,7 @@ export default async function handler(req, res) {
     telephone: user.telephone,
     nom: user.nom,
     prenom: user.prenom,
-    fonction: user.fonction,
+    fonction: fonctionValue,
     ville: user.ville,
     source: 'whatsapp'
   }], { onConflict: 'identifiant' });

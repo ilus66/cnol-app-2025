@@ -1,493 +1,153 @@
-import { useState, useEffect } from 'react';
-import { Box, Typography, Paper, TextField, Button, Table, TableHead, TableRow, TableCell, TableBody, Divider, CircularProgress, Accordion, AccordionSummary, AccordionDetails, Grid } from '@mui/material';
+import { useEffect, useState } from 'react';
+import { Box, Typography, Paper, Grid, CircularProgress, Table, TableHead, TableRow, TableCell, TableBody, Button } from '@mui/material';
+import { Pie } from 'react-chartjs-2';
 import { supabase } from '../../lib/supabaseClient';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 export default function AdminStatistiques() {
-  const [loading, setLoading] = useState(false);
-  const [classement, setClassement] = useState([]);
-  const [searchParticipant, setSearchParticipant] = useState('');
-  const [standsVisites, setStandsVisites] = useState([]);
-  const [searchExposant, setSearchExposant] = useState('');
-  const [visiteursStand, setVisiteursStand] = useState([]);
-  const [statsFonction, setStatsFonction] = useState([]);
-  const [statsVille, setStatsVille] = useState([]);
-  const [statsJour, setStatsJour] = useState([]);
-  const [statsSemaine, setStatsSemaine] = useState([]);
-  const [statsMois, setStatsMois] = useState([]);
-  const [totalInscrits, setTotalInscrits] = useState(0);
-  const [totalValides, setTotalValides] = useState(0);
-  const [totalExposants, setTotalExposants] = useState(0);
-  const [totalVilles, setTotalVilles] = useState(0);
-  const [totalReservations, setTotalReservations] = useState(0);
-  const [totalWhatsapp, setTotalWhatsapp] = useState(0);
-  const [successWhatsapp, setSuccessWhatsapp] = useState(0);
-  const [errorWhatsapp, setErrorWhatsapp] = useState(0);
-  const [topVilles, setTopVilles] = useState([]);
-  const [totalOpticiens, setTotalOpticiens] = useState(0);
-  const [totalOrthoptistes, setTotalOrthoptistes] = useState(0);
-  const [totalOphtalmos, setTotalOphtalmos] = useState(0);
-  const [totalEtudiantsAutres, setTotalEtudiantsAutres] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    total: 0,
+    opticiens: 0,
+    orthoptistes: 0,
+    ophtalmos: 0,
+    etudiantsAutres: 0,
+    topVilles: [],
+    data: []
+  });
 
   useEffect(() => {
-    // Total inscrits
-    supabase.from('inscription').select('id', { count: 'exact', head: true }).then(({ count }) => setTotalInscrits(count || 0));
-    // Total validés (requête directe, sans fusion)
-    supabase.from('inscription').select('id', { count: 'exact', head: true }).eq('valide', true).then(({ count }) => setTotalValides(count || 0));
-    // Total exposants
-    supabase.from('inscription').select('id', { count: 'exact', head: true }).eq('participant_type', 'exposant').then(({ count }) => setTotalExposants(count || 0));
-    // Total villes distinctes
-    supabase.from('inscription').select('ville', { count: 'exact' }).then(({ data }) => {
-      const villes = (data || []).map(r => (r.ville || '').toUpperCase().trim()).filter(v => v && v !== 'NON RENSEIGNÉE');
-      setTotalVilles([...new Set(villes)].length);
-    });
-    // Total réservations (ateliers + masterclass)
-    Promise.all([
-      supabase.from('reservations_ateliers').select('id', { count: 'exact', head: true }),
-      supabase.from('reservations_masterclass').select('id', { count: 'exact', head: true })
-    ]).then(([a, m]) => setTotalReservations((a.count || 0) + (m.count || 0)));
-    // Charger les stats détaillées
-    fetchStatsVille();
-    fetchStatsFonction();
-    fetchStatsPeriodes();
-    fetchClassement();
-    // Stats WhatsApp : charger les téléphones des envois succès
-    let whatsappSuccessPhones = [];
-    supabase.from('whatsapp_envois').select('telephone, status').then(({ data }) => {
-      whatsappSuccessPhones = (data || []).filter(e => e.status === 'success').map(e => e.telephone);
-      setTotalWhatsapp(whatsappSuccessPhones.length);
-      setSuccessWhatsapp(whatsappSuccessPhones.length);
-      setErrorWhatsapp((data || []).filter(e => e.status === 'error').length);
-
-      // Fusionner inscriptions validés + WhatsApp succès, déduplication robuste
-      Promise.all([
-        supabase.from('inscription').select('fonction, email, telephone').eq('valide', true),
-        supabase.from('whatsapp').select('fonction, email, telephone')
-      ]).then(([insc, whats]) => {
-        // Helpers de normalisation
-        function normalizePhone(phone) {
-          if (!phone) return '';
-          let p = phone.replace(/\D/g, '');
-          if (p.startsWith('212')) p = '+' + p;
-          else if (p.startsWith('0')) p = '+212' + p.slice(1);
-          else if (p.startsWith('6') || p.startsWith('7')) p = '+212' + p;
-          else if (!p.startsWith('+')) p = '+' + p;
-          return p;
-        }
-        function normalizeEmail(email) {
-          return (email || '').toLowerCase().trim();
-        }
-        // Filtrer WhatsApp : ne garder que ceux qui ont reçu un envoi succès
-        const whatsFiltered = (whats.data || []).filter(r => whatsappSuccessPhones.includes(r.telephone));
-        // Fusionner et dédupliquer par email OU téléphone normalisé
-        const uniques = {};
-        [...(insc.data || []), ...whatsFiltered].forEach(r => {
-          const email = normalizeEmail(r.email);
-          const tel = normalizePhone(r.telephone);
-          const key = email || tel;
-          if (!key) return; // ignorer si pas d'identifiant unique
-          if (!uniques[key]) uniques[key] = r;
-        });
-        const personnes = Object.values(uniques);
-        const fonctions = personnes.map(r => (r.fonction || '').toLowerCase().trim());
-        const orthoptistes = fonctions.filter(f => f.includes('orthopt')).length;
-        const ophtalmos = fonctions.filter(f => f.includes('ophtalm')).length;
-        const etudiantsAutres = fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length;
-        const totalGlobal = personnes.length;
-        const opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres;
-        setTotalOpticiens(opticiens);
-        setTotalOrthoptistes(orthoptistes);
-        setTotalOphtalmos(ophtalmos);
-        setTotalEtudiantsAutres(etudiantsAutres);
-        // Synchroniser le total global affiché (emails + WhatsApp)
-        setTotalWhatsapp(whatsappSuccessPhones.length);
-        // Afficher le total global fusionné dans une variable dédiée si besoin
-        // (ex: setTotalGlobalFusion(totalGlobal))
-      });
-    });
-    // Top 10 villes (inscription + whatsapp)
-    Promise.all([
-      supabase.from('inscription').select('ville'),
-      supabase.from('whatsapp').select('ville')
-    ]).then(([insc, whats]) => {
-      const villes = [...(insc.data || []), ...(whats.data || [])]
-        .map(r => (r.ville || '').toUpperCase().trim())
-        .filter(v => v && v !== 'NON RENSEIGNÉE');
+    async function fetchStats() {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('statistiques_participants')
+        .select('fonction, ville');
+      if (error) return setLoading(false);
+      // Normalisation
+      const rows = (data || []).map(r => ({
+        fonction: (r.fonction || '').toLowerCase().trim(),
+        ville: (r.ville || '').toUpperCase().trim()
+      }));
+      // Professions
+      const orthoptistes = rows.filter(r => r.fonction.includes('orthopt')).length;
+      const ophtalmos = rows.filter(r => r.fonction.includes('ophtalm')).length;
+      const etudiantsAutres = rows.filter(r => r.fonction.includes('etudiant') || r.fonction === 'autre' || r.fonction === 'autres').length;
+      const total = rows.length;
+      const opticiens = total - orthoptistes - ophtalmos - etudiantsAutres;
+      // Villes
       const countByVille = {};
-      villes.forEach(v => { countByVille[v] = (countByVille[v] || 0) + 1; });
-      setTopVilles(Object.entries(countByVille).sort((a, b) => b[1] - a[1]).slice(0, 10));
-    });
-    // Totaux par fonction (inscription + whatsapp, déduplication robuste)
-    // (Supprimé : Promise.all sur inscription + whatsapp sans WhatsApp succès)
+      rows.forEach(r => {
+        if (!r.ville) return;
+        countByVille[r.ville] = (countByVille[r.ville] || 0) + 1;
+      });
+      const topVilles = Object.entries(countByVille).sort((a, b) => b[1] - a[1]).slice(0, 10);
+      setStats({
+        total,
+        opticiens,
+        orthoptistes,
+        ophtalmos,
+        etudiantsAutres,
+        topVilles,
+        data: rows
+      });
+      setLoading(false);
+    }
+    fetchStats();
   }, []);
 
-  // Classement des stands les plus visités
-  const fetchClassement = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('leads')
-      .select('exposant_id, exposant:exposant_id (nom, prenom, qualite_sponsoring)')
-      .neq('exposant_id', null);
-    if (error) return setLoading(false);
-    // Agréger côté client
-    const countByExposant = {};
-    data.forEach(l => {
-      const key = l.exposant_id;
-      if (!countByExposant[key]) countByExposant[key] = { ...l.exposant, count: 0 };
-      countByExposant[key].count++;
-    });
-    setClassement(Object.values(countByExposant).sort((a, b) => b.count - a.count));
-    setLoading(false);
-  };
-
-  // Recherche stands visités par un participant
-  const handleSearchParticipant = async () => {
-    setLoading(true);
-    const { data: inscrits } = await supabase
-      .from('inscription')
-      .select('id, nom, prenom, email')
-      .ilike('nom', `%${searchParticipant}%`);
-    if (!inscrits || inscrits.length === 0) {
-      setStandsVisites([]);
-      setLoading(false);
-      return;
-    }
-    const participant = inscrits[0];
-    const { data: leads } = await supabase
-      .from('leads')
-      .select('created_at, exposant:exposant_id (nom, prenom, qualite_sponsoring)')
-      .eq('visiteur_id', participant.id);
-    setStandsVisites(leads.map(l => ({ ...l, participant })));
-    setLoading(false);
-  };
-
-  // Recherche visiteurs d'un stand (exposant)
-  const handleSearchExposant = async () => {
-    setLoading(true);
-    const { data: exposants } = await supabase
-      .from('inscription')
-      .select('id, nom, prenom, qualite_sponsoring')
-      .ilike('nom', `%${searchExposant}%`);
-    if (!exposants || exposants.length === 0) {
-      setVisiteursStand([]);
-      setLoading(false);
-      return;
-    }
-    const exposant = exposants[0];
-    const { data: leads } = await supabase
-      .from('leads')
-      .select('created_at, visiteur:visiteur_id (nom, prenom, email)')
-      .eq('exposant_id', exposant.id);
-    setVisiteursStand(leads.map(l => ({ ...l, exposant })));
-    setLoading(false);
-  };
-
-  // Export CSV générique
-  const exportCSV = (rows, header, filename) => {
+  // Export CSV
+  const exportCSV = () => {
+    const header = ['Fonction', 'Ville'];
+    const rows = stats.data.map(r => [r.fonction, r.ville]);
     const csvContent = [header, ...rows].map(row => row.map(val => `"${val || ''}"`).join(',')).join('\n');
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename;
+    a.download = 'statistiques_participants.csv';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  // Stats par fonction (regroupement JS)
-  const fetchStatsFonction = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('inscription')
-      .select('fonction');
-    setLoading(false);
-    if (!error && data) {
-      const countByFonction = {};
-      data.forEach(row => {
-        const key = row.fonction || 'Non renseigné';
-        countByFonction[key] = (countByFonction[key] || 0) + 1;
-      });
-      setStatsFonction(Object.entries(countByFonction).map(([fonction, count]) => ({ fonction, count })));
-    }
-  };
+  if (loading) return <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh"><CircularProgress /></Box>;
 
-  // Stats par ville (fusion inscription + whatsapp succès)
-  const fetchStatsVille = async () => {
-    setLoading(true);
-    // Récupérer les téléphones WhatsApp succès
-    const { data: envois } = await supabase.from('whatsapp_envois').select('telephone, status');
-    const whatsappSuccessPhones = (envois || []).filter(e => e.status === 'success').map(e => e.telephone);
-    // Récupérer les villes inscription et whatsapp
-    const [{ data: villesInscription }, { data: villesWhatsapp }] = await Promise.all([
-      supabase.from('inscription').select('ville'),
-      supabase.from('whatsapp').select('ville, telephone')
-    ]);
-    // Filtrer WhatsApp : ne garder que ceux qui ont reçu un envoi succès
-    const villesWhatsappFiltered = (villesWhatsapp || []).filter(r => whatsappSuccessPhones.includes(r.telephone));
-    // Fusionner et normaliser
-    const allVilles = [
-      ...(villesInscription || []).map(r => (r.ville || '').toUpperCase().trim()),
-      ...villesWhatsappFiltered.map(r => (r.ville || '').toUpperCase().trim())
-    ].filter(v => v && v !== 'NON RENSEIGNÉE');
-    // Compter
-    const countByVille = {};
-    allVilles.forEach(v => { countByVille[v] = (countByVille[v] || 0) + 1; });
-    setStatsVille(Object.entries(countByVille).map(([ville, count]) => ({ ville, count })));
-    setLoading(false);
+  // Données camembert
+  const pieData = {
+    labels: ['Opticiens', 'Orthoptistes', 'Ophtalmos', 'Étudiants/Autres'],
+    datasets: [{
+      data: [stats.opticiens, stats.orthoptistes, stats.ophtalmos, stats.etudiantsAutres],
+      backgroundColor: ['#e53935', '#8e24aa', '#3949ab', '#43a047']
+    }]
   };
-
-  // Stats par jour/semaine/mois
-  const fetchStatsPeriodes = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('inscription')
-      .select('created_at');
-    setLoading(false);
-    if (!error && data) {
-      // Par jour
-      const countByDay = {};
-      // Par semaine (année-semaine)
-      const countByWeek = {};
-      // Par mois
-      const countByMonth = {};
-      data.forEach(row => {
-        const date = new Date(row.created_at);
-        // Jour
-        const dayKey = date.toISOString().slice(0, 10);
-        countByDay[dayKey] = (countByDay[dayKey] || 0) + 1;
-        // Semaine (année-semaine)
-        const year = date.getFullYear();
-        const week = getWeekNumber(date);
-        const weekKey = `${year}-S${String(week).padStart(2, '0')}`;
-        countByWeek[weekKey] = (countByWeek[weekKey] || 0) + 1;
-        // Mois
-        const monthKey = `${year}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        countByMonth[monthKey] = (countByMonth[monthKey] || 0) + 1;
-      });
-      setStatsJour(Object.entries(countByDay).map(([periode, count]) => ({ periode, count })));
-      setStatsSemaine(Object.entries(countByWeek).map(([periode, count]) => ({ periode, count })));
-      setStatsMois(Object.entries(countByMonth).map(([periode, count]) => ({ periode, count })));
-    }
-  };
-
-  // Helper semaine ISO
-  function getWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
-  }
 
   return (
-    <Box sx={{ maxWidth: 1100, mx: 'auto', mt: 4 }}>
-      {/* Header */}
-      <Typography variant="h4" gutterBottom>Statistiques CNOL 2025</Typography>
-      {/* Barre d'actions globales */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <Button variant="contained" onClick={fetchClassement}>Rafraîchir</Button>
-        <Button variant="outlined">Export global</Button>
-        <Button variant="outlined" onClick={() => window.print()}>Imprimer</Button>
-      </Box>
-      {/* Tuiles statistiques clés */}
-      <Grid container spacing={2} sx={{ mb: 3 }}>
-        <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Total inscrits<br/><b>{totalInscrits}</b></Paper></Grid>
-        <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Validés<br/><b>{totalValides}</b></Paper></Grid>
-        <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Exposants<br/><b>{totalExposants}</b></Paper></Grid>
-        <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Villes<br/><b>{totalVilles}</b></Paper></Grid>
-        <Grid item xs={6} md={2}><Paper sx={{ p: 2, textAlign: 'center' }}>Réservations<br/><b>{totalReservations}</b></Paper></Grid>
+    <Box p={3}>
+      <Typography variant="h4" gutterBottom>Statistiques Participants</Typography>
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={3}>
+          <Paper elevation={3} sx={{ p:2, textAlign:'center' }}>
+            <Typography variant="h6">Total</Typography>
+            <Typography variant="h4">{stats.total}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Paper elevation={3} sx={{ p:2, textAlign:'center' }}>
+            <Typography variant="h6">Opticiens</Typography>
+            <Typography variant="h4">{stats.opticiens}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Paper elevation={3} sx={{ p:2, textAlign:'center' }}>
+            <Typography variant="h6">Orthoptistes</Typography>
+            <Typography variant="h4">{stats.orthoptistes}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Paper elevation={3} sx={{ p:2, textAlign:'center' }}>
+            <Typography variant="h6">Ophtalmos</Typography>
+            <Typography variant="h4">{stats.ophtalmos}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={3}>
+          <Paper elevation={3} sx={{ p:2, textAlign:'center' }}>
+            <Typography variant="h6">Étudiants/Autres</Typography>
+            <Typography variant="h4">{stats.etudiantsAutres}</Typography>
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p:2 }}>
+            <Typography variant="h6" gutterBottom>Répartition par profession</Typography>
+            <Pie data={pieData} />
+          </Paper>
+        </Grid>
+        <Grid item xs={12} md={6}>
+          <Paper elevation={3} sx={{ p:2 }}>
+            <Typography variant="h6" gutterBottom>Top 10 villes</Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Ville</TableCell>
+                  <TableCell>Participants</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {stats.topVilles.map(([ville, count]) => (
+                  <TableRow key={ville}>
+                    <TableCell>{ville}</TableCell>
+                    <TableCell>{count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Paper>
+        </Grid>
+        <Grid item xs={12}>
+          <Box mt={2} textAlign="right">
+            <Button variant="contained" color="primary" onClick={exportCSV}>Exporter CSV</Button>
+          </Box>
+        </Grid>
       </Grid>
-      {/* Bloc stats WhatsApp (bleu ciel) */}
-      <Paper sx={{ p: 2, mb: 3, background: '#e5f6fd', border: '1px solid #b3e0f7' }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>Envois WhatsApp</Typography>
-        <div>Total envois WhatsApp : <b>{totalWhatsapp}</b></div>
-        <div>Succès : <b>{successWhatsapp}</b> &nbsp;|&nbsp; Échecs : <b>{errorWhatsapp}</b></div>
-        <div>Taux de succès : <b>{totalWhatsapp ? Math.round((successWhatsapp/totalWhatsapp)*100) : 0}%</b></div>
-      </Paper>
-      {/* Bloc stats Emails + WhatsApp (vert) */}
-      <Paper sx={{ p: 2, mb: 3, background: '#e6f9ed', border: '1px solid #b2e5c2' }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>Envois emails & WhatsApp</Typography>
-        <div>Total emails envoyés (validés) : <b>{totalValides}</b></div>
-        <div>Total WhatsApp : <b>{totalWhatsapp}</b></div>
-        <div>Total global (emails + WhatsApp) : <b>{totalValides + totalWhatsapp}</b></div>
-      </Paper>
-      {/* Bloc total global (rouge) */}
-      <Paper sx={{ p: 2, mb: 3, background: '#ffeaea', border: '1px solid #ffb3b3' }}>
-        <Typography variant="h6" sx={{ mb: 1 }}>Total des envois (global)</Typography>
-        <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Total global : {totalValides + totalWhatsapp}</div>
-        <div style={{ marginBottom: 8 }}><b>Top 10 villes :</b> {topVilles.map(([ville, count]) => `${ville} (${count})`).join(', ')}</div>
-        <div>
-          <b>Opticiens :</b> {totalOpticiens} &nbsp;|&nbsp; <b>Orthoptistes :</b> {totalOrthoptistes} &nbsp;|&nbsp; <b>Ophtalmologues :</b> {totalOphtalmos} &nbsp;|&nbsp; <b>Étudiants + autres :</b> {totalEtudiantsAutres}
-        </div>
-      </Paper>
-      {/* Recherche & filtres */}
-      <Box sx={{ mb: 3 }}>
-        <TextField label="Recherche globale" sx={{ mr: 2 }} />
-        <TextField label="Filtre période" sx={{ mr: 2 }} />
-        <TextField label="Filtre ville" sx={{ mr: 2 }} />
-        <TextField label="Filtre fonction" sx={{ mr: 2 }} />
-        <TextField label="Validé ?" sx={{ mr: 2 }} />
-      </Box>
-      {/* Accordéons statistiques détaillées */}
-      <Accordion defaultExpanded>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}><b>Inscrits par ville</b></AccordionSummary>
-        <AccordionDetails>
-          {/* Bloc existant statsVille ici */}
-          {statsVille.length > 0 && (
-            <>
-              <Button variant="outlined" sx={{ mb: 1 }} onClick={() => exportCSV(statsVille.map(v => [v.ville, v.count]), ['Ville', 'Nombre'], 'statistiques-par-ville.csv')}>Exporter CSV</Button>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Ville</TableCell>
-                    <TableCell>Nombre</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {statsVille.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{row.ville || 'Non renseignée'}</TableCell>
-                      <TableCell>{row.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </>
-          )}
-        </AccordionDetails>
-      </Accordion>
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}><b>Inscrits par fonction</b></AccordionSummary>
-        <AccordionDetails>
-          {/* Bloc existant statsFonction ici */}
-          {statsFonction.length > 0 && (
-            <>
-              <Button variant="outlined" sx={{ mb: 1 }} onClick={() => exportCSV(statsFonction.map(f => [f.fonction, f.count]), ['Fonction', 'Nombre'], 'statistiques-par-fonction.csv')}>Exporter CSV</Button>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Fonction</TableCell>
-                    <TableCell>Nombre</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {statsFonction.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{row.fonction || 'Non renseigné'}</TableCell>
-                      <TableCell>{row.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </>
-          )}
-        </AccordionDetails>
-      </Accordion>
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}><b>Inscrits par période</b></AccordionSummary>
-        <AccordionDetails>
-          {/* Par jour */}
-          <Typography variant="subtitle1" sx={{ mt: 1 }}>Par jour</Typography>
-          <Button variant="outlined" sx={{ mb: 1 }} onClick={() => exportCSV(statsJour.map(j => [j.periode, j.count]), ['Jour', 'Nombre'], 'inscrits-par-jour.csv')}>Exporter CSV</Button>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Jour</TableCell>
-                <TableCell>Nombre</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {statsJour.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{row.periode}</TableCell>
-                  <TableCell>{row.count}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {/* Par semaine */}
-          <Typography variant="subtitle1" sx={{ mt: 3 }}>Par semaine</Typography>
-          <Button variant="outlined" sx={{ mb: 1 }} onClick={() => exportCSV(statsSemaine.map(s => [s.periode, s.count]), ['Semaine', 'Nombre'], 'inscrits-par-semaine.csv')}>Exporter CSV</Button>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Semaine</TableCell>
-                <TableCell>Nombre</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {statsSemaine.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{row.periode}</TableCell>
-                  <TableCell>{row.count}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          {/* Par mois */}
-          <Typography variant="subtitle1" sx={{ mt: 3 }}>Par mois</Typography>
-          <Button variant="outlined" sx={{ mb: 1 }} onClick={() => exportCSV(statsMois.map(m => [m.periode, m.count]), ['Mois', 'Nombre'], 'inscrits-par-mois.csv')}>Exporter CSV</Button>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                <TableCell>Mois</TableCell>
-                <TableCell>Nombre</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {statsMois.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
-                <TableRow key={idx}>
-                  <TableCell>{row.periode}</TableCell>
-                  <TableCell>{row.count}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </AccordionDetails>
-      </Accordion>
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}><b>Classement stands les plus visités</b></AccordionSummary>
-        <AccordionDetails>
-          {/* Bloc existant classement ici */}
-          {classement.length > 0 && (
-            <>
-              <Button variant="outlined" sx={{ mb: 1 }} onClick={() => exportCSV(classement.map(e => [e.prenom, e.nom, e.qualite_sponsoring, e.count]), ['Prénom', 'Nom', 'Sponsoring', 'Nombre de visiteurs'], 'classement-stands.csv')}>Exporter CSV</Button>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Prénom</TableCell>
-                    <TableCell>Nom</TableCell>
-                    <TableCell>Sponsoring</TableCell>
-                    <TableCell>Nombre de visiteurs</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {classement.map((e, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{e.prenom}</TableCell>
-                      <TableCell>{e.nom}</TableCell>
-                      <TableCell>{e.qualite_sponsoring}</TableCell>
-                      <TableCell>{e.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </>
-          )}
-        </AccordionDetails>
-      </Accordion>
-      <Accordion>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}><b>Recherche avancée</b></AccordionSummary>
-        <AccordionDetails>
-          <Typography>Recherche participants, exposants, etc. (à compléter)</Typography>
-        </AccordionDetails>
-      </Accordion>
-      {/* Footer */}
-      <Box sx={{ mt: 4, textAlign: 'center', color: 'grey.600', fontSize: 13 }}>
-        CNOL 2025 – Admin | Version 1.0 | Support : cnol.badge@gmail.com
-      </Box>
     </Box>
   );
 } 
