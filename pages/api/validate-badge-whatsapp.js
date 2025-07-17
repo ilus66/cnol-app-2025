@@ -106,7 +106,10 @@ export default async function handler(req, res) {
 
   // Envoi WhatsApp avec le badge
   try {
-    const whatsappText = `Bonjour ${user.nom},\n\nVoici votre badge nominatif CNOL 2025 en pièce jointe (PDF).\nVous pouvez aussi le télécharger ici : ${badgeUrl}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.`;
+    // Préparer le contact principal (email ou téléphone)
+    const contactPrincipal = user.email && user.email.trim() !== '' ? user.email : user.telephone;
+    const contactLabel = user.email && user.email.trim() !== '' ? 'email' : 'numéro de téléphone';
+    const whatsappText = `Bonjour ${user.nom?.toUpperCase()} ${user.prenom ? user.prenom.toUpperCase() : ''},\n\nVotre badge nominatif CNOL 2025 est en pièce jointe (PDF) et vous a aussi été envoyé par ${contactLabel} : ${contactPrincipal}.\n\nVous pouvez également le télécharger ici :\n${badgeUrl}\n\nPour accéder à l'application CNOL 2025 (programme, notifications, espace personnel...), téléchargez-la ici :\nhttps://www.app.cnol.ma\n\nVos identifiants d'accès :\n${contactLabel.charAt(0).toUpperCase() + contactLabel.slice(1)} : ${contactPrincipal}\nCode badge : ${user.identifiant_badge}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.\n\nÀ bientôt !\n\nSuivez CNOL sur Instagram @cnol_maroc`;
     console.log('[validate-badge-whatsapp] Envoi WhatsApp', { to: user.telephone, fileName, badgeUrl });
     await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-whatsapp`, {
       method: 'POST',
