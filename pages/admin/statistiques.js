@@ -314,7 +314,9 @@ export default function AdminStatistiques() {
         <Typography variant="h6" sx={{ mb: 1 }}>Total des envois (global)</Typography>
         <div style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>Total global : {totalValides + totalWhatsapp}</div>
         <div style={{ marginBottom: 8 }}><b>Top 10 villes :</b> {topVilles.map(([ville, count]) => `${ville} (${count})`).join(', ')}</div>
-        <div><b>Opticiens :</b> {totalOpticiens} &nbsp;|&nbsp; <b>Orthoptistes :</b> {totalOrthoptistes} &nbsp;|&nbsp; <b>Ophtalmologues :</b> {totalOphtalmos} &nbsp;|&nbsp; <b>Étudiants + autres :</b> {totalEtudiantsAutres}</div>
+        <div>
+          <b>Opticiens :</b> {totalOpticiens} <span style={{ color: '#888', fontSize: 13 }}>(dont non répertoriés : {statsFonction.nonRepertories || 0})</span> &nbsp;|&nbsp; <b>Orthoptistes :</b> {totalOrthoptistes} &nbsp;|&nbsp; <b>Ophtalmologues :</b> {totalOphtalmos} &nbsp;|&nbsp; <b>Étudiants + autres :</b> {totalEtudiantsAutres}
+        </div>
       </Paper>
       {/* Recherche & filtres */}
       <Box sx={{ mb: 3 }}>
