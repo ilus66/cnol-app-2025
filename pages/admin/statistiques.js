@@ -100,9 +100,9 @@ export default function AdminStatistiques() {
         setTotalOphtalmos(ophtalmos);
         setTotalEtudiantsAutres(etudiantsAutres);
         // Synchroniser le total global affiché (emails + WhatsApp)
-        // (mais laisser la tuile Validés indépendante)
-        // setTotalValides(totalGlobal - whatsappSuccessPhones.length); // <-- on ne touche plus à ce compteur ici
         setTotalWhatsapp(whatsappSuccessPhones.length);
+        // Afficher le total global fusionné dans une variable dédiée si besoin
+        // (ex: setTotalGlobalFusion(totalGlobal))
       });
     });
     // Top 10 villes (inscription + whatsapp)
