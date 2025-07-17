@@ -51,11 +51,58 @@ export default function AdminStatistiques() {
     fetchStatsFonction();
     fetchStatsPeriodes();
     fetchClassement();
-    // Stats WhatsApp
-    supabase.from('whatsapp_envois').select('id, status').then(({ data }) => {
-      setTotalWhatsapp(data.length);
-      setSuccessWhatsapp(data.filter(e => e.status === 'success').length);
-      setErrorWhatsapp(data.filter(e => e.status === 'error').length);
+    // Stats WhatsApp : charger les téléphones des envois succès
+    let whatsappSuccessPhones = [];
+    supabase.from('whatsapp_envois').select('telephone, status').then(({ data }) => {
+      whatsappSuccessPhones = (data || []).filter(e => e.status === 'success').map(e => e.telephone);
+      setTotalWhatsapp(whatsappSuccessPhones.length);
+      setSuccessWhatsapp(whatsappSuccessPhones.length);
+      setErrorWhatsapp((data || []).filter(e => e.status === 'error').length);
+
+      // Fusionner inscriptions validés + WhatsApp succès, déduplication robuste
+      Promise.all([
+        supabase.from('inscription').select('fonction, email, telephone').eq('valide', true),
+        supabase.from('whatsapp').select('fonction, email, telephone')
+      ]).then(([insc, whats]) => {
+        // Helpers de normalisation
+        function normalizePhone(phone) {
+          if (!phone) return '';
+          let p = phone.replace(/\D/g, '');
+          if (p.startsWith('212')) p = '+' + p;
+          else if (p.startsWith('0')) p = '+212' + p.slice(1);
+          else if (p.startsWith('6') || p.startsWith('7')) p = '+212' + p;
+          else if (!p.startsWith('+')) p = '+' + p;
+          return p;
+        }
+        function normalizeEmail(email) {
+          return (email || '').toLowerCase().trim();
+        }
+        // Filtrer WhatsApp : ne garder que ceux qui ont reçu un envoi succès
+        const whatsFiltered = (whats.data || []).filter(r => whatsappSuccessPhones.includes(r.telephone));
+        // Fusionner et dédupliquer par email OU téléphone normalisé
+        const uniques = {};
+        [...(insc.data || []), ...whatsFiltered].forEach(r => {
+          const email = normalizeEmail(r.email);
+          const tel = normalizePhone(r.telephone);
+          const key = email || tel;
+          if (!key) return; // ignorer si pas d'identifiant unique
+          if (!uniques[key]) uniques[key] = r;
+        });
+        const personnes = Object.values(uniques);
+        const fonctions = personnes.map(r => (r.fonction || '').toLowerCase().trim());
+        const orthoptistes = fonctions.filter(f => f.includes('orthopt')).length;
+        const ophtalmos = fonctions.filter(f => f.includes('ophtalm')).length;
+        const etudiantsAutres = fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length;
+        const totalGlobal = personnes.length;
+        const opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres;
+        setTotalOpticiens(opticiens);
+        setTotalOrthoptistes(orthoptistes);
+        setTotalOphtalmos(ophtalmos);
+        setTotalEtudiantsAutres(etudiantsAutres);
+        // Synchroniser le total global affiché
+        setTotalValides(totalGlobal - whatsappSuccessPhones.length);
+        setTotalWhatsapp(whatsappSuccessPhones.length);
+      });
     });
     // Top 10 villes (inscription + whatsapp)
     Promise.all([
