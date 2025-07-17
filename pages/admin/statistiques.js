@@ -93,7 +93,8 @@ export default function AdminStatistiques() {
         const orthoptistes = fonctions.filter(f => f.includes('orthopt')).length;
         const ophtalmos = fonctions.filter(f => f.includes('ophtalm')).length;
         const etudiantsAutres = fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length;
-        // Les non renseignés sont considérés comme opticiens
+        const totalGlobal = personnes.length;
+        // Calcul fiable : opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres
         const opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres;
         setTotalOpticiens(opticiens);
         setTotalOrthoptistes(orthoptistes);
