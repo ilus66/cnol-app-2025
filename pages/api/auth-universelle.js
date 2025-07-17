@@ -2,6 +2,7 @@ import { supabase } from '../../lib/supabaseClient';
 import fs from 'fs';
 import path from 'path';
 import { parse, stringify } from 'csv-parse/sync';
+import cookie from 'cookie';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ message: 'Méthode non autorisée' });
@@ -23,6 +24,21 @@ export default async function handler(req, res) {
   }
   console.log('[AUTH-UNIVERSELLE] Recherche inscription:', { identifiant, code, isEmail, data, error });
   if (data && !error) {
+    const sessionData = {
+      id: data.id,
+      email: data.email,
+      prenom: data.prenom,
+      valide: data.valide,
+      participant_type: data.participant_type || 'opticien',
+    };
+    const sessionCookie = cookie.serialize('cnol-session', JSON.stringify(sessionData), {
+      httpOnly: true,
+      secure: true,
+      maxAge: 60 * 60 * 24 * 7,
+      path: '/',
+      sameSite: 'none',
+    });
+    res.setHeader('Set-Cookie', sessionCookie);
     return res.status(200).json({ success: true, message: 'Connexion réussie.', user: { id: data.id, nom: data.nom, prenom: data.prenom } });
   }
 
@@ -51,6 +67,21 @@ export default async function handler(req, res) {
         if (!contact.email || contact.email.trim() === '') {
           return res.status(200).json({ success: false, needEmail: true, message: 'Email requis', contact: { nom: contact.nom, prenom: contact.prenom, telephone: contact.telephone, identifiant_badge: contact.identifiant_badge } });
         } else {
+          const sessionData = {
+            id: contact.id,
+            email: contact.email,
+            prenom: contact.prenom,
+            valide: true,
+            participant_type: 'opticien',
+          };
+          const sessionCookie = cookie.serialize('cnol-session', JSON.stringify(sessionData), {
+            httpOnly: true,
+            secure: true,
+            maxAge: 60 * 60 * 24 * 7,
+            path: '/',
+            sameSite: 'none',
+          });
+          res.setHeader('Set-Cookie', sessionCookie);
           return res.status(200).json({ success: true, fromWhatsapp: true, contact });
         }
       }
