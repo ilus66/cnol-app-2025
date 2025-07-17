@@ -21,6 +21,19 @@ export default async function handler(req, res) {
       .eq('identifiant_badge', code);
     data = (found && found.length > 0) ? found[0] : null;
     error = err;
+  } else {
+    // Recherche par téléphone dans inscription
+    let tel = identifiant.replace(/\D/g, '');
+    if (tel.length === 10 && tel.startsWith('0')) {
+      tel = '212' + tel.slice(1);
+    }
+    const { data: found, error: err } = await supabase
+      .from('inscription')
+      .select('*')
+      .eq('telephone', '+' + tel)
+      .eq('identifiant_badge', code);
+    data = (found && found.length > 0) ? found[0] : null;
+    error = err;
   }
   console.log('[AUTH-UNIVERSELLE] Recherche inscription:', { identifiant, code, isEmail, data, error });
   if (data && !error) {
