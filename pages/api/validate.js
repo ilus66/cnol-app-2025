@@ -165,7 +165,16 @@ export default async function handler(req, res) {
       return p;
     }
     const identifiant = updated.email?.toLowerCase().trim() || normalizePhone(updated.telephone);
-    await supabase.from('statistiques_participants').upsert([{
+    console.log('[validate] Injection stats_participants', {
+      identifiant,
+      email: updated.email,
+      telephone: updated.telephone,
+      nom: updated.nom,
+      prenom: updated.prenom,
+      fonction: updated.fonction,
+      ville: updated.ville
+    });
+    const { error: upsertError } = await supabase.from('statistiques_participants').upsert([{
       identifiant,
       email: updated.email,
       telephone: updated.telephone,
@@ -175,6 +184,11 @@ export default async function handler(req, res) {
       ville: updated.ville,
       source: 'inscription'
     }], { onConflict: 'identifiant' });
+    if (upsertError) {
+      console.error('[validate] Erreur upsert stats_participants', upsertError);
+    } else {
+      console.log('[validate] Upsert stats_participants OK');
+    }
 
     return res.status(200).json({ message: 'Inscription validée et mail envoyé.' });
   } catch (error) {
