@@ -51,32 +51,15 @@ export default function EntreesWhatsAppAdmin() {
         setSending((prev) => ({ ...prev, [row.id]: false }));
         return;
       }
-      // 2. Générer le message WhatsApp
-      const whatsappMessage = `\nBonjour ${row.prenom} ${row.nom},\n\nVotre badge nominatif CNOL 2025 est en pièce jointe (PDF).\n\nVous pouvez également le télécharger ici :\n${badgeData.badgeUrl}\n\nPour accéder à l'application CNOL 2025 (programme, notifications, espace personnel…), téléchargez-la ici :\nhttps://www.app.cnol.ma\n\nVos identifiants d'accès :\nNuméro de téléphone : ${row.telephone}\nCode badge : ${badgeData.badgeCode}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.\n\nÀ bientôt !\n\nSuivez CNOL sur Instagram @cnol_maroc\n`;
-      // 3. Envoyer via WhatsApp
-      const sendRes = await fetch('/api/send-whatsapp', {
+      // 2. Générer le message WhatsApp (supprimé, car déjà fait côté backend)
+      // 3. Envoyer via WhatsApp (supprimé)
+      // 4. Marquer comme envoyé
+      await fetch('/api/whatsapp/mark-badge-sent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: row.telephone,
-          text: whatsappMessage,
-          documentUrl: badgeData.badgeUrl,
-          fileName: `badge-${row.nom}-${row.prenom}.pdf`
-        })
+        body: JSON.stringify({ id: row.id })
       });
-      const sendData = await sendRes.json();
-      if (sendData.success) {
-        alert('Badge envoyé via WhatsApp !');
-        // 4. Marquer comme envoyé
-        await fetch('/api/whatsapp/mark-badge-sent', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id: row.id })
-        });
-        setSent((prev) => ({ ...prev, [row.id]: true }));
-      } else {
-        alert('Erreur lors de l\'envoi WhatsApp');
-      }
+      setSent((prev) => ({ ...prev, [row.id]: true }));
     } catch (e) {
       alert('Erreur lors de l\'envoi');
     }
