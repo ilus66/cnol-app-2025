@@ -67,12 +67,21 @@ export default async function handler(req, res) {
         if (!contact.email || contact.email.trim() === '') {
           return res.status(200).json({ success: false, needEmail: true, message: 'Email requis', contact: { nom: contact.nom, prenom: contact.prenom, telephone: contact.telephone, identifiant_badge: contact.identifiant_badge } });
         } else {
+          // Chercher l'utilisateur dans inscription par email
+          const { data: inscrit, error: inscritError } = await supabase
+            .from('inscription')
+            .select('*')
+            .eq('email', contact.email)
+            .single();
+          if (!inscrit || inscritError) {
+            return res.status(401).json({ success: false, message: 'Utilisateur non trouvé dans inscription.' });
+          }
           const sessionData = {
-            id: contact.id,
-            email: contact.email,
-            prenom: contact.prenom,
-            valide: true,
-            participant_type: 'opticien',
+            id: inscrit.id,
+            email: inscrit.email,
+            prenom: inscrit.prenom,
+            valide: inscrit.valide,
+            participant_type: inscrit.participant_type || 'opticien',
           };
           const sessionCookie = cookie.serialize('cnol-session', JSON.stringify(sessionData), {
             httpOnly: true,
