@@ -69,7 +69,7 @@ export default function AdminStatistiques() {
       villes.forEach(v => { countByVille[v] = (countByVille[v] || 0) + 1; });
       setTopVilles(Object.entries(countByVille).sort((a, b) => b[1] - a[1]).slice(0, 10));
     });
-    // Totaux par fonction (inscription + whatsapp, sans doublons, et bornés au global)
+    // Totaux par fonction (inscription + whatsapp, sans doublons)
     Promise.all([
       supabase.from('inscription').select('fonction, email, telephone'),
       supabase.from('whatsapp').select('fonction, email, telephone')
@@ -81,9 +81,7 @@ export default function AdminStatistiques() {
         if (!key) return; // ignorer si pas d'identifiant unique
         if (!uniques[key]) uniques[key] = r;
       });
-      // Limiter le nombre total à totalValides + totalWhatsapp
-      const personnes = Object.values(uniques).slice(0, (totalValides + totalWhatsapp));
-      const fonctions = personnes.map(r => (r.fonction || '').toLowerCase().trim());
+      const fonctions = Object.values(uniques).map(r => (r.fonction || '').toLowerCase().trim());
       setTotalOpticiens(fonctions.filter(f => f.includes('opticien')).length);
       setTotalOrthoptistes(fonctions.filter(f => f.includes('orthopt')).length);
       setTotalOphtalmos(fonctions.filter(f => f.includes('ophtalm')).length);
