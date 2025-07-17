@@ -56,8 +56,9 @@ export default async function handler(req, res) {
   }
 
   // Construire le nom de fichier safe
-  const safeName = (user.nom || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
-  const fileName = `badge-cnol2025-${safeName}.pdf`;
+  const safeNom = (user.nom || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
+  const safePrenom = (user.prenom || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
+  const fileName = `badge-cnol2025-${safeNom}-${safePrenom}.pdf`;
 
   // Upload dans le bucket 'logos' avec le client service_role
   try {
