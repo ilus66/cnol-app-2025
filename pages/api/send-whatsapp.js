@@ -6,6 +6,15 @@ export default async function handler(req, res) {
   const { to, text, documentUrl, fileName } = req.body;
   const apiKey = '110f5e951d8effdf46eb4e3ddce932b5b3f48f4d31c9992e30d5c25e3ad4c030'; // Remplace par ta clé API valide
 
+  // Log détaillé pour debug
+  console.log('[send-whatsapp] Appel reçu', {
+    heure: new Date().toISOString(),
+    referer: req.headers['referer'] || req.headers['origin'] || 'inconnu',
+    to,
+    fileName,
+    documentUrl
+  });
+
   try {
     console.log('Wasender: tentative envoi', { to, text, documentUrl, fileName });
     const response = await fetch('https://wasenderapi.com/api/send-message', {
