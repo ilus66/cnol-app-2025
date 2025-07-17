@@ -105,6 +105,28 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Exception update whatsapp', error: e.message });
   }
 
+  // Injection dans statistiques_participants
+  function normalizePhone(phone) {
+    if (!phone) return '';
+    let p = phone.replace(/\D/g, '');
+    if (p.startsWith('212')) p = '+' + p;
+    else if (p.startsWith('0')) p = '+212' + p.slice(1);
+    else if (p.startsWith('6') || p.startsWith('7')) p = '+212' + p;
+    else if (!p.startsWith('+')) p = '+' + p;
+    return p;
+  }
+  const identifiant = user.email?.toLowerCase().trim() || normalizePhone(user.telephone);
+  await supabaseServiceRole.from('statistiques_participants').upsert([{
+    identifiant,
+    email: user.email,
+    telephone: user.telephone,
+    nom: user.nom,
+    prenom: user.prenom,
+    fonction: user.fonction,
+    ville: user.ville,
+    source: 'whatsapp'
+  }], { onConflict: 'identifiant' });
+
   // Envoi WhatsApp avec le badge
   try {
     // Préparer le contact principal (email ou téléphone)

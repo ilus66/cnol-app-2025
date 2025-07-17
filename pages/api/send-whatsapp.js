@@ -54,6 +54,34 @@ export default async function handler(req, res) {
           message: text,
           file_name: fileName
         });
+        // Injection dans statistiques_participants
+        function normalizePhone(phone) {
+          if (!phone) return '';
+          let p = phone.replace(/\D/g, '');
+          if (p.startsWith('212')) p = '+' + p;
+          else if (p.startsWith('0')) p = '+212' + p.slice(1);
+          else if (p.startsWith('6') || p.startsWith('7')) p = '+212' + p;
+          else if (!p.startsWith('+')) p = '+' + p;
+          return p;
+        }
+        const { data: user } = await supabaseServiceRole
+          .from('whatsapp')
+          .select('email, telephone, nom, prenom, fonction, ville')
+          .eq('telephone', to)
+          .single();
+        if (user) {
+          const identifiant = user.email?.toLowerCase().trim() || normalizePhone(user.telephone);
+          await supabaseServiceRole.from('statistiques_participants').upsert([{
+            identifiant,
+            email: user.email,
+            telephone: user.telephone,
+            nom: user.nom,
+            prenom: user.prenom,
+            fonction: user.fonction,
+            ville: user.ville,
+            source: 'whatsapp'
+          }], { onConflict: 'identifiant' });
+        }
         console.log('Wasender: envoi terminé (succès forcé malgré erreur générique)');
         return res.status(200).json({ success: true, data });
       }
@@ -66,6 +94,34 @@ export default async function handler(req, res) {
       message: text,
       file_name: fileName
     });
+    // Injection dans statistiques_participants
+    function normalizePhone(phone) {
+      if (!phone) return '';
+      let p = phone.replace(/\D/g, '');
+      if (p.startsWith('212')) p = '+' + p;
+      else if (p.startsWith('0')) p = '+212' + p.slice(1);
+      else if (p.startsWith('6') || p.startsWith('7')) p = '+212' + p;
+      else if (!p.startsWith('+')) p = '+' + p;
+      return p;
+    }
+    const { data: user } = await supabaseServiceRole
+      .from('whatsapp')
+      .select('email, telephone, nom, prenom, fonction, ville')
+      .eq('telephone', to)
+      .single();
+    if (user) {
+      const identifiant = user.email?.toLowerCase().trim() || normalizePhone(user.telephone);
+      await supabaseServiceRole.from('statistiques_participants').upsert([{
+        identifiant,
+        email: user.email,
+        telephone: user.telephone,
+        nom: user.nom,
+        prenom: user.prenom,
+        fonction: user.fonction,
+        ville: user.ville,
+        source: 'whatsapp'
+      }], { onConflict: 'identifiant' });
+    }
     console.log('Wasender: envoi terminé');
     res.status(200).json({ success: true, data });
   } catch (err) {

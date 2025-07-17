@@ -154,6 +154,28 @@ export default async function handler(req, res) {
       }
     }
 
+    // Injection dans statistiques_participants
+    function normalizePhone(phone) {
+      if (!phone) return '';
+      let p = phone.replace(/\D/g, '');
+      if (p.startsWith('212')) p = '+' + p;
+      else if (p.startsWith('0')) p = '+212' + p.slice(1);
+      else if (p.startsWith('6') || p.startsWith('7')) p = '+212' + p;
+      else if (!p.startsWith('+')) p = '+' + p;
+      return p;
+    }
+    const identifiant = updated.email?.toLowerCase().trim() || normalizePhone(updated.telephone);
+    await supabase.from('statistiques_participants').upsert([{
+      identifiant,
+      email: updated.email,
+      telephone: updated.telephone,
+      nom: updated.nom,
+      prenom: updated.prenom,
+      fonction: updated.fonction,
+      ville: updated.ville,
+      source: 'inscription'
+    }], { onConflict: 'identifiant' });
+
     return res.status(200).json({ message: 'Inscription validée et mail envoyé.' });
   } catch (error) {
     console.error('❌ Erreur API validate:', error);
