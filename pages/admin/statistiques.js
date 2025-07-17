@@ -32,7 +32,7 @@ export default function AdminStatistiques() {
   useEffect(() => {
     // Total inscrits
     supabase.from('inscription').select('id', { count: 'exact', head: true }).then(({ count }) => setTotalInscrits(count || 0));
-    // Total validés
+    // Total validés (requête directe, sans fusion)
     supabase.from('inscription').select('id', { count: 'exact', head: true }).eq('valide', true).then(({ count }) => setTotalValides(count || 0));
     // Total exposants
     supabase.from('inscription').select('id', { count: 'exact', head: true }).eq('participant_type', 'exposant').then(({ count }) => setTotalExposants(count || 0));
@@ -99,8 +99,9 @@ export default function AdminStatistiques() {
         setTotalOrthoptistes(orthoptistes);
         setTotalOphtalmos(ophtalmos);
         setTotalEtudiantsAutres(etudiantsAutres);
-        // Synchroniser le total global affiché
-        setTotalValides(totalGlobal - whatsappSuccessPhones.length);
+        // Synchroniser le total global affiché (emails + WhatsApp)
+        // (mais laisser la tuile Validés indépendante)
+        // setTotalValides(totalGlobal - whatsappSuccessPhones.length); // <-- on ne touche plus à ce compteur ici
         setTotalWhatsapp(whatsappSuccessPhones.length);
       });
     });
