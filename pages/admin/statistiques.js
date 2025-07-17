@@ -20,9 +20,11 @@ export default function AdminStatistiques() {
   useEffect(() => {
     async function fetchStats() {
       setLoading(true);
+      // Remplace la requête supabase par une version avec .range(0, 19999)
       const { data, error } = await supabase
         .from('statistiques_participants')
-        .select('fonction, ville');
+        .select('fonction, ville')
+        .range(0, 19999); // récupère jusqu'à 20 000 entrées
       if (error) return setLoading(false);
       // Normalisation
       const rows = (data || []).map(r => ({
