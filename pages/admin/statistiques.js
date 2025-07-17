@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { Box, Typography, Paper, Grid, CircularProgress, Table, TableHead, TableRow, TableCell, TableBody, Button } from '@mui/material';
 import { Pie } from 'react-chartjs-2';
 import { supabase } from '../../lib/supabaseClient';
+import { Chart, ArcElement, Tooltip, Legend } from 'chart.js';
+Chart.register(ArcElement, Tooltip, Legend);
 
 export default function AdminStatistiques() {
   const [loading, setLoading] = useState(true);
