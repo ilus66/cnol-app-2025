@@ -97,10 +97,15 @@ export default function AdminStatistiques() {
         if (!uniques[key]) uniques[key] = r;
       });
       const fonctions = Object.values(uniques).map(r => (r.fonction || '').toLowerCase().trim());
-      setTotalOpticiens(fonctions.filter(f => f.includes('opticien')).length);
-      setTotalOrthoptistes(fonctions.filter(f => f.includes('orthopt')).length);
-      setTotalOphtalmos(fonctions.filter(f => f.includes('ophtalm')).length);
-      setTotalEtudiantsAutres(fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length);
+      const orthoptistes = fonctions.filter(f => f.includes('orthopt')).length;
+      const ophtalmos = fonctions.filter(f => f.includes('ophtalm')).length;
+      const etudiantsAutres = fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length;
+      const totalGlobal = fonctions.length;
+      const opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres;
+      setTotalOpticiens(opticiens);
+      setTotalOrthoptistes(orthoptistes);
+      setTotalOphtalmos(ophtalmos);
+      setTotalEtudiantsAutres(etudiantsAutres);
     });
   }, []);
 
