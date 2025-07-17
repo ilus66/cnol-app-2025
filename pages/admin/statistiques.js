@@ -213,22 +213,29 @@ export default function AdminStatistiques() {
     }
   };
 
-  // Stats par ville (regroupement JS)
+  // Stats par ville (fusion inscription + whatsapp succès)
   const fetchStatsVille = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('inscription')
-      .select('ville');
+    // Récupérer les téléphones WhatsApp succès
+    const { data: envois } = await supabase.from('whatsapp_envois').select('telephone, status');
+    const whatsappSuccessPhones = (envois || []).filter(e => e.status === 'success').map(e => e.telephone);
+    // Récupérer les villes inscription et whatsapp
+    const [{ data: villesInscription }, { data: villesWhatsapp }] = await Promise.all([
+      supabase.from('inscription').select('ville'),
+      supabase.from('whatsapp').select('ville, telephone')
+    ]);
+    // Filtrer WhatsApp : ne garder que ceux qui ont reçu un envoi succès
+    const villesWhatsappFiltered = (villesWhatsapp || []).filter(r => whatsappSuccessPhones.includes(r.telephone));
+    // Fusionner et normaliser
+    const allVilles = [
+      ...(villesInscription || []).map(r => (r.ville || '').toUpperCase().trim()),
+      ...villesWhatsappFiltered.map(r => (r.ville || '').toUpperCase().trim())
+    ].filter(v => v && v !== 'NON RENSEIGNÉE');
+    // Compter
+    const countByVille = {};
+    allVilles.forEach(v => { countByVille[v] = (countByVille[v] || 0) + 1; });
+    setStatsVille(Object.entries(countByVille).map(([ville, count]) => ({ ville, count })));
     setLoading(false);
-    if (!error && data) {
-      const countByVille = {};
-      data.forEach(row => {
-        // Normalisation : majuscules + trim
-        const key = (row.ville || 'Non renseignée').toUpperCase().trim();
-        countByVille[key] = (countByVille[key] || 0) + 1;
-      });
-      setStatsVille(Object.entries(countByVille).map(([ville, count]) => ({ ville, count })));
-    }
   };
 
   // Stats par jour/semaine/mois
