@@ -20,14 +20,28 @@ export default function AdminStatistiques() {
   useEffect(() => {
     async function fetchStats() {
       setLoading(true);
-      // Remplace la requête supabase par une version avec .range(0, 19999)
-      const { data, error } = await supabase
+      // 1. Récupérer le vrai total (count)
+      const { count } = await supabase
         .from('statistiques_participants')
-        .select('fonction, ville')
-        .range(0, 19999); // récupère jusqu'à 20 000 entrées
-      if (error) return setLoading(false);
+        .select('*', { count: 'exact', head: true });
+      // 2. Charger les données par lots de 1000
+      let allRows = [];
+      let from = 0;
+      let to = 999;
+      while (true) {
+        const { data, error } = await supabase
+          .from('statistiques_participants')
+          .select('fonction, ville')
+          .range(from, to);
+        if (error) break;
+        if (!data || data.length === 0) break;
+        allRows = allRows.concat(data);
+        if (data.length < 1000) break;
+        from += 1000;
+        to += 1000;
+      }
       // Normalisation
-      const rows = (data || []).map(r => ({
+      const rows = (allRows || []).map(r => ({
         fonction: (r.fonction || '').toLowerCase().trim(),
         ville: (r.ville || '').toUpperCase().trim()
       }));
@@ -35,8 +49,7 @@ export default function AdminStatistiques() {
       const orthoptistes = rows.filter(r => r.fonction.includes('orthopt')).length;
       const ophtalmos = rows.filter(r => r.fonction.includes('ophtalm')).length;
       const etudiantsAutres = rows.filter(r => r.fonction.includes('etudiant') || r.fonction === 'autre' || r.fonction === 'autres').length;
-      const total = rows.length;
-      const opticiens = total - orthoptistes - ophtalmos - etudiantsAutres;
+      const opticiens = (count || 0) - orthoptistes - ophtalmos - etudiantsAutres;
       // Villes
       const countByVille = {};
       rows.forEach(r => {
@@ -45,7 +58,7 @@ export default function AdminStatistiques() {
       });
       const topVilles = Object.entries(countByVille).sort((a, b) => b[1] - a[1]).slice(0, 10);
       setStats({
-        total,
+        total: count || 0,
         opticiens,
         orthoptistes,
         ophtalmos,
