@@ -96,11 +96,12 @@ export default function AdminStatistiques() {
         const opticiens = fonctions.filter(f => f.includes('opticien')).length;
         const totalGlobal = personnes.length;
         const nonRepertories = totalGlobal - (opticiens + orthoptistes + ophtalmos + etudiantsAutres);
-        setTotalOpticiens(opticiens);
+        const opticiensElargis = opticiens + nonRepertories;
+        setTotalOpticiens(opticiensElargis);
         setTotalOrthoptistes(orthoptistes);
         setTotalOphtalmos(ophtalmos);
         setTotalEtudiantsAutres(etudiantsAutres);
-        setStatsFonction(prev => ({ ...prev, nonRepertories }));
+        setStatsFonction(prev => ({ ...prev, nonRepertories, opticiens, opticiensElargis }));
         // Synchroniser le total global affiché (emails + WhatsApp)
         setTotalWhatsapp(whatsappSuccessPhones.length);
         // Afficher le total global fusionné dans une variable dédiée si besoin
