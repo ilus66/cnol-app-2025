@@ -124,43 +124,7 @@ export default function AdminStatistiques() {
       setTopVilles(Object.entries(countByVille).sort((a, b) => b[1] - a[1]).slice(0, 10));
     });
     // Totaux par fonction (inscription + whatsapp, déduplication robuste)
-    Promise.all([
-      supabase.from('inscription').select('fonction, email, telephone'),
-      supabase.from('whatsapp').select('fonction, email, telephone')
-    ]).then(([insc, whats]) => {
-      // Helpers de normalisation
-      function normalizePhone(phone) {
-        if (!phone) return '';
-        let p = phone.replace(/\D/g, '');
-        if (p.startsWith('212')) p = '+' + p;
-        else if (p.startsWith('0')) p = '+212' + p.slice(1);
-        else if (p.startsWith('6') || p.startsWith('7')) p = '+212' + p;
-        else if (!p.startsWith('+')) p = '+' + p;
-        return p;
-      }
-      function normalizeEmail(email) {
-        return (email || '').toLowerCase().trim();
-      }
-      // Fusionner et dédupliquer par email OU téléphone normalisé
-      const uniques = {};
-      [...(insc.data || []), ...(whats.data || [])].forEach(r => {
-        const email = normalizeEmail(r.email);
-        const tel = normalizePhone(r.telephone);
-        const key = email || tel;
-        if (!key) return; // ignorer si pas d'identifiant unique
-        if (!uniques[key]) uniques[key] = r;
-      });
-      const fonctions = Object.values(uniques).map(r => (r.fonction || '').toLowerCase().trim());
-      const orthoptistes = fonctions.filter(f => f.includes('orthopt')).length;
-      const ophtalmos = fonctions.filter(f => f.includes('ophtalm')).length;
-      const etudiantsAutres = fonctions.filter(f => f.includes('etudiant') || f === 'autre' || f === 'autres').length;
-      const totalGlobal = fonctions.length;
-      const opticiens = totalGlobal - orthoptistes - ophtalmos - etudiantsAutres;
-      setTotalOpticiens(opticiens);
-      setTotalOrthoptistes(orthoptistes);
-      setTotalOphtalmos(ophtalmos);
-      setTotalEtudiantsAutres(etudiantsAutres);
-    });
+    // (Supprimé : Promise.all sur inscription + whatsapp sans WhatsApp succès)
   }, []);
 
   // Classement des stands les plus visités
