@@ -99,7 +99,6 @@ export default function AdminStatistiques() {
         setTotalOrthoptistes(orthoptistes);
         setTotalOphtalmos(ophtalmos);
         setTotalEtudiantsAutres(etudiantsAutres);
-        setStatsFonction(prev => ({ ...prev, nonRepertories, opticiens, opticiensElargis }));
         // Synchroniser le total global affiché (emails + WhatsApp)
         setTotalWhatsapp(whatsappSuccessPhones.length);
         // Afficher le total global fusionné dans une variable dédiée si besoin
