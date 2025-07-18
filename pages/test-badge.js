@@ -33,8 +33,8 @@ export default function TestBadge() {
           mx: 'auto',
           overflow: 'hidden',
         }}>
-          {/* Logo CNOL en haut, centré */}
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 3, pb: 0, pl: 0 }}>
+          {/* Logo CNOL en haut, légèrement à gauche */}
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', pt: 3, pb: 0, pl: 2 }}>
             <img src={logoUrl} alt="Logo CNOL" style={{ width: 286, height: 72, objectFit: 'contain' }} />
           </Box>
           {/* Titre principal sur deux lignes et adresse */}
