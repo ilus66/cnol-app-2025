@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { Box, Typography, TextField, Button, CircularProgress, Alert } from '@mui/material';
+import { Box, Typography, TextField, Button, CircularProgress, Alert, MenuItem, Select, InputLabel, FormControl } from '@mui/material';
 
 export default function WhatsAppValidésAdmin() {
   const [message, setMessage] = useState('');
@@ -9,6 +9,7 @@ export default function WhatsAppValidésAdmin() {
   const [uploading, setUploading] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState(null);
+  const [categorie, setCategorie] = useState('');
 
   // Upload du fichier vers Supabase bucket 'logos'
   const handleFileChange = async (e) => {
@@ -29,12 +30,16 @@ export default function WhatsAppValidésAdmin() {
     setUploading(false);
   };
 
-  // Envoi WhatsApp à tous les validés
+  // Envoi WhatsApp à tous les validés (filtrés par catégorie)
   const handleSend = async () => {
     setSending(true);
     setResult(null);
-    // Récupérer tous les inscrits validés
-    const { data: inscrits, error } = await supabase.from('inscription').select('id, nom, prenom, telephone').eq('valide', true);
+    // Récupérer tous les inscrits validés (et filtrer par catégorie si besoin)
+    let query = supabase.from('inscription').select('id, nom, prenom, telephone').eq('valide', true);
+    if (categorie) {
+      query = query.eq('fonction', categorie);
+    }
+    const { data: inscrits, error } = await query;
     if (error) {
       setResult({ success: false, message: "Erreur récupération inscrits: " + error.message });
       setSending(false);
@@ -63,6 +68,8 @@ export default function WhatsAppValidésAdmin() {
       } catch (e) {
         failCount++;
       }
+      // Attendre 10 secondes avant d'envoyer le suivant
+      await new Promise(resolve => setTimeout(resolve, 10000));
     }
     setResult({ success: true, message: `Envoi terminé. Succès: ${successCount}, Échecs: ${failCount}` });
     setSending(false);
@@ -75,6 +82,21 @@ export default function WhatsAppValidésAdmin() {
         Personnalisez le message (vous pouvez utiliser <b>{'{nom}'}</b> et <b>{'{prenom}'}</b> pour insérer le nom/prénom de chaque inscrit).<br />
         Vous pouvez aussi joindre un fichier (image, document ou vidéo).
       </Typography>
+      <FormControl fullWidth sx={{ mb: 2 }}>
+        <InputLabel id="categorie-label">Catégorie</InputLabel>
+        <Select
+          labelId="categorie-label"
+          value={categorie}
+          label="Catégorie"
+          onChange={e => setCategorie(e.target.value)}
+        >
+          <MenuItem value="">Toutes</MenuItem>
+          <MenuItem value="Opticien">Opticien</MenuItem>
+          <MenuItem value="Orthoptiste">Orthoptiste</MenuItem>
+          <MenuItem value="Ophtalmologue">Ophtalmologue</MenuItem>
+          <MenuItem value="Etudiant">Étudiant</MenuItem>
+        </Select>
+      </FormControl>
       <TextField
         label="Message WhatsApp"
         value={message}
@@ -97,4 +119,4 @@ export default function WhatsAppValidésAdmin() {
       )}
     </Box>
   );
-} 
+}
