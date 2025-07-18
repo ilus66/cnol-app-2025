@@ -33,14 +33,14 @@ export default function TestBadge() {
           mx: 'auto',
           overflow: 'hidden',
         }}>
-          {/* Logo CNOL en haut, centré, à la place du code-barres */}
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 3, pb: 1 }}>
-            <img src={logoUrl} alt="Logo CNOL" style={{ width: 90, height: 38, objectFit: 'contain' }} />
+          {/* Logo CNOL en haut à gauche, à la dimension du code-barres */}
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', pt: 3, pb: 0, pl: 4 }}>
+            <img src={logoUrl} alt="Logo CNOL" style={{ width: 110, height: 28, objectFit: 'contain' }} />
           </Box>
-          {/* Titre principal et adresse */}
-          <Box sx={{ px: 4, textAlign: 'left', mb: 2 }}>
-            <Typography variant="h5" sx={{ fontWeight: 900, fontSize: 28, letterSpacing: 0, fontFamily: 'Montserrat, Roboto, Arial', mb: 0.5, lineHeight: 1.1 }}>
-              CONGRÈS NATIONAL D'OPTIQUE LUNETTERIE
+          {/* Titre principal sur deux lignes et adresse */}
+          <Box sx={{ px: 4, textAlign: 'left', mb: 2, mt: 0.5 }}>
+            <Typography variant="h5" sx={{ fontWeight: 900, fontSize: 28, letterSpacing: 0, fontFamily: 'Montserrat, Roboto, Arial', mb: 0.2, lineHeight: 1.1 }}>
+              CONGRÈS NATIONAL<br/>D'OPTIQUE LUNETTERIE
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'Montserrat, Roboto, Arial', fontWeight: 500, fontSize: 15, lineHeight: 1.2 }}>
               {lieu}
