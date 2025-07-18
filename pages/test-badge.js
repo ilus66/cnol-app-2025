@@ -10,73 +10,73 @@ export default function TestBadge() {
   const [fonction, setFonction] = useState('Opticien');
   const [ville, setVille] = useState('Casablanca');
   const [badgeCode, setBadgeCode] = useState('123ABC');
-  const [date, setDate] = useState('10 OCT 2025');
-  const [heure, setHeure] = useState('10H00');
-  const [dateFin, setDateFin] = useState('12 OCT 2025');
-  const [heureFin, setHeureFin] = useState('19H00');
-  const [lieu, setLieu] = useState('Fondation Mohammed VI, Rabat');
+  const [date, setDate] = useState('11 OCT. 2024');
+  const [heure, setHeure] = useState('09H00');
+  const [dateFin, setDateFin] = useState('12 OCT. 2024');
+  const [heureFin, setHeureFin] = useState('20H00');
+  const [lieu, setLieu] = useState('Centre de conférences Fm6education - Av. Allal Al Fassi RABAT');
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'linear-gradient(135deg, #f5f6fa 0%, #e3e6ee 100%)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
       <Typography variant="h4" sx={{ mb: 3, fontWeight: 800, letterSpacing: 1 }}>Prévisualisation badge (test)</Typography>
       <Stack direction="row" spacing={4} alignItems="flex-start">
         <Paper elevation={8} sx={{
-          p: 4,
+          p: 0,
           borderRadius: 6,
-          minWidth: 410,
-          minHeight: 560,
+          minWidth: 420,
+          minHeight: 600,
           bgcolor: '#fff',
           position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 8px 32px #0002',
           mx: 'auto',
+          overflow: 'hidden',
         }}>
-          {/* En-tête */}
-          <Box sx={{ mb: 2, textAlign: 'center' }}>
-            <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 1, fontFamily: 'Montserrat, Roboto, Arial', mb: 0.5 }}>
-              CNOL 2025
+          {/* Logo CNOL en haut, centré, à la place du code-barres */}
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 3, pb: 1 }}>
+            <img src={logoUrl} alt="Logo CNOL" style={{ width: 90, height: 38, objectFit: 'contain' }} />
+          </Box>
+          {/* Titre principal et adresse */}
+          <Box sx={{ px: 4, textAlign: 'left', mb: 2 }}>
+            <Typography variant="h5" sx={{ fontWeight: 900, fontSize: 28, letterSpacing: 0, fontFamily: 'Montserrat, Roboto, Arial', mb: 0.5, lineHeight: 1.1 }}>
+              CONGRÈS NATIONAL D'OPTIQUE LUNETTERIE
             </Typography>
-            <Typography variant="subtitle1" color="text.secondary" sx={{ fontFamily: 'Montserrat, Roboto, Arial', fontWeight: 500, fontSize: 16 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'Montserrat, Roboto, Arial', fontWeight: 500, fontSize: 15, lineHeight: 1.2 }}>
               {lieu}
             </Typography>
           </Box>
           {/* Bloc dates/horaires */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, mt: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', px: 4, mb: 2 }}>
             <Box sx={{ textAlign: 'left' }}>
-              <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 18 }}>{date}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
             </Box>
             <Typography variant="h4" color="text.secondary" sx={{ mx: 2, fontWeight: 300, fontSize: 32 }}>&#8594;</Typography>
             <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 18 }}>{dateFin}</Typography>
+              <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{dateFin}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heureFin}</Typography>
             </Box>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Bloc identité : à gauche (nom, code), à droite (fonction, ville) */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-            <Box>
-              <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 22 }}>{prenom} {nom}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>Code : <b>{badgeCode}</b></Typography>
-            </Box>
-            <Box sx={{ textAlign: 'right' }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{fonction}</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{ville}</Typography>
-            </Box>
+          {/* Bloc central : nom/prénom/fonction/ville/code */}
+          <Box sx={{ px: 4, mb: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom} <span style={{ fontWeight: 400, fontSize: 17, marginLeft: 8 }}>{fonction}</span></Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{ville}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>Code : <b>{badgeCode}</b></Typography>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Bas du badge */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', minHeight: 120 }}>
-            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 15, textAlign: 'center', mb: 0.5 }}>
+          {/* Bas du badge : texte badge nominatif, site web, QR code en bas à droite */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', minHeight: 120, px: 4, pb: 2 }}>
+            <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mb: 1 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 15, mb: 0.5 }}>
                 BADGE nominatif personnel – Présentez-le à l'entrée
               </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700, fontSize: 15, textAlign: 'center', letterSpacing: 1 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700, fontSize: 15, letterSpacing: 1 }}>
                 www.app.cnol.ma
               </Typography>
             </Box>
-            <Box sx={{ position: 'absolute', right: 0, bottom: 0, p: 1 }}>
+            <Box sx={{ position: 'absolute', right: 24, bottom: 16 }}>
               <QRCode value={badgeCode} size={80} />
             </Box>
           </Box>
