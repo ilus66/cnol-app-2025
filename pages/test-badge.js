@@ -46,31 +46,33 @@ export default function TestBadge() {
               Centre de conférences Fm6education -<br/>Av. Allal Al Fassi RABAT
             </Typography>
           </Box>
-          {/* Bloc dates/horaires rapprochés */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', px: 4, mb: 2 }}>
+          {/* Bloc dates/horaires descendu et flèche centrée */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', px: 4, mb: 2, mt: 2 }}>
             <Box sx={{ textAlign: 'left', minWidth: 120 }}>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
             </Box>
-            <Typography variant="h4" color="text.secondary" sx={{ mx: 1, fontWeight: 300, fontSize: 28 }}>&#8594;</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', mx: 1 }}>
+              <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 300, fontSize: 28, lineHeight: 1, mt: '2px' }}>&#8594;</Typography>
+            </Box>
             <Box sx={{ textAlign: 'left', minWidth: 120, ml: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{dateFin}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heureFin}</Typography>
             </Box>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Bloc central : nom/prénom, fonction en dessous, ville/code */}
+          {/* Bloc central : nom/prénom, fonction en gras dessous, ville/code */}
           <Box sx={{ px: 4, mb: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{fonction}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800, fontSize: 15 }}>{fonction}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{ville}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>Code : <b>{badgeCode}</b></Typography>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Bas du badge : texte badge nominatif, site web, QR code en bas à droite */}
+          {/* Bas du badge : texte badge nominatif plus petit, site web, QR code en bas à droite */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', minHeight: 120, px: 4, pb: 2 }}>
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 15, mb: 0.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 12, mb: 0.5 }}>
                 BADGE nominatif personnel – Présentez-le à l'entrée
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700, fontSize: 15, letterSpacing: 1 }}>
