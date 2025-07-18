@@ -61,7 +61,6 @@ const QRCodeScanner = dynamic(() => import('../components/QRCodeScanner'), {
 export const getServerSideProps = async ({ req }) => {
   // Vérifier si l'utilisateur est connecté via la session
   const sessionCookie = req.cookies['cnol-session'];
-  
   if (!sessionCookie) {
     return {
       redirect: {
@@ -70,11 +69,9 @@ export const getServerSideProps = async ({ req }) => {
       },
     };
   }
-
   try {
     // Décoder la session
     const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
-    
     if (!sessionData || !sessionData.id) {
       return {
         redirect: {
@@ -83,46 +80,71 @@ export const getServerSideProps = async ({ req }) => {
         },
       };
     }
-
-    // 1. Récupérer les données de base de l'utilisateur
-    const { data: userData, error: userError } = await supabase
+    // 1. Récupérer l'utilisateur dans inscription
+    let { data: userData, error: userError } = await supabase
       .from('inscription')
       .select('*')
       .eq('id', sessionData.id)
       .single();
-
+    let userType = 'inscription';
+    // 2. Si non trouvé, chercher dans whatsapp (par id ou telephone)
     if (userError || !userData) {
-      return {
-        redirect: {
-          destination: '/identification?error=user_not_found',
-          permanent: false,
-        },
-      };
+      userType = 'whatsapp';
+      // On tente par id (si id WhatsApp) puis par téléphone (si sessionData.telephone existe)
+      let userWhatsapp = null;
+      if (sessionData.id) {
+        const { data } = await supabase
+          .from('whatsapp')
+          .select('*')
+          .eq('id', sessionData.id)
+          .single();
+        userWhatsapp = data;
+      }
+      if (!userWhatsapp && sessionData.telephone) {
+        const { data } = await supabase
+          .from('whatsapp')
+          .select('*')
+          .eq('telephone', sessionData.telephone)
+          .single();
+        userWhatsapp = data;
+      }
+      if (!userWhatsapp && sessionData.identifiant_badge) {
+        const { data } = await supabase
+          .from('whatsapp')
+          .select('*')
+          .eq('identifiant_badge', sessionData.identifiant_badge)
+          .single();
+        userWhatsapp = data;
+      }
+      if (!userWhatsapp) {
+        return {
+          redirect: {
+            destination: '/identification?error=user_not_found',
+            permanent: false,
+          },
+        };
+      }
+      userData = userWhatsapp;
     }
-    
-    // 2. Récupérer les réservations d'ateliers par email
-    const { data: ateliersData, error: ateliersError } = await supabase
+    // 3. Récupérer les réservations ateliers/masterclass si email dispo (pour uniformité)
+    let ateliersData = [], masterclassData = [];
+    if (userData.email) {
+      const { data: aData } = await supabase
         .from('reservations_ateliers')
         .select('*, ateliers(*)')
         .eq('email', userData.email);
-
-    // 3. Récupérer les réservations de masterclass par email
-    const { data: masterclassData, error: masterclassError } = await supabase
+      ateliersData = aData || [];
+      const { data: mData } = await supabase
         .from('reservations_masterclass')
         .select('*, masterclasses:masterclass(*)')
         .eq('email', userData.email);
-
-    if (ateliersError || masterclassError) {
-        console.error("Erreur de récupération des réservations:", ateliersError, masterclassError);
+      masterclassData = mData || [];
     }
-    
-    // 4. Combiner les données et les passer au composant
     const userWithReservations = {
       ...userData,
-      reservations_ateliers: ateliersData || [],
-      reservations_masterclass: masterclassData || [],
+      reservations_ateliers: ateliersData,
+      reservations_masterclass: masterclassData,
     };
-
     return {
       props: {
         user: userWithReservations,
@@ -758,386 +780,4 @@ export default function MonEspace({ user }) {
                         onClick={async () => {
                           const toastId = toast.loading('Génération du ticket...');
                           try {
-                            const res = await fetch(`/api/download-ticket-masterclass?id=${reservation.id}`);
-                            if (!res.ok) {
-                              const errorData = await res.json();
-                              throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
-                            }
-                            const blob = await res.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const link = document.createElement('a');
-                            link.href = url;
-                            const titreSafe = reservation.masterclasses?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                            link.setAttribute('download', `ticket-masterclass-${titreSafe}.pdf`);
-                            document.body.appendChild(link);
-                            link.click();
-                            link.parentNode.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                            toast.success('Ticket téléchargé !', { id: toastId });
-                          } catch (e) {
-                            console.error("Erreur téléchargement ticket:", e);
-                            toast.error(`Erreur: ${e.message}`, { id: toastId });
-                          }
-                        }}
-                      >
-                        TÉLÉCHARGER LE TICKET
-                      </Button>
-                    </Paper>
-                  ))}
-                </List>
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Aucune masterclass validée
-                </Typography>
-              )}
-              {settings.ouverture_reservation_masterclass && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    width: '100%',
-                    borderRadius: 999,
-                    fontWeight: 'bold',
-                    fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                    letterSpacing: 1,
-                    py: 1.2,
-                    my: 1.5,
-                    textTransform: 'none',
-                    whiteSpace: 'normal',
-                    px: 2
-                  }}
-                  href="/reservation-masterclass"
-                >
-                  RÉSERVER UNE MASTERCLASS
-                </Button>
-              )}
-            </Paper>
-          </Grid>
-        )}
-
-        {/* Scanner Badge */}
-        {user.valide && (
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                <QrCodeScanner sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Scanner un Contact
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Scannez le badge d'un autre participant pour échanger vos coordonnées.
-              </Typography>
-              <Button 
-                variant="contained" 
-                fullWidth
-                href="/scan-contact"
-                startIcon={<QrCodeScanner />}
-              >
-                Ouvrir le scanner
-              </Button>
-            </Paper>
-          </Grid>
-        )}
-
-        {/* Contacts Collectés */}
-        {user.valide && (
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                <ContactPhone sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Contacts Collectés
-                <Badge badgeContent={contacts.length} color="primary" sx={{ ml: 2 }} />
-                {contacts.length > 5 && (
-                  <Button size="small" sx={{ ml: 2 }} onClick={() => setContactsModalOpen(true)}>
-                    Voir tous les contacts
-                  </Button>
-                )}
-              </Typography>
-              {contacts.length > 0 ? (
-                <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                  {contacts.slice(0, 5).map((contact, index) => (
-                    <ListItem key={index} alignItems="flex-start" divider={index < Math.min(contacts.length, 5) - 1}>
-                      <ListItemAvatar>
-                        <Avatar>
-                          <Person />
-                        </Avatar>
-                      </ListItemAvatar>
-                      <ListItemText
-                        primary={contact.prenom ? `${contact.prenom} ${contact.nom}` : contact.nom}
-                        secondary={
-                          <>
-                            <Typography
-                              sx={{ display: 'block' }}
-                              component="span"
-                              variant="body2"
-                              color="text.primary"
-                            >
-                              {contact.fonction}
-                            </Typography>
-                            {`${contact.email} • ${contact.telephone || 'N/A'}`}
-                          </>
-                        }
-                      />
-                      <Button size="small" onClick={() => downloadVCard(contact)} sx={{ ml: 2 }}>
-                        Ajouter au contacts
-                      </Button>
-                    </ListItem>
-                  ))}
-                </List>
-              ) : (
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                  Aucun contact collecté. Scannez un badge pour commencer !
-                </Typography>
-              )}
-              {/* Modal pour tous les contacts */}
-              <Dialog open={contactsModalOpen} onClose={() => setContactsModalOpen(false)} maxWidth="sm" fullWidth>
-                <DialogTitle>Tous les contacts collectés</DialogTitle>
-                <DialogContent>
-                  <List sx={{ width: '100%', bgcolor: 'background.paper' }}>
-                    {contacts.map((contact, index) => (
-                      <ListItem key={index} alignItems="flex-start" divider={index < contacts.length - 1}>
-                        <ListItemAvatar>
-                          <Avatar>
-                            <Person />
-                          </Avatar>
-                        </ListItemAvatar>
-                        <ListItemText
-                          primary={contact.prenom ? `${contact.prenom} ${contact.nom}` : contact.nom}
-                          secondary={
-                            <>
-                              <Typography
-                                sx={{ display: 'block' }}
-                                component="span"
-                                variant="body2"
-                                color="text.primary"
-                              >
-                                {contact.fonction}
-                              </Typography>
-                              {`${contact.email} • ${contact.telephone || 'N/A'}`}
-                            </>
-                          }
-                        />
-                        <Button size="small" onClick={() => downloadVCard(contact)} sx={{ ml: 2 }}>
-                          Ajouter au contacts
-                        </Button>
-                      </ListItem>
-                    ))}
-                  </List>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => setContactsModalOpen(false)}>Fermer</Button>
-                </DialogActions>
-              </Dialog>
-            </Paper>
-          </Grid>
-        )}
-
-        {/* Postuler CNOL d'Or - Condition d'affichage ajoutée */}
-        {user.valide && user.fonction === 'Opticien' && (
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
-                CNOL d'Or 2025
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Postulez pour le prix CNOL d'Or 2025
-              </Typography>
-              <Button 
-                variant="contained" 
-                fullWidth
-                href="/cnol-dor"
-                startIcon={<EmojiEvents />}
-              >
-                Postuler au CNOL d'Or
-              </Button>
-            </Paper>
-          </Grid>
-        )}
-
-        {/* Réserver un Hôtel */}
-        {user.valide && (
-          <Grid item xs={12} md={6}>
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                <Hotel sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Réserver un Hôtel
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Consultez et réservez dans nos hôtels partenaires
-              </Typography>
-              <Button 
-                variant="contained" 
-                fullWidth
-                href="/hotels"
-                startIcon={<Hotel />}
-              >
-                Voir les hôtels partenaires
-              </Button>
-            </Paper>
-          </Grid>
-        )}
-
-        {/* Section Stands visités - harmonisée */}
-        {user.valide && (
-          <Grid item xs={12}>
-            <Paper sx={{ p: 3, mb: 3 }}>
-              <Typography variant="h5" gutterBottom>
-                <QrCodeScanner sx={{ mr: 1, verticalAlign: 'middle' }} />
-                Stands visités
-              </Typography>
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<QrCodeScanner />}
-                href="/scan-stand-visiteur"
-                fullWidth
-                sx={{ mb: 2, fontWeight: 'bold' }}
-              >
-                Scanner un stand
-              </Button>
-              {loadingStandsVisites ? (
-                <CircularProgress sx={{ ml: 2 }} />
-              ) : standsVisites.length > 0 ? (
-                <Stack spacing={2}>
-                  {standsVisites.map((sv, idx) => {
-                    const exposant = exposantsList.find(e => e.id === sv.exposant_id);
-                    return (
-                      <Paper key={idx} sx={{ p: 2, borderRadius: 3, boxShadow: 0, bgcolor: '#fff' }}>
-                        <Stack direction="row" alignItems="center" spacing={2}>
-                          <Avatar
-                            src={exposant?.logo_url || undefined}
-                            alt={exposant?.nom || 'Stand inconnu'}
-                            sx={{ width: 48, height: 48, bgcolor: 'white', border: '1px solid #eee' }}
-                          >
-                            {exposant?.nom ? exposant.nom[0].toUpperCase() : '?'}
-                          </Avatar>
-                          <Box sx={{ flex: 1 }}>
-                            <Typography variant="subtitle1" fontWeight="bold">{exposant?.nom || 'Stand inconnu'}</Typography>
-                            {exposant?.type_produits && (
-                              <Typography variant="body2" color="text.secondary">{exposant.type_produits}</Typography>
-                            )}
-                            <Typography variant="caption" color="text.secondary">
-                              {sv.created_at && `Visité le ${new Date(sv.created_at).toLocaleString('fr-FR')}`}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                        {exposant?.id && (
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            startIcon={<Download />}
-                            fullWidth
-                            sx={{ mt: 2, fontWeight: 'bold' }}
-                            onClick={() => handleDownloadExposantFiche(exposant.id, exposant.nom)}
-                          >
-                            Télécharger la fiche exposant
-                          </Button>
-                        )}
-                      </Paper>
-                    );
-                  })}
-                </Stack>
-              ) : (
-                <Typography variant="body2" color="text.secondary">Aucun stand visité pour l'instant.</Typography>
-              )}
-            </Paper>
-          </Grid>
-        )}
-
-        {/* Section Exposants harmonisée */}
-        <Box sx={{ maxWidth: 500, mx: 'auto', mb: 3 }}>
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-            <Typography variant="h5" gutterBottom>Exposants</Typography>
-            <Stack spacing={2}>
-              {exposantsList && exposantsList.length > 0 ?
-                exposantsList.filter(exp => exp.publie).sort((a, b) => {
-                  const order = { platinum: 1, gold: 2, 'silver+': 3, silver: 4 };
-                  const aRank = order[(a.sponsoring_level || '').toLowerCase()] || 99;
-                  const bRank = order[(b.sponsoring_level || '').toLowerCase()] || 99;
-                  if (aRank !== bRank) return aRank - bRank;
-                  return (a.nom || '').localeCompare(b.nom || '');
-                }).map(exp => (
-                  <Paper key={exp.id} sx={{ p: 2, borderRadius: 3, boxShadow: 0, bgcolor: '#fff' }}>
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Avatar src={exp.logo_url} alt={exp.nom} sx={{ width: 48, height: 48 }} />
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight="bold">{exp.nom}</Typography>
-                        {exp.sponsoring_level && <Chip label={exp.sponsoring_level.toUpperCase()} color="primary" size="small" sx={{ mt: 1 }} />}
-                      </Box>
-                    </Stack>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      component={Link}
-                      href={`/exposant/${exp.id}`}
-                      sx={{ mt: 2 }}
-                    >
-                      Voir la fiche
-                    </Button>
-                  </Paper>
-                )) : (
-                <Typography>Aucun exposant à afficher.</Typography>
-              )}
-            </Stack>
-          </Paper>
-        </Box>
-
-        <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, mb: 4 }}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>Programme général</Typography>
-            {settings.programme_published && (
-              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                <Button variant="contained" color="primary" href="/programme-complet.pdf" target="_blank" startIcon={<Download />}>Télécharger le programme complet</Button>
-              </Stack>
-            )}
-          </Paper>
-        </Box>
-
-        {/* Section Intervenants */}
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              <Person sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Intervenants
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Découvrez tous les intervenants, leurs parcours et leurs participations au congrès.
-            </Typography>
-            <Button 
-              variant="contained" 
-              fullWidth
-              href="/intervenants"
-              startIcon={<Person />}
-            >
-              Voir les intervenants
-            </Button>
-          </Paper>
-        </Grid>
-
-        {/* Localisation Événement (map) - doit être la dernière section */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
-              <LocationOn sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Localisation de l'Événement
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              CNOL 2025 - Rabat, Maroc
-            </Typography>
-            <Box sx={{ height: 300, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
-              <iframe 
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3308.556696027705!2d-6.870305288928752!3d33.97823197307313!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xda76cdca2be509f%3A0x5737e47164ae0407!2sFondation%20Mohammed%20VI%20de%20Promotion%20des%20Oeuvres%20Sociales%20de%20l'Education%20et%20de%20Formation!5e0!3m2!1sfr!2sma!4v1750541270419!5m2!1sfr!2sma"
-                width="100%"
-                height="100%"
-                style={{ border: 0 }}
-                allowFullScreen=""
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
-    </Box>
-  );
-}
+                            const res = await fetch(`
