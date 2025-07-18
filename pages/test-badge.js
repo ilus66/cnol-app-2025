@@ -61,6 +61,14 @@ export default function TestBadge() {
             </Box>
           </Box>
           <Divider sx={{ my: 2 }} />
+          {/* Bloc central : nom/prénom, fonction en gras dessous, ville/code */}
+          <Box sx={{ px: 4, mb: 1, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+            <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800, fontSize: 15 }}>{fonction}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{ville}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>Code : <b>{badgeCode}</b></Typography>
+          </Box>
+          <Divider sx={{ my: 2 }} />
           {/* Bas du badge : texte badge nominatif sous la dernière ligne, URL, QR code en bas à droite */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', minHeight: 100, px: 4, pb: 2 }}>
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mb: 1 }}>
