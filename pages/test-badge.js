@@ -52,7 +52,7 @@ export default function TestBadge() {
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', mx: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', mx: 2 }}>
               <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 300, fontSize: 28, lineHeight: 1, mt: '2px' }}>&#8594;</Typography>
             </Box>
             <Box sx={{ textAlign: 'left', minWidth: 120, ml: 2 }}>
@@ -61,6 +61,12 @@ export default function TestBadge() {
             </Box>
           </Box>
           <Divider sx={{ my: 2 }} />
+          {/* Texte badge nominatif juste sous le séparateur, URL en bas */}
+          <Box sx={{ px: 4, mb: 1 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 12, mb: 0.5 }}>
+              BADGE nominatif personnel – Présentez-le à l'entrée
+            </Typography>
+          </Box>
           {/* Bloc central : nom/prénom, fonction en gras dessous, ville/code */}
           <Box sx={{ px: 4, mb: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom}</Typography>
@@ -69,12 +75,9 @@ export default function TestBadge() {
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>Code : <b>{badgeCode}</b></Typography>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Bas du badge : texte badge nominatif plus petit, site web, QR code en bas à droite */}
-          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', minHeight: 120, px: 4, pb: 2 }}>
+          {/* Bas du badge : site web, QR code en bas à droite */}
+          <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', minHeight: 100, px: 4, pb: 2 }}>
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 12, mb: 0.5 }}>
-                BADGE nominatif personnel – Présentez-le à l'entrée
-              </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700, fontSize: 15, letterSpacing: 1 }}>
                 www.app.cnol.ma
               </Typography>
