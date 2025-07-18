@@ -34,7 +34,7 @@ export default function TestBadge() {
           overflow: 'hidden',
         }}>
           {/* Logo CNOL en haut à gauche, réduit de moitié et aligné à gauche comme le titre */}
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', pt: 3, pb: 0, pl: 4 }}>
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'left', pt: 3, pb: 0, pl: 4 }}>
             <img src={logoUrl} alt="Logo CNOL" style={{ width: 220, height: 56, objectFit: 'contain' }} />
           </Box>
           {/* Titre principal sur deux lignes et adresse */}
