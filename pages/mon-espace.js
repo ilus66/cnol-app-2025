@@ -61,6 +61,7 @@ const QRCodeScanner = dynamic(() => import('../components/QRCodeScanner'), {
 export const getServerSideProps = async ({ req }) => {
   // Vérifier si l'utilisateur est connecté via la session
   const sessionCookie = req.cookies['cnol-session'];
+  
   if (!sessionCookie) {
     return {
       redirect: {
@@ -69,9 +70,11 @@ export const getServerSideProps = async ({ req }) => {
       },
     };
   }
+
   try {
     // Décoder la session
     const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+    
     if (!sessionData || !sessionData.id) {
       return {
         redirect: {
@@ -80,71 +83,46 @@ export const getServerSideProps = async ({ req }) => {
         },
       };
     }
-    // 1. Récupérer l'utilisateur dans inscription
-    let { data: userData, error: userError } = await supabase
+
+    // 1. Récupérer les données de base de l'utilisateur
+    const { data: userData, error: userError } = await supabase
       .from('inscription')
       .select('*')
       .eq('id', sessionData.id)
       .single();
-    let userType = 'inscription';
-    // 2. Si non trouvé, chercher dans whatsapp (par id ou telephone)
+
     if (userError || !userData) {
-      userType = 'whatsapp';
-      // On tente par id (si id WhatsApp) puis par téléphone (si sessionData.telephone existe)
-      let userWhatsapp = null;
-      if (sessionData.id) {
-        const { data } = await supabase
-          .from('whatsapp')
-          .select('*')
-          .eq('id', sessionData.id)
-          .single();
-        userWhatsapp = data;
-      }
-      if (!userWhatsapp && sessionData.telephone) {
-        const { data } = await supabase
-          .from('whatsapp')
-          .select('*')
-          .eq('telephone', sessionData.telephone)
-          .single();
-        userWhatsapp = data;
-      }
-      if (!userWhatsapp && sessionData.identifiant_badge) {
-        const { data } = await supabase
-          .from('whatsapp')
-          .select('*')
-          .eq('identifiant_badge', sessionData.identifiant_badge)
-          .single();
-        userWhatsapp = data;
-      }
-      if (!userWhatsapp) {
-        return {
-          redirect: {
-            destination: '/identification?error=user_not_found',
-            permanent: false,
-          },
-        };
-      }
-      userData = userWhatsapp;
+      return {
+        redirect: {
+          destination: '/identification?error=user_not_found',
+          permanent: false,
+        },
+      };
     }
-    // 3. Récupérer les réservations ateliers/masterclass si email dispo (pour uniformité)
-    let ateliersData = [], masterclassData = [];
-    if (userData.email) {
-      const { data: aData } = await supabase
+    
+    // 2. Récupérer les réservations d'ateliers par email
+    const { data: ateliersData, error: ateliersError } = await supabase
         .from('reservations_ateliers')
         .select('*, ateliers(*)')
         .eq('email', userData.email);
-      ateliersData = aData || [];
-      const { data: mData } = await supabase
+
+    // 3. Récupérer les réservations de masterclass par email
+    const { data: masterclassData, error: masterclassError } = await supabase
         .from('reservations_masterclass')
         .select('*, masterclasses:masterclass(*)')
         .eq('email', userData.email);
-      masterclassData = mData || [];
+
+    if (ateliersError || masterclassError) {
+        console.error("Erreur de récupération des réservations:", ateliersError, masterclassError);
     }
+    
+    // 4. Combiner les données et les passer au composant
     const userWithReservations = {
       ...userData,
-      reservations_ateliers: ateliersData,
-      reservations_masterclass: masterclassData,
+      reservations_ateliers: ateliersData || [],
+      reservations_masterclass: masterclassData || [],
     };
+
     return {
       props: {
         user: userWithReservations,
@@ -780,337 +758,4 @@ export default function MonEspace({ user }) {
                         onClick={async () => {
                           const toastId = toast.loading('Génération du ticket...');
                           try {
-                            const res = await fetch(`/api/download-ticket-masterclass?id=${reservation.id}`);
-                            if (!res.ok) {
-                              const errorData = await res.json();
-                              throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
-                            }
-                            const blob = await res.blob();
-                            const url = window.URL.createObjectURL(blob);
-                            const titreSafe = reservation.masterclasses?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-                            const link = document.createElement('a');
-                            link.href = url;
-                            link.setAttribute('download', `ticket-masterclass-${titreSafe}.pdf`);
-                            document.body.appendChild(link);
-                            link.click();
-                            link.parentNode.removeChild(link);
-                            window.URL.revokeObjectURL(url);
-                            toast.success('Ticket téléchargé !', { id: toastId });
-                          } catch (e) {
-                            console.error("Erreur téléchargement ticket:", e);
-                            toast.error(`Erreur: ${e.message}`, { id: toastId });
-                          }
-                        }}
-                      >
-                        TÉLÉCHARGER LE TICKET
-                      </Button>
-                    </Paper>
-                  ))}
-                </List>
-              ) : (
-                <Typography variant="body2" color="text.secondary">
-                  Aucune masterclass validée
-                </Typography>
-              )}
-              {settings.ouverture_reservation_masterclass && (
-                <Button
-                  variant="contained"
-                  color="primary"
-                  sx={{
-                    width: '100%',
-                    borderRadius: 999,
-                    fontWeight: 'bold',
-                    fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                    letterSpacing: 1,
-                    py: 1.2,
-                    my: 1.5,
-                    textTransform: 'none',
-                    whiteSpace: 'normal',
-                    px: 2
-                  }}
-                  href="/reservation-masterclass"
-                >
-                  RÉSERVER UNE MASTERCLASS
-                </Button>
-              )}
-            </Paper>
-          </Grid>
-        )}
-
-        {/* Section Programme */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-            <Typography variant="h6" gutterBottom>
-              <Event sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Programme Scientifique
-            </Typography>
-            {programmeLoading ? (
-              <CircularProgress />
-            ) : (
-              <ReactMarkdown>{programme}</ReactMarkdown>
-            )}
-            {programmeDate && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                Date de publication : {new Date(programmeDate).toLocaleDateString('fr-FR', { dateStyle: 'full' })}
-              </Typography>
-            )}
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<Download />}
-              sx={{
-                width: '100%',
-                borderRadius: 3,
-                fontWeight: 'bold',
-                fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                letterSpacing: 1,
-                py: 1.2,
-                mt: 2,
-                textTransform: 'none'
-              }}
-              onClick={handleDownloadProgrammePdf}
-            >
-              TÉLÉCHARGER LE PROGRAMME (PDF)
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<Share />}
-              sx={{
-                width: '100%',
-                borderRadius: 3,
-                fontWeight: 'bold',
-                fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                letterSpacing: 1,
-                py: 1.2,
-                mt: 2,
-                textTransform: 'none'
-              }}
-              onClick={handleShareWhatsapp}
-            >
-              PARTAGER LE PROGRAMME SUR WHATSAPP
-            </Button>
-          </Paper>
-        </Grid>
-
-        {/* Section Exposants */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-            <Typography variant="h6" gutterBottom>
-              <Store sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Nos Exposants
-            </Typography>
-            {exposantsList.length === 0 ? (
-              <Typography variant="body2" color="text.secondary">
-                Aucun exposant enregistré pour le moment.
-              </Typography>
-            ) : (
-              <Grid container spacing={2}>
-                {exposantsList.map((exposant) => (
-                  <Grid item xs={12} sm={6} md={4} key={exposant.id}>
-                    <Card sx={{ height: '100%' }}>
-                      <CardContent>
-                        <Typography variant="h6" gutterBottom>
-                          {exposant.nom}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {exposant.description}
-                        </Typography>
-                        <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-                          {exposant.site_web && (
-                            <Button
-                              variant="outlined"
-                              color="primary"
-                              startIcon={<Link />}
-                              size="small"
-                              onClick={() => window.open(exposant.site_web, '_blank')}
-                            >
-                              Site Web
-                            </Button>
-                          )}
-                          {exposant.stand && (
-                            <Button
-                              variant="outlined"
-                              color="info"
-                              startIcon={<LocationOn />}
-                              size="small"
-                              onClick={() => {
-                                const stand = standsVisites.find(s => s.exposant_id === exposant.id);
-                                if (stand) {
-                                  window.open(`/stand/${stand.id}`, '_blank');
-                                } else {
-                                  toast.error('Stand de cet exposant non trouvé.');
-                                }
-                              }}
-                            >
-                              Mon Stand
-                            </Button>
-                          )}
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            startIcon={<Download />}
-                            size="small"
-                            onClick={() => handleDownloadExposantFiche(exposant.id, exposant.nom)}
-                          >
-                            Fiche Exposant
-                          </Button>
-                        </Stack>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                ))}
-              </Grid>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Section Contacts */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-            <Typography variant="h6" gutterBottom>
-              <ContactPhone sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Mes Contacts
-            </Typography>
-            <List>
-              {contacts.map((contact) => (
-                <ListItem key={contact.id} button onClick={() => downloadVCard(contact)}>
-                  <ListItemAvatar>
-                    <Avatar>{contact.prenom ? contact.prenom.charAt(0) : contact.nom.charAt(0)}</Avatar>
-                  </ListItemAvatar>
-                  <ListItemText
-                    primary={`${contact.prenom || ''}${contact.prenom ? ' ' : ''}${contact.nom}`}
-                    secondary={contact.email || contact.telephone}
-                  />
-                </ListItem>
-              ))}
-            </List>
-            <Button
-              variant="contained"
-              color="primary"
-              startIcon={<ContactPhone />}
-              sx={{
-                width: '100%',
-                borderRadius: 3,
-                fontWeight: 'bold',
-                fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                letterSpacing: 1,
-                py: 1.2,
-                mt: 2,
-                textTransform: 'none'
-              }}
-              onClick={() => setContactsModalOpen(true)}
-            >
-              AJOUTER UN NOUVEAU CONTACT
-            </Button>
-          </Paper>
-        </Grid>
-
-        {/* Section Paramètres */}
-        <Grid item xs={12}>
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-            <Typography variant="h6" gutterBottom>
-              <Settings sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Paramètres
-            </Typography>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={notificationsEnabled}
-                  onChange={handleNotificationToggle}
-                  name="notifications"
-                  color="primary"
-                />
-              }
-              label="Recevoir les notifications push"
-            />
-            <Button
-              variant="contained"
-              color="info"
-              startIcon={<Notifications />}
-              sx={{
-                width: '100%',
-                borderRadius: 3,
-                fontWeight: 'bold',
-                fontSize: { xs: '0.95rem', sm: '1.05rem' },
-                letterSpacing: 1,
-                py: 1.2,
-                mt: 2,
-                textTransform: 'none'
-              }}
-              onClick={handleNotificationToggle}
-            >
-              {notificationsEnabled ? 'DÉSACTIVER LES NOTIFICATIONS' : 'ACTIVER LES NOTIFICATIONS'}
-            </Button>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Modal de gestion des contacts */}
-      <Dialog open={contactsModalOpen} onClose={() => setContactsModalOpen(false)}>
-        <DialogTitle>Ajouter un nouveau contact</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2}>
-            <TextField
-              label="Nom"
-              value={newContact.nom}
-              onChange={(e) => setNewContact({ ...newContact, nom: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label="Prénom"
-              value={newContact.prenom}
-              onChange={(e) => setNewContact({ ...newContact, prenom: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label="Email"
-              value={newContact.email}
-              onChange={(e) => setNewContact({ ...newContact, email: e.target.value })}
-              fullWidth
-            />
-            <TextField
-              label="Téléphone"
-              value={newContact.telephone}
-              onChange={(e) => setNewContact({ ...newContact, telephone: e.target.value })}
-              fullWidth
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setContactsModalOpen(false)} color="primary">
-            Annuler
-          </Button>
-          <Button
-            onClick={async () => {
-              setLoading(true);
-              setError('');
-              setSuccess('');
-              const { error } = await supabase
-                .from('contacts')
-                .insert({
-                  nom: newContact.nom,
-                  prenom: newContact.prenom,
-                  email: newContact.email,
-                  telephone: newContact.telephone,
-                  user_id: user.id,
-                });
-              if (error) {
-                setError("Erreur lors de l'ajout du contact : " + error.message);
-              } else {
-                setSuccess('Contact ajouté avec succès !');
-                setContacts(prev => [...prev, newContact]);
-                setNewContact({ nom: '', prenom: '', email: '', telephone: '' });
-              }
-              setLoading(false);
-            }}
-            color="primary"
-            disabled={loading}
-          >
-            {loading ? 'Ajout...' : 'Ajouter'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
-  );
-}
+                            const res = await fetch(`
