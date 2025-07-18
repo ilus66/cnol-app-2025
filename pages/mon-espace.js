@@ -657,12 +657,12 @@ export default function MonEspace({ user }) {
                         onClick={async () => {
                           const toastId = toast.loading('Génération du ticket...');
                           try {
-                            const res = await fetch(`/api/download-ticket-atelier?id=${reservation.id}`);
-                            if (!res.ok) {
-                              const errorData = await res.json();
+                            const resAtelier = await fetch(`/api/download-ticket-atelier?id=${reservation.id}`);
+                            if (!resAtelier.ok) {
+                              const errorData = await resAtelier.json();
                               throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
                             }
-                            const blob = await res.blob();
+                            const blob = await resAtelier.blob();
                             const url = window.URL.createObjectURL(blob);
                             const titreSafe = reservation.ateliers?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
                             const link = document.createElement('a');
@@ -758,4 +758,226 @@ export default function MonEspace({ user }) {
                         onClick={async () => {
                           const toastId = toast.loading('Génération du ticket...');
                           try {
-                            const res = await fetch(`
+                            const resMasterclass = await fetch(`/api/download-ticket-masterclass?id=${reservation.id}`);
+                            if (!resMasterclass.ok) {
+                              const errorData = await resMasterclass.json();
+                              throw new Error(errorData.message || 'Erreur lors de la génération du ticket');
+                            }
+                            const blob = await resMasterclass.blob();
+                            const url = window.URL.createObjectURL(blob);
+                            const titreSafe = reservation.masterclasses?.titre.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.setAttribute('download', `ticket-masterclass-${titreSafe}.pdf`);
+                            document.body.appendChild(link);
+                            link.click();
+                            link.parentNode.removeChild(link);
+                            window.URL.revokeObjectURL(url);
+                            toast.success('Ticket téléchargé !', { id: toastId });
+                          } catch (e) {
+                            console.error("Erreur téléchargement ticket:", e);
+                            toast.error(`Erreur: ${e.message}`, { id: toastId });
+                          }
+                        }}
+                      >
+                        TÉLÉCHARGER LE TICKET
+                      </Button>
+                    </Paper>
+                  ))}
+                </List>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Aucun masterclass validé
+                </Typography>
+              )}
+              {settings.ouverture_reservation_masterclass && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  sx={{
+                    width: '100%',
+                    borderRadius: 999,
+                    fontWeight: 'bold',
+                    fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                    letterSpacing: 1,
+                    py: 1.2,
+                    my: 1.5,
+                    textTransform: 'none',
+                    whiteSpace: 'normal',
+                    px: 2
+                  }}
+                  href="/reservation-masterclass"
+                >
+                  RÉSERVER UNE MASTERCLASS
+                </Button>
+              )}
+            </Paper>
+          </Grid>
+        )}
+
+        {/* Programme général */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+            <Typography variant="h6" gutterBottom>
+              <Map sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Programme Général
+            </Typography>
+            {programmeLoading ? (
+              <CircularProgress />
+            ) : (
+              <ReactMarkdown>{programme}</ReactMarkdown>
+            )}
+            <Button
+              variant="contained"
+              color="primary"
+              startIcon={<Download />}
+              sx={{
+                width: '100%',
+                borderRadius: 3,
+                fontWeight: 'bold',
+                fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                letterSpacing: 1,
+                py: 1.2,
+                mt: 2,
+                textTransform: 'none'
+              }}
+              onClick={handleDownloadProgrammePdf}
+            >
+              TÉLÉCHARGER LE PROGRAMME (PDF)
+            </Button>
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<ContactPhone />}
+              sx={{
+                width: '100%',
+                borderRadius: 3,
+                fontWeight: 'bold',
+                fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                letterSpacing: 1,
+                py: 1.2,
+                mt: 2,
+                textTransform: 'none'
+              }}
+              onClick={handleShareWhatsapp}
+            >
+              PARTAGER LE PROGRAMME SUR WHATSAPP
+            </Button>
+          </Paper>
+        </Grid>
+
+        {/* Exposants */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+            <Typography variant="h6" gutterBottom>
+              <EmojiEvents sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Exposants
+            </Typography>
+            <Grid container spacing={2}>
+              {exposantsList.map((exposant) => (
+                <Grid item xs={12} sm={6} md={4} key={exposant.id}>
+                  <Card sx={{ height: '100%' }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom>
+                        {exposant.nom}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {exposant.description}
+                      </Typography>
+                      <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+                        {exposant.site_web && (
+                          <Button
+                            variant="outlined"
+                            color="primary"
+                            startIcon={<LocationOn />}
+                            href={exposant.site_web}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            size="small"
+                          >
+                            Site Web
+                          </Button>
+                        )}
+                        {exposant.email && (
+                          <Button
+                            variant="outlined"
+                            color="info"
+                            startIcon={<ContactPhone />}
+                            href={`mailto:${exposant.email}`}
+                            size="small"
+                          >
+                            {exposant.email}
+                          </Button>
+                        )}
+                        {exposant.telephone && (
+                          <Button
+                            variant="outlined"
+                            color="success"
+                            startIcon={<ContactPhone />}
+                            href={`tel:${exposant.telephone}`}
+                            size="small"
+                          >
+                            {exposant.telephone}
+                          </Button>
+                        )}
+                      </Stack>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        startIcon={<Download />}
+                        sx={{
+                          width: '100%',
+                          borderRadius: 3,
+                          fontWeight: 'bold',
+                          fontSize: { xs: '0.95rem', sm: '1.05rem' },
+                          letterSpacing: 1,
+                          py: 1.2,
+                          mt: 2,
+                          textTransform: 'none'
+                        }}
+                        onClick={() => handleDownloadExposantFiche(exposant.id, exposant.nom)}
+                      >
+                        TÉLÉCHARGER LA FICHE EXPOSANT
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Grid>
+
+        {/* Stands visités */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+            <Typography variant="h6" gutterBottom>
+              <LocationOn sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Stands Visités
+            </Typography>
+            {loadingStandsVisites ? (
+              <CircularProgress />
+            ) : (
+              <List>
+                {standsVisites.map((stand) => (
+                  <ListItem key={stand.id} sx={{ alignItems: 'flex-start' }}>
+                    <ListItemAvatar>
+                      <Avatar sx={{ bgcolor: 'primary.main', width: 40, height: 40 }}>
+                        {stand.nom.charAt(0)}
+                      </Avatar>
+                    </ListItemAvatar>
+                    <ListItemText
+                      primary={stand.nom}
+                      secondary={
+                        <ReactMarkdown>{stand.description}</ReactMarkdown>
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            )}
+          </Paper>
+        </Grid>
+      </Grid>
+    </Box>
+  );
+}
