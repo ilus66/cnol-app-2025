@@ -38,13 +38,13 @@ export default async function handler(req, res) {
   console.log('[whatsapp/generate-badge] Contact trouvé', contact);
 
   // Générer ou récupérer le code badge au bon format
-  let badgeCode = contact.code_identification;
+  let badgeCode = contact.identifiant_badge;
   if (!badgeCode || !/^[0-9]{3}[A-Z]{3}$/.test(badgeCode)) {
     badgeCode = generateBadgeCode();
     // Mettre à jour la table whatsapp avec ce code
     await supabaseServiceRole
       .from('whatsapp')
-      .update({ code_identification: badgeCode })
+      .update({ identifiant_badge: badgeCode })
       .eq('id', id);
     console.log('[whatsapp/generate-badge] Nouveau code badge généré et stocké:', badgeCode);
   } else {
