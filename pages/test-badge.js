@@ -43,25 +43,26 @@ export default function TestBadge() {
               CONGRÈS NATIONAL<br/>D'OPTIQUE LUNETTERIE
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'Montserrat, Roboto, Arial', fontWeight: 500, fontSize: 15, lineHeight: 1.2 }}>
-              {lieu}
+              Centre de conférences Fm6education -<br/>Av. Allal Al Fassi RABAT
             </Typography>
           </Box>
-          {/* Bloc dates/horaires */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', px: 4, mb: 2 }}>
-            <Box sx={{ textAlign: 'left' }}>
+          {/* Bloc dates/horaires rapprochés */}
+          <Box sx={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'flex-start', px: 4, mb: 2 }}>
+            <Box sx={{ textAlign: 'left', minWidth: 120 }}>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
             </Box>
-            <Typography variant="h4" color="text.secondary" sx={{ mx: 2, fontWeight: 300, fontSize: 32 }}>&#8594;</Typography>
-            <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="h4" color="text.secondary" sx={{ mx: 1, fontWeight: 300, fontSize: 28 }}>&#8594;</Typography>
+            <Box sx={{ textAlign: 'left', minWidth: 120, ml: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{dateFin}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heureFin}</Typography>
             </Box>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Bloc central : nom/prénom/fonction/ville/code */}
+          {/* Bloc central : nom/prénom, fonction en dessous, ville/code */}
           <Box sx={{ px: 4, mb: 2, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom} <span style={{ fontWeight: 400, fontSize: 17, marginLeft: 8 }}>{fonction}</span></Typography>
+            <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{fonction}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{ville}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>Code : <b>{badgeCode}</b></Typography>
           </Box>
