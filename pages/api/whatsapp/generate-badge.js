@@ -108,7 +108,7 @@ export default async function handler(req, res) {
   try {
     const { error } = await supabaseServiceRole
       .from('whatsapp')
-      .update({ badge_envoye: true, badge_url: badgeUrl })
+      .update({ badge_envoye: true, badge_url: badgeUrl, valide: true }) // Ajout de la validation automatique
       .eq('id', id);
     if (error) {
       console.error('[whatsapp/generate-badge] Erreur update whatsapp', error);
