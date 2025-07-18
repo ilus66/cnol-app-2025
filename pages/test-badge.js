@@ -43,7 +43,7 @@ export default function TestBadge() {
               CONGRÈS NATIONAL<br/>D'OPTIQUE LUNETTERIE
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'Montserrat, Roboto, Arial', fontWeight: 500, fontSize: 15, lineHeight: 1.2 }}>
-              Centre de conférences Fm6education -<br/>Av. Allal Al Fassi RABAT
+              Centre de conférences Fm6education<br/>Av. Allal Al Fassi RABAT
             </Typography>
           </Box>
           {/* Bloc dates/horaires descendu et flèche centrée */}
@@ -52,7 +52,7 @@ export default function TestBadge() {
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%', mx: 3, mt: 0.5 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%', mx: 4, mt: 1.5 }}>
               <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 300, fontSize: 28, lineHeight: 1 }}>&#8594;</Typography>
             </Box>
             <Box sx={{ textAlign: 'left', minWidth: 120, ml: 2 }}>
@@ -64,7 +64,7 @@ export default function TestBadge() {
           {/* Bloc central : nom/prénom, fonction en gras dessous, ville/code */}
           <Box sx={{ px: 4, mb: 1, mt: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 800, fontSize: 15 }}>{fonction}</Typography>
+            <Typography variant="body2" color="text.primary" sx={{ fontWeight: 800, fontSize: 15 }}>{fonction}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{ville}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>Code : <b>{badgeCode}</b></Typography>
           </Box>
