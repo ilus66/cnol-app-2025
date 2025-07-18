@@ -52,8 +52,8 @@ export default function TestBadge() {
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', mx: 2 }}>
-              <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 300, fontSize: 28, lineHeight: 1, mt: '2px' }}>&#8594;</Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%', mx: 3, mt: 0.5 }}>
+              <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 300, fontSize: 28, lineHeight: 1 }}>&#8594;</Typography>
             </Box>
             <Box sx={{ textAlign: 'left', minWidth: 120, ml: 2 }}>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{dateFin}</Typography>
@@ -61,7 +61,7 @@ export default function TestBadge() {
             </Box>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Texte badge nominatif juste sous le séparateur, URL en bas */}
+          {/* Texte badge nominatif juste sous le séparateur du bloc infos utilisateur */}
           <Box sx={{ px: 4, mb: 1 }}>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 12, mb: 0.5 }}>
               BADGE nominatif personnel – Présentez-le à l'entrée
