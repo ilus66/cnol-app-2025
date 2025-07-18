@@ -13,6 +13,8 @@ export default function TestBadge() {
   const [date, setDate] = useState('12 octobre 2025');
   const [heure, setHeure] = useState('20H');
   const [lieu, setLieu] = useState('Fondation Mohammed VI, Rabat');
+  const [dateFin, setDateFin] = useState('12 octobre 2025');
+  const [heureFin, setHeureFin] = useState('19H');
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: '#f5f6fa', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -35,10 +37,21 @@ export default function TestBadge() {
             <Typography variant="body1" sx={{ fontWeight: 700 }}>{date} {heure}</Typography>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Nom/prénom + fonction/ville sur la même ligne */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+          {/* Bloc identité : nom, fonction, ville en colonne */}
+          <Box sx={{ mb: 2 }}>
             <Typography variant="h6" sx={{ fontWeight: 700 }}>{prenom} {nom}</Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>{fonction} – {ville}</Typography>
+            <Typography variant="body2" color="text.secondary">{fonction}</Typography>
+            <Typography variant="body2" color="text.secondary">{ville}</Typography>
+          </Box>
+          {/* Bloc dates : début à gauche, fin à droite, séparés par une flèche */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, mt: 1 }}>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 700 }}>{date} {heure}</Typography>
+            </Box>
+            <Typography variant="h4" color="text.secondary" sx={{ mx: 2, fontWeight: 300 }}>&#8594;</Typography>
+            <Box>
+              <Typography variant="body1" sx={{ fontWeight: 700 }}>{dateFin} {heureFin}</Typography>
+            </Box>
           </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Code badge : <b>{badgeCode}</b></Typography>
           <Divider sx={{ my: 2 }} />
@@ -62,6 +75,8 @@ export default function TestBadge() {
             <TextField label="Code badge" value={badgeCode} onChange={e => setBadgeCode(e.target.value.toUpperCase())} />
             <TextField label="Date" value={date} onChange={e => setDate(e.target.value)} />
             <TextField label="Heure" value={heure} onChange={e => setHeure(e.target.value)} />
+            <TextField label="Date fin" value={dateFin} onChange={e => setDateFin(e.target.value)} />
+            <TextField label="Heure fin" value={heureFin} onChange={e => setHeureFin(e.target.value)} />
             <TextField label="Lieu" value={lieu} onChange={e => setLieu(e.target.value)} />
           </Stack>
         </Box>
