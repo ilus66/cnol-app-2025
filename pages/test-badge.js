@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { Box, Paper, Typography, TextField, Stack, Divider } from '@mui/material';
 import QRCode from 'qrcode.react';
 
+const logoUrl = '/logo-cnol.png';
+
 export default function TestBadge() {
   const [nom, setNom] = useState('DUPONT');
   const [prenom, setPrenom] = useState('JEAN');
   const [fonction, setFonction] = useState('Opticien');
   const [ville, setVille] = useState('Casablanca');
   const [badgeCode, setBadgeCode] = useState('123ABC');
-  const [date, setDate] = useState('10 OCT. 2025');
-  const [heure, setHeure] = useState('09H00');
+  const [date, setDate] = useState('12 octobre 2025');
+  const [heure, setHeure] = useState('20H');
   const [lieu, setLieu] = useState('Fondation Mohammed VI, Rabat');
 
   return (
@@ -17,28 +19,27 @@ export default function TestBadge() {
       <Typography variant="h4" sx={{ mb: 3 }}>Prévisualisation badge (test)</Typography>
       <Stack direction="row" spacing={4} alignItems="flex-start">
         <Paper elevation={6} sx={{ p: 4, borderRadius: 4, minWidth: 400, minHeight: 540, bgcolor: '#fff', position: 'relative', display: 'flex', flexDirection: 'column', boxShadow: '0 8px 32px #0002' }}>
+          {/* Logo en haut à gauche */}
+          <Box sx={{ position: 'absolute', top: 18, left: 18 }}>
+            <img src={logoUrl} alt="Logo CNOL" style={{ width: 48, height: 48, objectFit: 'contain' }} />
+          </Box>
           {/* Titre et sous-titre */}
-          <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 1, mb: 0.5, fontFamily: 'Montserrat, Roboto, Arial' }}>
+          <Typography variant="h5" sx={{ fontWeight: 900, letterSpacing: 1, mb: 0.5, fontFamily: 'Montserrat, Roboto, Arial', mt: 0.5, ml: 7 }}>
             CNOL 2025
           </Typography>
-          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, fontFamily: 'Montserrat, Roboto, Arial' }}>
+          <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 2, fontFamily: 'Montserrat, Roboto, Arial', ml: 7 }}>
             {lieu}
           </Typography>
-          {/* Date et heure */}
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>{date}</Typography>
-              <Typography variant="body2" color="text.secondary">{heure}</Typography>
-            </Box>
-            <Divider orientation="vertical" flexItem sx={{ mx: 2, borderRightWidth: 2 }} />
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body1" sx={{ fontWeight: 700 }}>{fonction}</Typography>
-              <Typography variant="body2" color="text.secondary">{ville}</Typography>
-            </Box>
+          {/* Date et heure (remplace le bloc fonction/ville) */}
+          <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, ml: 7 }}>
+            <Typography variant="body1" sx={{ fontWeight: 700 }}>{date} {heure}</Typography>
           </Box>
           <Divider sx={{ my: 2 }} />
-          {/* Nom/prénom */}
-          <Typography variant="h6" sx={{ fontWeight: 700, mb: 0.5 }}>{prenom} {nom}</Typography>
+          {/* Nom/prénom + fonction/ville sur la même ligne */}
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700 }}>{prenom} {nom}</Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ ml: 2 }}>{fonction} – {ville}</Typography>
+          </Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Code badge : <b>{badgeCode}</b></Typography>
           <Divider sx={{ my: 2 }} />
           {/* Infos secondaires */}
