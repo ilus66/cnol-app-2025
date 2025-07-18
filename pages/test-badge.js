@@ -64,7 +64,7 @@ export default function TestBadge() {
           {/* Bas du badge : texte badge nominatif sous la dernière ligne, URL, QR code en bas à droite */}
           <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', position: 'relative', minHeight: 100, px: 4, pb: 2 }}>
             <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', mb: 1 }}>
-              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 12, mb: 0.5 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500, fontSize: 10, mb: 0.5 }}>
                 BADGE nominatif personnel – Présentez-le à l'entrée
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 700, fontSize: 15, letterSpacing: 1 }}>
