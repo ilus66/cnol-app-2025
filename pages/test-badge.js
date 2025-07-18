@@ -33,9 +33,9 @@ export default function TestBadge() {
           mx: 'auto',
           overflow: 'hidden',
         }}>
-          {/* Logo CNOL en haut à gauche, à la dimension du code-barres */}
+          {/* Logo CNOL en haut à gauche, plus grand et aligné à gauche comme le titre */}
           <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', pt: 3, pb: 0, pl: 4 }}>
-            <img src={logoUrl} alt="Logo CNOL" style={{ width: 110, height: 28, objectFit: 'contain' }} />
+            <img src={logoUrl} alt="Logo CNOL" style={{ width: 440, height: 112, objectFit: 'contain' }} />
           </Box>
           {/* Titre principal sur deux lignes et adresse */}
           <Box sx={{ px: 4, textAlign: 'left', mb: 2, mt: 0.5 }}>
@@ -52,7 +52,7 @@ export default function TestBadge() {
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
             </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%', mx: 2, mt: 0, mb: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', height: '100%', mx: 3, mt: 0, mb: 1 }}>
               <Typography variant="h4" color="text.secondary" sx={{ fontWeight: 300, fontSize: 28, lineHeight: 1 }}>&#8594;</Typography>
             </Box>
             <Box sx={{ textAlign: 'left', minWidth: 120, ml: 2 }}>
