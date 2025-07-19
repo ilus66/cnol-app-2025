@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Box, Paper, Typography, TextField, Stack, Divider } from '@mui/material';
 import QRCode from 'qrcode.react';
-import { Barcode } from 'react-barcode';
+import dynamic from 'next/dynamic';
+const Barcode = dynamic(() => import('react-barcode'), { ssr: false });
 
 const logoUrl = '/logo-cnol.png';
 
