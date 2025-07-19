@@ -22,10 +22,10 @@ export default function StatistiquesAdmin() {
   const [totalReservations, setTotalReservations] = useState(0);
 
   useEffect(() => {
-    supabase.from('inscription').select('id', { count: 'exact', head: true }).then(({ count }) => setTotalInscrits(count || 0));
-    supabase.from('inscription').select('id', { count: 'exact', head: true }).eq('valide', true).then(({ count }) => setTotalValides(count || 0));
-    supabase.from('inscription').select('id', { count: 'exact', head: true }).eq('participant_type', 'exposant').then(({ count }) => setTotalExposants(count || 0));
-    supabase.from('inscription').select('ville', { count: 'exact' }).then(({ data }) => {
+    supabase.from('statistiques_participants').select('id', { count: 'exact', head: true }).then(({ count }) => setTotalInscrits(count || 0));
+    supabase.from('statistiques_participants').select('id', { count: 'exact', head: true }).eq('valide', true).then(({ count }) => setTotalValides(count || 0));
+    supabase.from('statistiques_participants').select('id', { count: 'exact', head: true }).eq('participant_type', 'exposant').then(({ count }) => setTotalExposants(count || 0));
+    supabase.from('statistiques_participants').select('ville', { count: 'exact' }).then(({ data }) => {
       const villes = (data || []).map(r => (r.ville || '').toUpperCase().trim()).filter(v => v && v !== 'NON RENSEIGNÉE');
       setTotalVilles([...new Set(villes)].length);
     });
@@ -59,7 +59,7 @@ export default function StatistiquesAdmin() {
   const handleSearchParticipant = async () => {
     setLoading(true);
     const { data: inscrits } = await supabase
-      .from('inscription')
+      .from('statistiques_participants')
       .select('id, nom, prenom, email')
       .ilike('nom', `%${searchParticipant}%`);
     if (!inscrits || inscrits.length === 0) {
@@ -79,7 +79,7 @@ export default function StatistiquesAdmin() {
   const handleSearchExposant = async () => {
     setLoading(true);
     const { data: exposants } = await supabase
-      .from('inscription')
+      .from('statistiques_participants')
       .select('id, nom, prenom, qualite_sponsoring')
       .ilike('nom', `%${searchExposant}%`);
     if (!exposants || exposants.length === 0) {
@@ -112,7 +112,7 @@ export default function StatistiquesAdmin() {
   const fetchStatsFonction = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('inscription')
+      .from('statistiques_participants')
       .select('fonction');
     setLoading(false);
     if (!error && data) {
@@ -128,7 +128,7 @@ export default function StatistiquesAdmin() {
   const fetchStatsVille = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('inscription')
+      .from('statistiques_participants')
       .select('ville');
     setLoading(false);
     if (!error && data) {
@@ -144,7 +144,7 @@ export default function StatistiquesAdmin() {
   const fetchStatsPeriodes = async () => {
     setLoading(true);
     const { data, error } = await supabase
-      .from('inscription')
+      .from('statistiques_participants')
       .select('created_at');
     setLoading(false);
     if (!error && data) {
