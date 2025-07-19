@@ -1,6 +1,6 @@
 import { supabase } from '../../../lib/supabaseClient';
 import sendBadgeEmail from '../../../lib/sendBadgeEmail';
-import generateBadgePdfBuffer from '../../../lib/generateBadgePdfBuffer';
+import { generateBadgeUnified } from '../../../lib/generateBadgeUnified';
 
 function generateStaffBadgeCode() {
   const chiffres = Math.floor(1000 + Math.random() * 9000); // 4 chiffres
@@ -36,13 +36,20 @@ export default async function handler(req, res) {
   // 2. Générer le PDF du badge
   let pdfBuffer;
   try {
-    pdfBuffer = await generateBadgePdfBuffer({
-      name: `${prenom} ${nom}`,
+    const userData = {
+      prenom,
+      nom,
       function: fonction,
-      city: '', // Ajoute la ville si tu l'as
-      email,
-      userId: badgeCode,
-    });
+      city: '',
+      badgeCode: badgeCode,
+      date: '10 OCT. 2025',
+      heure: '09H00',
+      dateFin: '12 OCT. 2025',
+      heureFin: '18H00',
+      lieu: organisation || '',
+      userId: badgeCode
+    };
+    pdfBuffer = await generateBadgeUnified(userData);
   } catch (err) {
     return res.status(500).json({ error: "Erreur lors de la génération du badge PDF : " + err.message });
   }
