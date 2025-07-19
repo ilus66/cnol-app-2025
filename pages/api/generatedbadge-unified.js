@@ -1,7 +1,5 @@
-// pages/api/generatedbadge.js
 import { supabase } from '../../lib/supabaseClient'
-// import { generateBadge } from '../../lib/generateBadge'
-import { generateBadgeUnified } from '../../lib/generateBadgeUnified'
+const { generateBadgeUnified } = require('../../lib/generateBadgeUnified')
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -32,7 +30,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Préparer les données pour le badge (format adapté à generateBadgeUnified)
+    // Préparer les données pour le badge (adapté pour test-badge)
     const userData = {
       prenom: inscrit.prenom,
       nom: inscrit.nom,
@@ -44,20 +42,11 @@ export default async function handler(req, res) {
       dateFin: '12 OCT. 2025',
       heureFin: inscrit.heure_fin || '18H00',
       lieu: inscrit.lieu || 'Centre de conférences Fm6education - Av. Allal Al Fassi RABAT',
-      userId: `cnol2025-${inscrit.id}`
+      userId: `cnol2025-${inscrit.id}` // Ajout pour QR code
     }
-    // Ancienne version (en cas de rollback rapide)
-    // const pdfBuffer = await generateBadge({
-    //   name: (inscrit.prenom && inscrit.nom)
-    //     ? `${inscrit.prenom} ${inscrit.nom}`
-    //     : inscrit.nom || inscrit.prenom || 'Inconnu',
-    //   function: inscrit.fonction,
-    //   city: inscrit.ville,
-    //   email: inscrit.email,
-    //   userId: `cnol2025-${inscrit.id}`,
-    //   identifiant_badge: inscrit.identifiant_badge,
-    // })
-    // Nouvelle version unifiée :
+    console.log('userData pour badge unified:', userData);
+
+    // Générer le PDF (Buffer)
     const pdfBuffer = await generateBadgeUnified(userData)
 
     // Générer un nom de fichier robuste
@@ -68,23 +57,17 @@ export default async function handler(req, res) {
     const nom = inscrit.nom || '';
     let filename = '';
     if (prenom && nom) {
-      filename = `badge-${toAscii(prenom.toLowerCase())}-${toAscii(nom.toLowerCase())}.pdf`;
+      filename = `badge-unified-${toAscii(prenom.toLowerCase())}-${toAscii(nom.toLowerCase())}.pdf`;
     } else if (!prenom && nom) {
-      filename = `badge-${toAscii(nom.toLowerCase())}.pdf`;
+      filename = `badge-unified-${toAscii(nom.toLowerCase())}.pdf`;
     } else {
-      filename = `badge-inconnu.pdf`;
+      filename = `badge-unified-inconnu.pdf`;
     }
     res.setHeader('Content-Type', 'application/pdf')
-    res.setHeader(
-      'Content-Disposition',
-      `inline; filename="${filename}"`
-    )
-    // IMPORTANT : use .end() to send raw buffer
-    return res.status(200).end(pdfBuffer)
-  } catch (err) {
-    console.error('Erreur génération badge :', err)
-    return res
-      .status(500)
-      .json({ message: 'Erreur serveur lors de la génération du badge' })
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+    res.setHeader('Content-Length', pdfBuffer.length)
+    res.send(Buffer.from(pdfBuffer))
+  } catch (e) {
+    res.status(500).json({ message: 'Erreur lors de la génération du badge', error: e.message })
   }
-}
+} 
