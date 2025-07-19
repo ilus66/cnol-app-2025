@@ -36,7 +36,7 @@ export default function TestBadge() {
           overflow: 'hidden',
         }}>
           {/* Code-barres en haut à gauche */}
-          <Box sx={{ width: '100%', display: 'flex', alignItems: 'flex-start', pt: 3, pb: 0, pl: 4.6, mb: 2 }}>
+          <Box sx={{ width: '100%', display: 'flex', alignItems: 'flex-start', pt: 3, pb: 0, pl: 4.4, mb: 2 }}>
             <Box sx={{ mr: 8, mt: 0 }}>
               <Barcode value={badgeCode} width={2} height={24} displayValue={false} margin={0} style={{ width: 95 }} />
             </Box>
