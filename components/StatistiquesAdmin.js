@@ -227,8 +227,8 @@ export default function StatistiquesAdmin() {
                   ))}
                 </TableBody>
               </Table>
-              {/* Ajout : Participants par ville hors top 10 */}
-              <Typography variant="h6" sx={{ mt: 4 }}>Participants par ville (hors top 10)</Typography>
+              {/* Top 10 villes */}
+              <Typography variant="h6" sx={{ mt: 4 }}>Top 10 villes</Typography>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -237,7 +237,25 @@ export default function StatistiquesAdmin() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {statsVille.slice().sort((a, b) => b.count - a.count).slice(10).map((row, idx) => (
+                  {statsVille.slice().sort((a, b) => b.count - a.count).slice(0, 10).map((row, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell>{row.ville || 'Non renseignée'}</TableCell>
+                      <TableCell>{row.count}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {/* Classement par villes : toutes les villes */}
+              <Typography variant="h6" sx={{ mt: 4 }}>Classement par villes : toutes les villes</Typography>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Ville</TableCell>
+                    <TableCell>Nombre</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {statsVille.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
                     <TableRow key={idx}>
                       <TableCell>{row.ville || 'Non renseignée'}</TableCell>
                       <TableCell>{row.count}</TableCell>
