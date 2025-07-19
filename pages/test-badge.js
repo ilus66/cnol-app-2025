@@ -36,7 +36,7 @@ export default function TestBadge() {
           overflow: 'hidden',
         }}>
           {/* Code-barres en haut à gauche */}
-          <Box sx={{ width: '100%', display: 'flex', alignItems: 'flex-start', pt: 3, pb: 0, pl: 4.4, mb: 2 }}>
+          <Box sx={{ width: '100%', display: 'flex', alignItems: 'flex-start', pt: 3, pb: 0, pl: 4.3, mb: 2 }}>
             <Box sx={{ mr: 8, mt: 0 }}>
               <Barcode value={badgeCode} width={2} height={24} displayValue={false} margin={0} style={{ width: 95 }} />
             </Box>
@@ -52,7 +52,7 @@ export default function TestBadge() {
             </Typography>
           </Box>
           {/* Bloc dates/horaires descendu et flèche centrée */}
-          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', px: 4, mb: 2, mt: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-start', px: 4, mb: 2, mt: 0 }}>
             <Box sx={{ textAlign: 'left', minWidth: 120 }}>
               <Typography variant="body1" sx={{ fontWeight: 700, fontSize: 19 }}>{date}</Typography>
               <Typography variant="body2" color="text.secondary" sx={{ fontSize: 15 }}>{heure}</Typography>
@@ -67,7 +67,7 @@ export default function TestBadge() {
           </Box>
           <Divider sx={{ my: 1 }} />
           {/* Bloc central : nom/prénom, fonction en gras dessous, ville/code */}
-          <Box sx={{ px: 4, mb: 1, mt: 0.5, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box sx={{ px: 4, mb: 1, mt: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             <Typography variant="h6" sx={{ fontWeight: 800, fontSize: 20, letterSpacing: 0.5 }}>{prenom} {nom}</Typography>
             <Typography variant="body2" color="text.primary" sx={{ fontWeight: 800, fontSize: 15 }}>{fonction}</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600, fontSize: 15 }}>{ville}</Typography>
