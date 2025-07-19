@@ -134,8 +134,9 @@ export default function StatistiquesAdmin() {
     if (!error && data) {
       const countByVille = {};
       data.forEach(row => {
-        const key = (row.ville || 'Non renseignée').toUpperCase().trim();
-        countByVille[key] = (countByVille[key] || 0) + 1;
+        const ville = (row.ville || '').toUpperCase().trim();
+        if (!ville) return; // Ignore vides/nulles
+        countByVille[ville] = (countByVille[ville] || 0) + 1;
       });
       setStatsVille(Object.entries(countByVille).map(([ville, count]) => ({ ville, count })));
     }
