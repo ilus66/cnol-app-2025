@@ -37,7 +37,7 @@ export default function TestBadge() {
         }}>
           {/* Code-barres en haut à gauche */}
           <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', pt: 3, pb: 0, pl: 2 }}>
-            <Barcode value={badgeCode} width={2} height={40} displayValue={false} margin={0} />
+            <Barcode value={badgeCode} width={2} height={48} displayValue={false} margin={0} style={{ width: 190 }} />
           </Box>
           {/* Titre principal sur deux lignes et adresse */}
           <Box sx={{ px: 4, textAlign: 'left', mb: 2, mt: 0.5 }}>
