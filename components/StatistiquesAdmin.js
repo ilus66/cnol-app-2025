@@ -134,11 +134,15 @@ export default function StatistiquesAdmin() {
     if (!error && data) {
       const countByVille = {};
       data.forEach(row => {
-        const ville = (row.ville || '').toUpperCase().trim();
-        if (!ville) return; // Ignore vides/nulles
+        let ville = (row.ville || '').toUpperCase().trim();
+        if (!ville || ville === 'NON RENSEIGNEE' || ville === 'NON RENSEIGNÉE') return;
         countByVille[ville] = (countByVille[ville] || 0) + 1;
       });
-      setStatsVille(Object.entries(countByVille).map(([ville, count]) => ({ ville, count })));
+      setStatsVille(
+        Object.entries(countByVille)
+          .sort((a, b) => b[1] - a[1])
+          .map(([ville, count]) => ({ ville, count }))
+      );
     }
   };
 
@@ -211,42 +215,6 @@ export default function StatistiquesAdmin() {
           {statsVille.length > 0 && (
             <>
               <Button variant="outlined" sx={{ mb: 1 }} onClick={() => exportCSV(statsVille.map(v => [v.ville, v.count]), ['Ville', 'Nombre'], 'statistiques-par-ville.csv')}>Exporter CSV</Button>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Ville</TableCell>
-                    <TableCell>Nombre</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {statsVille.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{row.ville || 'Non renseignée'}</TableCell>
-                      <TableCell>{row.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {/* Top 10 villes */}
-              <Typography variant="h6" sx={{ mt: 4 }}>Top 10 villes</Typography>
-              <Table size="small">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Ville</TableCell>
-                    <TableCell>Nombre</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {statsVille.slice().sort((a, b) => b.count - a.count).slice(0, 10).map((row, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{row.ville || 'Non renseignée'}</TableCell>
-                      <TableCell>{row.count}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              {/* Classement par villes : toutes les villes */}
-              <Typography variant="h6" sx={{ mt: 4 }}>Classement par villes : toutes les villes</Typography>
               <Table size="small">
                 <TableHead>
                   <TableRow>

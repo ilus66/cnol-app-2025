@@ -157,6 +157,29 @@ export default function AdminStatistiques() {
                 ))}
               </TableBody>
             </Table>
+            {/* Classement par villes : toutes les villes */}
+            <Typography variant="h6" sx={{ mt: 4 }}>Classement par villes : toutes les villes</Typography>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>Ville</TableCell>
+                  <TableCell>Participants</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Object.entries(stats.data.reduce((acc, r) => {
+                  const ville = (r.ville || '').toUpperCase().trim();
+                  if (!ville) return acc;
+                  acc[ville] = (acc[ville] || 0) + 1;
+                  return acc;
+                }, {})).sort((a, b) => b[1] - a[1]).map(([ville, count]) => (
+                  <TableRow key={ville}>
+                    <TableCell>{ville}</TableCell>
+                    <TableCell>{count}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </Paper>
         </Grid>
         <Grid item xs={12}>
