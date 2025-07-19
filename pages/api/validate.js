@@ -1,5 +1,5 @@
 import { supabase } from '../../lib/supabaseClient';
-import { generateBadge } from '../../lib/generateBadge';
+import { generateBadgeUnified } from '../../lib/generateBadgeUnified';
 const { sendBadgeEmail } = require('../../lib/sendBadgeEmail');
 
 // Fonction pour faire un nom safe (à copier aussi dans generateBadge.js)
@@ -63,14 +63,20 @@ export default async function handler(req, res) {
     }
 
     // Générer badge avec userId = id reçu
-    const pdfBuffer = await generateBadge({
-      name: `${updated.prenom} ${updated.nom}`,
+    const userData = {
+      prenom: updated.prenom,
+      nom: updated.nom,
       function: updated.fonction,
       city: updated.ville,
-      email: updated.email,
-      userId: idStr,  // utiliser la version string de l'id
-      identifiant_badge: updated.identifiant_badge,
-    });
+      badgeCode: updated.identifiant_badge ? String(updated.identifiant_badge) : 'TEST123',
+      date: '10 OCT. 2025',
+      heure: updated.heure_debut || '09H00',
+      dateFin: '12 OCT. 2025',
+      heureFin: updated.heure_fin || '18H00',
+      lieu: updated.lieu || 'Centre de conférences Fm6education - Av. Allal Al Fassi RABAT',
+      userId: idStr
+    };
+    const pdfBuffer = await generateBadgeUnified(userData);
 
     // Test upload avec la clé service_role
     const { createClient } = require('@supabase/supabase-js');
