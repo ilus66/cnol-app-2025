@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Box, Paper, Typography, TextField, Stack, Divider } from '@mui/material';
 import QRCode from 'qrcode.react';
+import { Barcode } from 'react-barcode';
 
 const logoUrl = '/logo-cnol.png';
 
@@ -33,9 +34,9 @@ export default function TestBadge() {
           mx: 'auto',
           overflow: 'hidden',
         }}>
-          {/* Logo CNOL en haut, parfaitement centré */}
-          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', pt: 3, pb: 0, pl: 0 }}>
-            <img src={logoUrl} alt="Logo CNOL" style={{ width: 286, height: 72, objectFit: 'contain' }} />
+          {/* Code-barres en haut à gauche */}
+          <Box sx={{ width: '100%', display: 'flex', justifyContent: 'flex-start', alignItems: 'center', pt: 3, pb: 0, pl: 2 }}>
+            <Barcode value={badgeCode} width={2} height={40} displayValue={false} margin={0} />
           </Box>
           {/* Titre principal sur deux lignes et adresse */}
           <Box sx={{ px: 4, textAlign: 'left', mb: 2, mt: 0.5 }}>
