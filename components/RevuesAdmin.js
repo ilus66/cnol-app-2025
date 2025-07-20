@@ -23,12 +23,12 @@ export default function RevuesAdmin() {
     setUploading(true); setError('');
     const fileExt = file.name.split('.').pop();
     const fileName = `couverture-${Date.now()}.${fileExt}`;
-    const { data, error } = await supabase.storage.from('revues-couvertures').upload(fileName, file);
+    const { data, error } = await supabase.storage.from('logos').upload(fileName, file);
     if (error) {
       setError('Erreur upload image : ' + error.message); setUploading(false); return;
     }
     // Récupérer l'URL publique
-    const { data: publicUrlData } = supabase.storage.from('revues-couvertures').getPublicUrl(fileName);
+    const { data: publicUrlData } = supabase.storage.from('logos').getPublicUrl(fileName);
     setForm(f => ({ ...f, couverture: publicUrlData.publicUrl }));
     setUploading(false);
   };
