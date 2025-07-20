@@ -8,6 +8,7 @@ export default function RevuesAdmin() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [uploading, setUploading] = useState(false);
 
   const fetchRevues = async () => {
     const { data, error } = await supabase.from('revues').select('*').order('created_at', { ascending: false });
@@ -15,6 +16,22 @@ export default function RevuesAdmin() {
   };
 
   useEffect(() => { fetchRevues(); }, []);
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true); setError('');
+    const fileExt = file.name.split('.').pop();
+    const fileName = `couverture-${Date.now()}.${fileExt}`;
+    const { data, error } = await supabase.storage.from('revues-couvertures').upload(fileName, file);
+    if (error) {
+      setError('Erreur upload image : ' + error.message); setUploading(false); return;
+    }
+    // Récupérer l'URL publique
+    const { data: publicUrlData } = supabase.storage.from('revues-couvertures').getPublicUrl(fileName);
+    setForm(f => ({ ...f, couverture: publicUrlData.publicUrl }));
+    setUploading(false);
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
@@ -39,7 +56,11 @@ export default function RevuesAdmin() {
         <Stack spacing={2}>
           <TextField label="Titre" value={form.titre} onChange={e => setForm(f => ({ ...f, titre: e.target.value }))} fullWidth />
           <TextField label="Lien PDF" value={form.pdf} onChange={e => setForm(f => ({ ...f, pdf: e.target.value }))} fullWidth />
-          <TextField label="Lien image couverture" value={form.couverture} onChange={e => setForm(f => ({ ...f, couverture: e.target.value }))} fullWidth />
+          <Button variant="outlined" component="label" disabled={uploading}>
+            {uploading ? 'Upload en cours...' : (form.couverture ? 'Changer la couverture' : 'Uploader une couverture')}
+            <input type="file" accept="image/*" hidden onChange={handleFileChange} />
+          </Button>
+          {form.couverture && <img src={form.couverture} alt="aperçu couverture" style={{ maxWidth: 120, maxHeight: 160, borderRadius: 4, marginTop: 4 }} />}
           {error && <Alert severity="error">{error}</Alert>}
           {success && <Alert severity="success">{success}</Alert>}
           <Button type="submit" variant="contained" color="primary" disabled={loading}>{loading ? 'Ajout...' : 'Ajouter'}</Button>
