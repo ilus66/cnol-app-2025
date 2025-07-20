@@ -21,6 +21,7 @@ import CNOLDorAdmin from '../../components/CNOLDorAdmin';
 import HotelsAdmin from '../../components/HotelsAdmin';
 import EntréesAdmin from '../../components/EntréesAdmin';
 import ExposantsAdmin from '../../components/ExposantsAdmin';
+import RevuesAdmin from '../../components/RevuesAdmin';
 import { supabase } from '../../lib/supabaseClient';
 import toast from 'react-hot-toast';
 
@@ -39,6 +40,7 @@ const navItems = [
   { text: 'Hôtels', icon: <HotelIcon /> },
   { text: 'Notifications', icon: <NotificationsIcon /> },
   { text: 'Paramètres', icon: <SettingsIcon /> },
+  { text: 'Revues', icon: <MenuIcon /> },
 ];
 
 export default function Administration() {
@@ -228,6 +230,7 @@ export default function Administration() {
         {selected === 'CNOL d\'Or' && <CNOLDorAdmin />}
         {selected === 'Hôtels' && <HotelsAdmin />}
         {selected === 'Exposants' && <ExposantsAdmin />}
+        {selected === 'Revues' && <RevuesAdmin />}
       </Box>
     </Box>
   );
