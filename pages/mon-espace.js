@@ -1209,7 +1209,29 @@ export default function MonEspace({ user }) {
         {/* Bloc Revue Maroc Optique (tout en bas) */}
         <Grid item xs={12}>
           <Paper sx={{ p: 3, mt: 4, borderRadius: 4, background: '#f7f7f7' }}>
-            <Typography variant="h5" gutterBottom>Revue Maroc Optique</Typography>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 900,
+                color: '#222',
+                textAlign: 'center',
+                mb: 3,
+                fontFamily: 'Montserrat, Arial, sans-serif',
+                letterSpacing: 2,
+                position: 'relative',
+                '&:after': {
+                  content: '""',
+                  display: 'block',
+                  width: '80px',
+                  height: '5px',
+                  background: 'linear-gradient(90deg, #1976d2 60%, #00bcd4 100%)',
+                  margin: '8px auto 0 auto',
+                  borderRadius: 3
+                }
+              }}
+            >
+              Revue <span style={{ color: '#1976d2' }}>Maroc Optique</span>
+            </Typography>
             <Grid container spacing={2}>
               {revues.length === 0 && (
                 <Grid item xs={12}><Typography>Aucune revue disponible pour le moment.</Typography></Grid>
