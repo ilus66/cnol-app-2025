@@ -16,6 +16,9 @@ export default function Inscription() {
   const [success, setSuccess] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showRecover, setShowRecover] = useState(false);
+  const [recoverStatus, setRecoverStatus] = useState('');
+  const [recoverLoading, setRecoverLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -111,6 +114,36 @@ export default function Inscription() {
         <input name="organisation" value={formData.organisation} onChange={handleChange} style={inputStyle} />
 
         {errorMessage && <p style={{ color: 'red', marginTop: '10px' }}>{errorMessage}</p>}
+        {/* Si l'email existe déjà, proposer la récupération */}
+        {errorMessage && errorMessage.toLowerCase().includes('existe déjà') && (
+          <div style={{ marginTop: 10, background: '#f8f9fa', padding: 12, borderRadius: 6, border: '1px solid #eee' }}>
+            <p style={{ margin: 0 }}>Vous avez déjà un compte ? <button type="button" style={{ color: '#0070f3', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', padding: 0 }} onClick={() => setShowRecover(v => !v)}>{showRecover ? 'Annuler' : 'Recevoir mes identifiants par email'}</button></p>
+            {showRecover && (
+              <form style={{ marginTop: 10 }} onSubmit={async e => {
+                e.preventDefault();
+                setRecoverLoading(true);
+                setRecoverStatus('');
+                try {
+                  const res = await fetch('/api/recover-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: formData.email })
+                  });
+                  const data = await res.json();
+                  if (data.success) setRecoverStatus('Un email de récupération va vous être envoyé si ce compte existe.');
+                  else setRecoverStatus(data.message || 'Erreur lors de la demande.');
+                } catch (err) {
+                  setRecoverStatus('Erreur inattendue.');
+                }
+                setRecoverLoading(false);
+              }}>
+                <input type="email" value={formData.email} disabled style={{ ...inputStyle, background: '#f1f1f1' }} />
+                <button type="submit" style={{ ...buttonStyle, marginTop: 0 }} disabled={recoverLoading}>{recoverLoading ? 'Envoi...' : 'Recevoir mes identifiants'}</button>
+                {recoverStatus && <p style={{ color: '#155724', marginTop: 8 }}>{recoverStatus}</p>}
+              </form>
+            )}
+          </div>
+        )}
 
         <button type="submit" style={buttonStyle} disabled={loading}>
           {loading ? "Envoi en cours..." : "S'inscrire"}
