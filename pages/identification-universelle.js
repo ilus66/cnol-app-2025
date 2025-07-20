@@ -6,6 +6,10 @@ export default function IdentificationUniverselle() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showRecover, setShowRecover] = useState(false);
+  const [recoverValue, setRecoverValue] = useState('');
+  const [recoverStatus, setRecoverStatus] = useState('');
+  const [recoverLoading, setRecoverLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -95,6 +99,38 @@ export default function IdentificationUniverselle() {
           {loading ? 'Connexion...' : 'Se connecter'}
         </button>
         {error && <div style={{ color: 'red', marginTop: 16, fontSize: 15, textAlign: 'center' }}>{error}</div>}
+        {error && (
+          <div style={{ textAlign: 'center', marginTop: 8 }}>
+            <button type="button" style={{ color: '#0070f3', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: 15 }} onClick={() => setShowRecover(v => !v)}>{showRecover ? 'Annuler' : 'Récupérer mes identifiants'}</button>
+            {showRecover && (
+              <form style={{ marginTop: 10 }} onSubmit={async e => {
+                e.preventDefault();
+                setRecoverLoading(true);
+                setRecoverStatus('');
+                try {
+                  const res = await fetch('/api/recover-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      email: recoverValue.includes('@') ? recoverValue : undefined,
+                      telephone: recoverValue && !recoverValue.includes('@') ? recoverValue : undefined
+                    })
+                  });
+                  const data = await res.json();
+                  if (data.success) setRecoverStatus('Un message va vous être envoyé si ce compte existe.');
+                  else setRecoverStatus(data.message || 'Erreur lors de la demande.');
+                } catch (err) {
+                  setRecoverStatus('Erreur inattendue.');
+                }
+                setRecoverLoading(false);
+              }}>
+                <input type="text" value={recoverValue} onChange={e => setRecoverValue(e.target.value)} placeholder="Votre email ou téléphone" style={{ width: '100%', padding: 8, borderRadius: 4, border: '1px solid #ccc', marginBottom: 8 }} />
+                <button type="submit" style={{ width: '100%', background: '#0070f3', color: '#fff', border: 'none', borderRadius: 4, padding: 10, fontWeight: 600 }} disabled={recoverLoading}>{recoverLoading ? 'Envoi...' : 'Recevoir mes identifiants'}</button>
+                {recoverStatus && <div style={{ color: '#155724', marginTop: 8 }}>{recoverStatus}</div>}
+              </form>
+            )}
+          </div>
+        )}
         {success && <div style={{ color: 'green', marginTop: 16, fontSize: 15, textAlign: 'center' }}>{success}</div>}
       </form>
     </div>
