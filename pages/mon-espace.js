@@ -156,6 +156,20 @@ export default function MonEspace({ user }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [contactsModalOpen, setContactsModalOpen] = useState(false);
+  // Détection de la source (inscription ou whatsapp)
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    telephone: user.telephone || '',
+    email: user.email || '',
+    confirmEmail: user.email || '',
+    ville: user.ville || '',
+    organisation: user.organisation || ''
+  });
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [editSuccess, setEditSuccess] = useState('');
+  // On suppose que la prop user.source est renseignée côté serveur (à adapter si besoin)
+  const userSource = user.source || (user.id ? 'inscription' : 'whatsapp');
 
   // Détermine si l'utilisateur a le droit de voir les ateliers/masterclass
   const isAllowedForWorkshops = user && (user.fonction === 'Opticien' || user.fonction === 'Ophtalmologue');
@@ -487,6 +501,53 @@ export default function MonEspace({ user }) {
             color={user.valide ? "success" : "warning"}
             sx={{ mt: 1, mb: 2 }}
           />
+          <Button variant="outlined" sx={{ mt: 1 }} onClick={() => setEditOpen(v => !v)}>
+            {editOpen ? 'Annuler' : 'Modifier mes infos'}
+          </Button>
+          {editOpen && (
+            <Box component="form" sx={{ mt: 2, background: '#fff', p: 2, borderRadius: 2, boxShadow: 0, border: '1px solid #eee' }}
+              onSubmit={async e => {
+                e.preventDefault();
+                setEditLoading(true); setEditError(''); setEditSuccess('');
+                if (!editForm.email || !editForm.confirmEmail || editForm.email !== editForm.confirmEmail) {
+                  setEditError('Les emails ne correspondent pas.'); setEditLoading(false); return;
+                }
+                try {
+                  const res = await fetch('/api/update-user-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      id: user.id,
+                      telephone: editForm.telephone,
+                      email: editForm.email,
+                      ville: editForm.ville,
+                      organisation: editForm.organisation,
+                      source: userSource
+                    })
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    setEditSuccess('Informations mises à jour !');
+                    setTimeout(() => router.reload(), 1200);
+                  } else {
+                    setEditError(data.message || 'Erreur lors de la mise à jour.');
+                  }
+                } catch (err) {
+                  setEditError('Erreur inattendue.');
+                }
+                setEditLoading(false);
+              }}
+            >
+              <TextField label="Téléphone" value={editForm.telephone} onChange={e => setEditForm(f => ({ ...f, telephone: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Email" type="email" value={editForm.email} onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Confirmer l'email" type="email" value={editForm.confirmEmail} onChange={e => setEditForm(f => ({ ...f, confirmEmail: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Ville" value={editForm.ville} onChange={e => setEditForm(f => ({ ...f, ville: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+              <TextField label="Nom du magasin / organisation" value={editForm.organisation} onChange={e => setEditForm(f => ({ ...f, organisation: e.target.value }))} fullWidth sx={{ mb: 2 }} />
+              {editError && <Alert severity="error" sx={{ mb: 2 }}>{editError}</Alert>}
+              {editSuccess && <Alert severity="success" sx={{ mb: 2 }}>{editSuccess}</Alert>}
+              <Button type="submit" variant="contained" color="primary" disabled={editLoading}>{editLoading ? 'Mise à jour...' : 'Enregistrer'}</Button>
+            </Box>
+          )}
         </Box>
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
           <Button
