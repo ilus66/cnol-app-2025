@@ -177,6 +177,15 @@ export default function MonEspace({ user }) {
   // Bouton Admin visible uniquement pour les admins
   const isAdmin = user && user.role === 'admin';
 
+  // Bloc Revue Maroc Optique
+  const [revues, setRevues] = useState([]);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from('revues').select('*').order('created_at', { ascending: false });
+      setRevues(data || []);
+    })();
+  }, []);
+
   useEffect(() => {
     // Vérifier les permissions de notifications
     if ('Notification' in window) {
@@ -1104,6 +1113,27 @@ export default function MonEspace({ user }) {
             </Paper>
           </Grid>
         )}
+
+        {/* Bloc Revue Maroc Optique */}
+        <Grid item xs={12}>
+          <Paper sx={{ p: 3, mt: 4, borderRadius: 4, background: '#f7f7f7' }}>
+            <Typography variant="h5" gutterBottom>Revue Maroc Optique</Typography>
+            <Grid container spacing={2}>
+              {revues.length === 0 && (
+                <Grid item xs={12}><Typography>Aucune revue disponible pour le moment.</Typography></Grid>
+              )}
+              {revues.map((revue, idx) => (
+                <Grid item xs={12} sm={6} md={4} key={idx}>
+                  <Paper sx={{ p: 2, borderRadius: 3, boxShadow: 0, bgcolor: '#fff', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <img src={revue.couverture} alt={revue.titre} style={{ width: 120, height: 170, objectFit: 'cover', borderRadius: 4, marginBottom: 12 }} />
+                    <Typography variant="subtitle1" fontWeight="bold" align="center" sx={{ mb: 1 }}>{revue.titre}</Typography>
+                    <Button variant="contained" color="primary" href={revue.pdf} target="_blank" rel="noopener noreferrer">Télécharger</Button>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Grid>
 
         {/* Section Exposants harmonisée */}
         <Box sx={{ maxWidth: 500, mx: 'auto', mb: 3 }}>
