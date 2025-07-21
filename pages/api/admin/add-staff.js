@@ -3,9 +3,9 @@ import sendBadgeEmail from '../../../lib/sendBadgeEmail';
 import { generateBadgeUnified } from '../../../lib/generateBadgeUnified';
 
 function generateStaffBadgeCode() {
-  const chiffres = Math.floor(1000 + Math.random() * 9000); // 4 chiffres
-  const lettres = Math.random().toString(36).substring(2, 6).toUpperCase(); // 4 lettres
-  return `${chiffres}${lettres}`;
+  const digits = Math.floor(100 + Math.random() * 900); // 3 chiffres
+  const letters = Array(3).fill(0).map(() => String.fromCharCode(65 + Math.floor(Math.random() * 26))).join('');
+  return `${digits}${letters}`;
 }
 
 export default async function handler(req, res) {
