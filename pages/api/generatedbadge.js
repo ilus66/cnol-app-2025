@@ -44,7 +44,9 @@ export default async function handler(req, res) {
       dateFin: '12 OCT. 2025',
       heureFin: inscrit.heure_fin || '18H00',
       lieu: inscrit.lieu || 'Centre de conférences Fm6education - Av. Allal Al Fassi RABAT',
-      userId: `cnol2025-${inscrit.id}`
+      userId: `cnol2025-${inscrit.id}`,
+      organisation: inscrit.organisation,
+      participant_type: inscrit.participant_type
     }
     // Ancienne version (en cas de rollback rapide)
     // const pdfBuffer = await generateBadge({
