@@ -27,15 +27,22 @@ const statusFilters = [
   { value: 'pending', label: 'Non validé' },
 ];
 
+const sourceFilters = [
+  { value: '', label: 'Toutes sources' },
+  { value: 'inscription', label: 'Inscription' },
+  { value: 'whatsapp', label: 'WhatsApp' },
+];
+
 const PAGE_SIZE = 10;
 
 export default function InscriptionsAdmin() {
-  const [inscriptions, setInscriptions] = useState([]);
+  const [participants, setParticipants] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [sourceFilter, setSourceFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('recent');
   const [totalCount, setTotalCount] = useState(0);
   const [formData, setFormData] = useState({
@@ -45,56 +52,108 @@ export default function InscriptionsAdmin() {
   const [adding, setAdding] = useState(false);
   const isMobile = useMediaQuery('(max-width:600px)');
 
-  useEffect(() => { fetchInscriptions(); }, [page, search, typeFilter, statusFilter, sortOrder]);
+  useEffect(() => { fetchParticipants(); }, [page, search, typeFilter, statusFilter, sourceFilter, sortOrder]);
 
-  async function fetchInscriptions() {
+  async function fetchParticipants() {
     setLoading(true);
     try {
-      let query = supabase.from('inscription').select('*', { count: 'exact' });
-      if (sortOrder === 'recent') query = query.order('created_at', { ascending: false });
-      else if (sortOrder === 'alpha') query = query.order('nom', { ascending: true }).order('prenom', { ascending: true });
-      query = query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-      let countQuery = supabase.from('inscription').select('id', { count: 'exact', head: true });
+      // Récupérer les données des deux tables
+      let inscriptionQuery = supabase.from('inscription').select('*');
+      let whatsappQuery = supabase.from('whatsapp').select('*');
+      
+      // Appliquer les filtres de recherche
       if (search) {
-        query = query.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`);
-        countQuery = countQuery.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`);
+        inscriptionQuery = inscriptionQuery.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`);
+        whatsappQuery = whatsappQuery.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`);
       }
+      
+      // Appliquer le filtre de statut
       if (statusFilter) {
-        query = query.eq('valide', statusFilter === 'validated');
-        countQuery = countQuery.eq('valide', statusFilter === 'validated');
+        inscriptionQuery = inscriptionQuery.eq('valide', statusFilter === 'validated');
+        whatsappQuery = whatsappQuery.eq('valide', statusFilter === 'validated');
       }
+      
+      // Appliquer le filtre de type
       if (typeFilter) {
-        query = query.ilike('fonction', typeFilter);
-        countQuery = countQuery.ilike('fonction', typeFilter);
+        inscriptionQuery = inscriptionQuery.ilike('fonction', typeFilter);
+        whatsappQuery = whatsappQuery.ilike('fonction', typeFilter);
       }
-      const { data, error, count } = await query.limit(PAGE_SIZE);
-      const { count: total } = await countQuery;
-      if (error) toast.error(`Erreur chargement : ${error.message}`);
-      else {
-        setInscriptions(data || []);
-        setTotalCount(total || 0);
+
+      let allParticipants = [];
+
+      // Récupérer les données selon le filtre de source
+      if (sourceFilter === '' || sourceFilter === 'inscription') {
+        const { data: inscriptionData, error: inscriptionError } = await inscriptionQuery;
+        if (inscriptionError) {
+          console.error('Erreur inscription:', inscriptionError);
+        } else {
+          const formattedInscriptions = inscriptionData.map(item => ({
+            ...item,
+            source: 'inscription',
+            sourceLabel: 'Inscription'
+          }));
+          allParticipants = [...allParticipants, ...formattedInscriptions];
+        }
       }
+
+      if (sourceFilter === '' || sourceFilter === 'whatsapp') {
+        const { data: whatsappData, error: whatsappError } = await whatsappQuery;
+        if (whatsappError) {
+          console.error('Erreur WhatsApp:', whatsappError);
+        } else {
+          const formattedWhatsapp = whatsappData.map(item => ({
+            ...item,
+            source: 'whatsapp',
+            sourceLabel: 'WhatsApp',
+            // Normaliser les champs pour correspondre à la structure inscription
+            participant_type: item.participant_type || item.fonction || 'autre',
+            valide: item.valide !== false, // Par défaut true pour WhatsApp si pas défini
+          }));
+          allParticipants = [...allParticipants, ...formattedWhatsapp];
+        }
+      }
+
+      // Tri
+      if (sortOrder === 'recent') {
+        allParticipants.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+      } else if (sortOrder === 'alpha') {
+        allParticipants.sort((a, b) => {
+          const nameA = `${a.nom || ''} ${a.prenom || ''}`.toLowerCase();
+          const nameB = `${b.nom || ''} ${b.prenom || ''}`.toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      }
+
+      // Pagination
+      const startIndex = (page - 1) * PAGE_SIZE;
+      const endIndex = startIndex + PAGE_SIZE;
+      const paginatedData = allParticipants.slice(startIndex, endIndex);
+
+      setParticipants(paginatedData);
+      setTotalCount(allParticipants.length);
+
     } catch (error) {
       toast.error('Erreur réseau');
+      console.error('Erreur fetchParticipants:', error);
     }
     setLoading(false);
   }
 
-  async function validerInscription(id) {
+  async function validerParticipant(participant) {
     try {
-      const res = await fetch('/api/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: `cnol2025-${id}` }),
-      });
-      const result = await res.json();
-      if (res.ok) {
-        toast.success(result.message);
-        fetchInscriptions();
+      const table = participant.source;
+      const { error } = await supabase
+        .from(table)
+        .update({ valide: !participant.valide })
+        .eq('id', participant.id);
+
+      if (error) {
+        toast.error(`Erreur validation : ${error.message}`);
       } else {
-        toast.error(`Erreur : ${result.message}`);
+        toast.success(participant.valide ? 'Participant non validé' : 'Participant validé');
+        fetchParticipants();
       }
-    } catch {
+    } catch (error) {
       toast.error('Erreur réseau ou serveur');
     }
   }
@@ -128,7 +187,7 @@ export default function InscriptionsAdmin() {
     let isUnique = false;
     while (!isUnique) {
       badgeCode = generateBadgeCode();
-      if (!inscriptions.some(i => i.identifiant_badge === badgeCode)) isUnique = true;
+      if (!participants.some(i => i.identifiant_badge === badgeCode)) isUnique = true;
     }
     try {
       const { data: inserted, error } = await supabase.from('inscription').insert([
@@ -147,7 +206,7 @@ export default function InscriptionsAdmin() {
       else {
         toast.success('Inscription ajoutée !');
         setFormData({ nom: '', prenom: '', participant_type: 'opticien', sponsoring_level: 'platinum', email: '', telephone: '', ville: '', fonction: '', organisation: '' });
-        fetchInscriptions();
+        fetchParticipants();
       }
     } catch (err) {
       toast.error(`Erreur serveur : ${err.message}`);
@@ -159,36 +218,69 @@ export default function InscriptionsAdmin() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   }
 
-  function handlePrintBadge(inscrit) {
-    window.open(`/api/generatedbadge?id=${inscrit.id}`, '_blank');
+  function handlePrintBadge(participant) {
+    // Utiliser l'ID et la source pour générer le badge approprié
+    const endpoint = participant.source === 'whatsapp' ? 'generatedbadge-whatsapp' : 'generatedbadge';
+    window.open(`/api/${endpoint}?id=${participant.id}`, '_blank');
   }
 
   async function exportCSV() {
     try {
-      const { data, error } = await supabase.from('inscription').select('*');
-      if (error) throw error;
-      const header = Object.keys(data[0] || {});
-      const rows = data.map(row => header.map(h => row[h]));
-      const csvContent = [header, ...rows].map(row => row.map(val => `"${val || ''}"`).join(',')).join('\n');
+      // Récupérer toutes les données des deux tables
+      const { data: inscriptionData, error: inscriptionError } = await supabase.from('inscription').select('*');
+      const { data: whatsappData, error: whatsappError } = await supabase.from('whatsapp').select('*');
+      
+      if (inscriptionError || whatsappError) {
+        throw new Error('Erreur lors de la récupération des données');
+      }
+
+      // Fusionner les données avec indication de la source
+      const allData = [
+        ...(inscriptionData || []).map(item => ({ ...item, source: 'inscription' })),
+        ...(whatsappData || []).map(item => ({ ...item, source: 'whatsapp' }))
+      ];
+
+      if (allData.length === 0) {
+        toast.error('Aucune donnée à exporter');
+        return;
+      }
+
+      // Créer les en-têtes en combinant toutes les clés possibles
+      const allKeys = new Set();
+      allData.forEach(item => Object.keys(item).forEach(key => allKeys.add(key)));
+      const header = Array.from(allKeys);
+
+      const rows = allData.map(row => header.map(h => row[h] || ''));
+      const csvContent = [header, ...rows].map(row => row.map(val => `"${val}"`).join(',')).join('\n');
+      
       const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'inscriptions.csv';
+      a.download = 'participants_complet.csv';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
+      
+      toast.success('Export CSV réussi');
     } catch (err) {
       toast.error('Erreur export CSV');
+      console.error('Erreur export:', err);
     }
   }
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>Liste des inscrits</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>Liste des participants ({totalCount})</Typography>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <TextField label="Recherche" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
+        <FormControl sx={{ minWidth: 120 }}>
+          <InputLabel>Source</InputLabel>
+          <Select value={sourceFilter} label="Source" onChange={e => { setSourceFilter(e.target.value); setPage(1); }}>
+            {sourceFilters.map(opt => <MenuItem key={opt.value} value={opt.value}>{opt.label}</MenuItem>)}
+          </Select>
+        </FormControl>
         <FormControl sx={{ minWidth: 120 }}>
           <InputLabel>Statut</InputLabel>
           <Select value={statusFilter} label="Statut" onChange={e => { setStatusFilter(e.target.value); setPage(1); }}>
@@ -207,21 +299,38 @@ export default function InscriptionsAdmin() {
           Trier {sortOrder === 'recent' ? 'A-Z' : 'par date'}
         </Button>
       </Stack>
+      
       {isMobile ? (
         <Stack spacing={2}>
-          {inscriptions.map((row) => (
-            <Paper key={row.id} sx={{ p: 2, borderRadius: 2, boxShadow: 2 }}>
+          {participants.map((row) => (
+            <Paper key={`${row.source}-${row.id}`} sx={{ p: 2, borderRadius: 2, boxShadow: 2 }}>
               <Stack direction="row" spacing={2} alignItems="center">
                 <Box>
-                  <Typography variant="h6">{row.prenom} {row.nom}</Typography>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                    <Typography variant="h6">{row.prenom} {row.nom}</Typography>
+                    <Chip 
+                      label={row.sourceLabel} 
+                      size="small" 
+                      color={row.source === 'inscription' ? 'primary' : 'secondary'}
+                    />
+                  </Stack>
                   <Typography variant="body2" color="text.secondary">{row.email}</Typography>
                   <Typography variant="body2" color="text.secondary">{row.ville}</Typography>
-                  <Typography variant="body2" color="text.secondary">{row.fonction && (row.fonction.length > 50 ? row.fonction.slice(0, 50) + '…' : row.fonction)}</Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {row.fonction && (row.fonction.length > 50 ? row.fonction.slice(0, 50) + '…' : row.fonction)}
+                  </Typography>
                   <Typography variant="body2" color="text.secondary">{row.participant_type}</Typography>
                 </Box>
                 <Stack spacing={1} sx={{ ml: 'auto' }}>
                   <Button size="small" variant="outlined" onClick={() => handlePrintBadge(row)}>Badge</Button>
-                  <Button size="small" variant="outlined" onClick={() => validerInscription(row.id)}>{row.valide ? 'Validé' : 'Valider'}</Button>
+                  <Button 
+                    size="small" 
+                    variant="outlined" 
+                    color={row.valide ? 'success' : 'warning'}
+                    onClick={() => validerParticipant(row)}
+                  >
+                    {row.valide ? 'Validé' : 'Valider'}
+                  </Button>
                 </Stack>
               </Stack>
             </Paper>
@@ -232,6 +341,7 @@ export default function InscriptionsAdmin() {
           <Table size="small">
             <TableHead>
               <TableRow>
+                <TableCell>Source</TableCell>
                 <TableCell>Nom</TableCell>
                 <TableCell>Prénom</TableCell>
                 <TableCell>Email</TableCell>
@@ -244,9 +354,16 @@ export default function InscriptionsAdmin() {
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8}><CircularProgress /></TableCell></TableRow>
-              ) : inscriptions.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow><TableCell colSpan={9}><CircularProgress /></TableCell></TableRow>
+              ) : participants.map((row) => (
+                <TableRow key={`${row.source}-${row.id}`}>
+                  <TableCell>
+                    <Chip 
+                      label={row.sourceLabel} 
+                      size="small" 
+                      color={row.source === 'inscription' ? 'primary' : 'secondary'}
+                    />
+                  </TableCell>
                   <TableCell>{row.nom}</TableCell>
                   <TableCell>{row.prenom}</TableCell>
                   <TableCell>{row.email}</TableCell>
@@ -254,7 +371,10 @@ export default function InscriptionsAdmin() {
                   <TableCell>{row.fonction}</TableCell>
                   <TableCell>{row.participant_type}</TableCell>
                   <TableCell>
-                    <Checkbox checked={row.valide} onChange={() => validerInscription(row.id)} />
+                    <Checkbox 
+                      checked={row.valide || false} 
+                      onChange={() => validerParticipant(row)} 
+                    />
                   </TableCell>
                   <TableCell>
                     <Button size="small" onClick={() => handlePrintBadge(row)}>Badge</Button>
@@ -265,9 +385,11 @@ export default function InscriptionsAdmin() {
           </Table>
         </TableContainer>
       )}
+      
       <Stack direction="row" justifyContent="center" sx={{ mt: 2 }}>
         <Pagination count={Math.ceil(totalCount / PAGE_SIZE)} page={page} onChange={(_, v) => setPage(v)} />
       </Stack>
+      
       <Divider sx={{ my: 3 }} />
       <Typography variant="h6" sx={{ mb: 1 }}>Ajouter un inscrit</Typography>
       <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -298,8 +420,3 @@ export default function InscriptionsAdmin() {
             </Select>
           </FormControl>
         )}
-        <Button type="submit" variant="contained" disabled={adding}>{adding ? 'Ajout...' : 'Ajouter'}</Button>
-      </Box>
-    </Box>
-  );
-} 
