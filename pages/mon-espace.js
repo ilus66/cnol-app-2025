@@ -492,29 +492,49 @@ export default function MonEspace({ user }) {
         </Box>
       )}
       {/* En-tête avec infos utilisateur */}
-      <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
-            Bonjour, {user.prenom?.toUpperCase()} {user.nom?.toUpperCase()}
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            {user.participant_type} • {user.email}
-          </Typography>
-          {user.fonction && (
-            <Typography variant="body2" color="text.secondary">
-              {user.fonction}
+      <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid item xs={12} md={8}>
+            <Typography variant="h5" sx={{ fontWeight: 'bold', mb: 1 }}>
+              Bonjour, {user.prenom?.toUpperCase()} {user.nom?.toUpperCase()}
             </Typography>
-          )}
-          <Chip 
-            label={user.valide ? "Compte validé" : "En attente de validation"} 
-            color={user.valide ? "success" : "warning"}
-            sx={{ mt: 1, mb: 2 }}
-          />
-          <Button variant="outlined" sx={{ mt: 1 }} onClick={() => setEditOpen(v => !v)}>
-            {editOpen ? 'Annuler' : 'Modifier mes infos'}
-          </Button>
-          {editOpen && (
-            <Box component="form" sx={{ mt: 2, background: '#fff', p: 2, borderRadius: 2, boxShadow: 0, border: '1px solid #eee' }}
+            <Typography variant="body1" color="text.secondary">
+              {user.participant_type} • {user.email}
+            </Typography>
+            {user.fonction && (
+              <Typography variant="body2" color="text.secondary">
+                {user.fonction}
+              </Typography>
+            )}
+            <Chip
+              label={user.valide ? "Compte validé" : "En attente de validation"}
+              color={user.valide ? "success" : "warning"}
+              sx={{ mt: 1 }}
+            />
+          </Grid>
+          <Grid item xs={12} md={4} sx={{ display: 'flex', flexDirection: { xs: 'row', md: 'column' }, gap: 1, alignItems: { md: 'flex-end' } }}>
+            <Button variant="outlined" onClick={() => setEditOpen(true)}>
+              Modifier mes infos
+            </Button>
+            <Button
+              variant="outlined"
+              color="error"
+              startIcon={<Logout />}
+              onClick={handleLogout}
+            >
+              Déconnexion
+            </Button>
+            <NotificationDropdown
+              notifications={notifications}
+              onMarkAllRead={markAllNotificationsRead}
+              onNotificationClick={handleNotificationClick}
+            />
+          </Grid>
+        </Grid>
+        <Dialog open={editOpen} onClose={() => setEditOpen(false)}>
+          <DialogTitle>Modifier mes informations</DialogTitle>
+          <DialogContent>
+            <Box component="form" sx={{ mt: 2 }}
               onSubmit={async e => {
                 e.preventDefault();
                 setEditLoading(true); setEditError(''); setEditSuccess('');
@@ -556,24 +576,11 @@ export default function MonEspace({ user }) {
               {editSuccess && <Alert severity="success" sx={{ mb: 2 }}>{editSuccess}</Alert>}
               <Button type="submit" variant="contained" color="primary" disabled={editLoading}>{editLoading ? 'Mise à jour...' : 'Enregistrer'}</Button>
             </Box>
-          )}
-        </Box>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-          <Button
-            variant="outlined"
-            color="error"
-            startIcon={<Logout />}
-            onClick={handleLogout}
-            sx={{ mb: 1, fontWeight: 'bold' }}
-          >
-            Déconnexion
-          </Button>
-          <NotificationDropdown
-            notifications={notifications}
-            onMarkAllRead={markAllNotificationsRead}
-            onNotificationClick={handleNotificationClick}
-          />
-        </Box>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditOpen(false)}>Annuler</Button>
+          </DialogActions>
+        </Dialog>
       </Paper>
 
       {/* Ajout du formulaire de changement de fonction pour les étudiants */}
@@ -1115,53 +1122,45 @@ export default function MonEspace({ user }) {
         )}
 
         {/* Section Exposants harmonisée */}
-        <Box sx={{ maxWidth: 500, mx: 'auto', mb: 3 }}>
-          <Paper sx={{ p: 3, mb: 3, borderRadius: 4, boxShadow: 1, background: '#f7f7f7' }}>
-            <Typography variant="h5" gutterBottom>Exposants</Typography>
-            <Stack spacing={2}>
-              {exposantsList && exposantsList.length > 0 ?
-                exposantsList.filter(exp => exp.publie).sort((a, b) => {
-                  const order = { platinum: 1, gold: 2, 'silver+': 3, silver: 4 };
-                  const aRank = order[(a.sponsoring_level || '').toLowerCase()] || 99;
-                  const bRank = order[(b.sponsoring_level || '').toLowerCase()] || 99;
-                  if (aRank !== bRank) return aRank - bRank;
-                  return (a.nom || '').localeCompare(b.nom || '');
-                }).map(exp => (
-                  <Paper key={exp.id} sx={{ p: 2, borderRadius: 3, boxShadow: 0, bgcolor: '#fff' }}>
-                    <Stack direction="row" alignItems="center" spacing={2}>
-                      <Avatar src={exp.logo_url} alt={exp.nom} sx={{ width: 48, height: 48 }} />
-                      <Box>
-                        <Typography variant="subtitle1" fontWeight="bold">{exp.nom}</Typography>
-                        {exp.sponsoring_level && <Chip label={exp.sponsoring_level.toUpperCase()} color="primary" size="small" sx={{ mt: 1 }} />}
-                      </Box>
-                    </Stack>
-                    <Button
-                      variant="outlined"
-                      fullWidth
-                      component={Link}
-                      href={`/exposant/${exp.id}`}
-                      sx={{ mt: 2 }}
-                    >
-                      Voir la fiche
-                    </Button>
-                  </Paper>
-                )) : (
-                <Typography>Aucun exposant à afficher.</Typography>
-              )}
-            </Stack>
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, mb: 3, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>
+              <BusinessIcon sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Exposants
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Découvrez la liste de nos exposants.
+            </Typography>
+            <Button
+              variant="contained"
+              fullWidth
+              href="#exposants-list" // Link to an anchor
+            >
+              Voir les exposants
+            </Button>
           </Paper>
-        </Box>
+        </Grid>
 
-        <Box sx={{ maxWidth: 900, mx: 'auto', mt: 4, mb: 4 }}>
-          <Paper sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h5" fontWeight="bold" gutterBottom>Programme général</Typography>
-            {settings.programme_published && (
-              <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
-                <Button variant="contained" color="primary" href="/programme-complet.pdf" target="_blank" startIcon={<Download />}>Télécharger le programme complet</Button>
-              </Stack>
-            )}
+        <Grid item xs={12} md={6}>
+          <Paper sx={{ p: 3, mb: 3, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>
+              <Event sx={{ mr: 1, verticalAlign: 'middle' }} />
+              Programme général
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Consultez le programme complet du congrès.
+            </Typography>
+            <Button
+              variant="contained"
+              fullWidth
+              href="/programme-complet.pdf"
+              target="_blank"
+              startIcon={<Download />}
+            >
+              Télécharger le programme
+            </Button>
           </Paper>
-        </Box>
+        </Grid>
 
         {/* Section Intervenants */}
         <Grid item xs={12} md={6}>
