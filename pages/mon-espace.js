@@ -1142,26 +1142,40 @@ export default function MonEspace({ user }) {
           </Paper>
         </Grid>
 
-        <Grid item xs={12} md={6}>
-          <Paper sx={{ p: 3, mb: 3, height: '100%' }}>
-            <Typography variant="h6" gutterBottom>
-              <Event sx={{ mr: 1, verticalAlign: 'middle' }} />
-              Programme général
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Consultez le programme complet du congrès.
-            </Typography>
-            <Button
-              variant="contained"
-              fullWidth
-              href="/programme-complet.pdf"
-              target="_blank"
-              startIcon={<Download />}
-            >
-              Télécharger le programme
-            </Button>
-          </Paper>
-        </Grid>
+        {settings.programme_published ? (
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3, mb: 3, height: '100%' }}>
+              <Typography variant="h6" gutterBottom>
+                <Event sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Programme général
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Consultez le programme complet du congrès.
+              </Typography>
+              <Button
+                variant="contained"
+                fullWidth
+                href="/programme-complet.pdf"
+                target="_blank"
+                startIcon={<Download />}
+              >
+                Télécharger le programme
+              </Button>
+            </Paper>
+          </Grid>
+        ) : (
+          <Grid item xs={12} md={6}>
+            <Paper sx={{ p: 3, mb: 3, height: '100%' }}>
+              <Typography variant="h6" gutterBottom>
+                <Event sx={{ mr: 1, verticalAlign: 'middle' }} />
+                Programme général
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Le programme sera publié prochainement.
+              </Typography>
+            </Paper>
+          </Grid>
+        )}
 
         {/* Section Intervenants */}
         <Grid item xs={12} md={6}>
