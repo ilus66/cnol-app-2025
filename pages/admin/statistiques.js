@@ -19,7 +19,7 @@ export default function AdminStatistiques() {
 
   useEffect(() => {
     async function fetchStats() {
-      setLoading(true);
+    setLoading(true);
       // 1. Récupérer le vrai total (count)
       const { count } = await supabase
         .from('statistiques_participants')
@@ -29,7 +29,7 @@ export default function AdminStatistiques() {
       let from = 0;
       let to = 999;
       while (true) {
-        const { data, error } = await supabase
+    const { data, error } = await supabase
           .from('statistiques_participants')
           .select('fonction, ville')
           .range(from, to);
@@ -137,36 +137,36 @@ export default function AdminStatistiques() {
             <Typography variant="h6" gutterBottom>Répartition par profession</Typography>
             <Pie data={pieData} />
           </Paper>
-        </Grid>
+      </Grid>
         <Grid item xs={12} md={6}>
           <Paper elevation={3} sx={{ p:2 }}>
             <Typography variant="h6" gutterBottom>Top 10 villes</Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Ville</TableCell>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Ville</TableCell>
                   <TableCell>Participants</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
                 {stats.topVilles.map(([ville, count]) => (
                   <TableRow key={ville}>
                     <TableCell>{ville}</TableCell>
                     <TableCell>{count}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             {/* Classement par villes : toutes les villes */}
             <Typography variant="h6" sx={{ mt: 4 }}>Classement par villes : toutes les villes</Typography>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
+          <Table size="small">
+            <TableHead>
+              <TableRow>
                   <TableCell>Ville</TableCell>
                   <TableCell>Participants</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
+              </TableRow>
+            </TableHead>
+            <TableBody>
                 {Object.entries(stats.data.reduce((acc, r) => {
                   const ville = (r.ville || '').toUpperCase().trim();
                   if (!ville) return acc;
@@ -176,16 +176,16 @@ export default function AdminStatistiques() {
                   <TableRow key={ville}>
                     <TableCell>{ville}</TableCell>
                     <TableCell>{count}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
           </Paper>
         </Grid>
         <Grid item xs={12}>
           <Box mt={2} textAlign="right">
             <Button variant="contained" color="primary" onClick={exportCSV}>Exporter CSV</Button>
-          </Box>
+      </Box>
         </Grid>
       </Grid>
     </Box>

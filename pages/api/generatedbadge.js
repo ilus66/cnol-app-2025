@@ -13,22 +13,32 @@ export default async function handler(req, res) {
     return res.status(400).json({ message: 'Paramètre id manquant' })
   }
 
-  // Récupérer l'inscrit
-  const { data: inscrit, error } = await supabase
+  // Récupérer l'inscrit dans inscription, puis dans whatsapp si non trouvé
+  let { data: inscrit, error } = await supabase
     .from('inscription')
     .select('*')
     .eq('id', id)
-    .single()
-
+    .single();
+  let source = 'inscription';
   if (error || !inscrit) {
-    return res.status(404).json({ message: 'Inscrit non trouvé' })
+    // Chercher dans whatsapp
+    const { data: inscritW, error: errorW } = await supabase
+      .from('whatsapp')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (errorW || !inscritW) {
+      return res.status(404).json({ message: 'Inscrit non trouvé' });
+    }
+    inscrit = inscritW;
+    source = 'whatsapp';
   }
 
-  // Vérifier que l'inscription est validée
-  if (!inscrit.valide) {
+  // Vérifier que l'inscription est validée (si champ existe)
+  if (typeof inscrit.valide !== 'undefined' && inscrit.valide === false) {
     return res.status(403).json({ 
       message: 'Accès refusé : Votre inscription doit être validée par l\'administrateur avant de pouvoir télécharger votre badge.' 
-    })
+    });
   }
 
   try {

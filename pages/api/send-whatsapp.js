@@ -43,7 +43,7 @@ export default async function handler(req, res) {
           message: text,
           file_name: fileName
         });
-        console.error('Wasender error:', data);
+      console.error('Wasender error:', data);
         return res.status(400).json({ error: 'Mauvais numéro ou format (400 Bad Request)' });
       } else {
         // Sinon, loguer comme succès (même si le message d'erreur est générique)
