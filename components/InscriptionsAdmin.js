@@ -219,9 +219,8 @@ export default function InscriptionsAdmin() {
   }
 
   function handlePrintBadge(participant) {
-    // Utiliser l'ID et la source pour générer le badge approprié
-    const endpoint = participant.source === 'whatsapp' ? 'generatedbadge-whatsapp' : 'generatedbadge';
-    window.open(`/api/${endpoint}?id=${participant.id}`, '_blank');
+    // L'API generatedbadge gère déjà les deux sources automatiquement
+    window.open(`/api/generatedbadge?id=${participant.id}`, '_blank');
   }
 
   async function exportCSV() {
