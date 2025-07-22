@@ -420,3 +420,8 @@ export default function InscriptionsAdmin() {
             </Select>
           </FormControl>
         )}
+        <Button type="submit" variant="contained" disabled={adding}>{adding ? 'Ajout...' : 'Ajouter'}</Button>
+      </Box>
+    </Box>
+  );
+}
