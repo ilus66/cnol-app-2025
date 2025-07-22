@@ -8,9 +8,9 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' })
   }
 
-  const { id } = req.query
+  const { identifiant_badge } = req.query
   if (!id) {
-    return res.status(400).json({ message: 'Paramètre id manquant' })
+    return res.status(400).json({ message: 'Paramètre identifiant_badge manquant' })
   }
 
   // Récupérer l'inscrit dans inscription, puis dans whatsapp si non trouvé
