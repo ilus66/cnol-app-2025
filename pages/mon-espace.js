@@ -45,7 +45,8 @@ import {
   School,
   EmojiEvents,
   Map,
-  AdminPanelSettings
+  AdminPanelSettings,
+  Business as BusinessIcon
 } from '@mui/icons-material';
 import dynamic from 'next/dynamic';
 import { toast } from 'react-hot-toast';
