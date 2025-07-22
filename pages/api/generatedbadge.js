@@ -17,7 +17,7 @@ export default async function handler(req, res) {
   let { data: inscrit, error } = await supabase
     .from('inscription')
     .select('*')
-    .eq('id', id)
+    .eq('identifiant_badge', identifiant_badge)
     .single();
   let source = 'inscription';
   if (error || !inscrit) {
@@ -25,7 +25,7 @@ export default async function handler(req, res) {
     const { data: inscritW, error: errorW } = await supabase
       .from('whatsapp')
       .select('*')
-      .eq('id', id)
+      .eq('identifiant_badge', identifiant_badge)
       .single();
     if (errorW || !inscritW) {
       return res.status(404).json({ message: 'Inscrit non trouvé' });
