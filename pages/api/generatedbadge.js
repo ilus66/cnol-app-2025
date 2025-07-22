@@ -16,13 +16,6 @@ export default async function handler(req, res) {
     })
   }
 
-  // Si on utilise id, source est obligatoire pour éviter les conflits
-  if (id && !identifiant_badge && !source) {
-    return res.status(400).json({ 
-      message: 'Paramètre source requis quand on utilise id (valeurs: "inscription" ou "whatsapp")' 
-    })
-  }
-
   let inscrit = null;
   let tableSource = null;
 
@@ -34,7 +27,7 @@ export default async function handler(req, res) {
         .from('inscription')
         .select('*')
         .eq('identifiant_badge', identifiant_badge)
-        .maybeSingle(); // Utiliser maybeSingle au lieu de single
+        .maybeSingle();
 
       if (!errorInscription && inscritInscription) {
         inscrit = inscritInscription;
@@ -45,7 +38,7 @@ export default async function handler(req, res) {
           .from('whatsapp')
           .select('*')
           .eq('identifiant_badge', identifiant_badge)
-          .maybeSingle(); // Utiliser maybeSingle au lieu de single
+          .maybeSingle();
 
         if (!errorWhatsapp && inscritWhatsapp) {
           inscrit = inscritWhatsapp;
@@ -54,24 +47,83 @@ export default async function handler(req, res) {
       }
     }
 
-    // Stratégie 2: Chercher par id + source spécifique
-    if (!inscrit && id && source) {
-      // Valider la source
-      if (!['inscription', 'whatsapp'].includes(source)) {
-        return res.status(400).json({ 
-          message: 'Paramètre source invalide. Valeurs acceptées: "inscription" ou "whatsapp"' 
-        });
-      }
+    // Stratégie 2: Chercher par id
+    if (!inscrit && id) {
+      // Si source est spécifiée, chercher seulement dans cette table
+      if (source) {
+        if (!['inscription', 'whatsapp'].includes(source)) {
+          return res.status(400).json({ 
+            message: 'Paramètre source invalide. Valeurs acceptées: "inscription" ou "whatsapp"' 
+          });
+        }
 
-      const { data: inscritData, error: errorData } = await supabase
-        .from(source)
-        .select('*')
-        .eq('id', id)
-        .maybeSingle();
+        const { data: inscritData, error: errorData } = await supabase
+          .from(source)
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
 
-      if (!errorData && inscritData) {
-        inscrit = inscritData;
-        tableSource = source;
+        if (!errorData && inscritData) {
+          inscrit = inscritData;
+          tableSource = source;
+        }
+      } else {
+        // Pas de source spécifiée : chercher dans les deux tables
+        // MAIS avec une logique pour éviter les conflits
+        
+        let candidats = [];
+        
+        // Chercher dans inscription
+        const { data: inscritInscription, error: errorInscription } = await supabase
+          .from('inscription')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (!errorInscription && inscritInscription) {
+          candidats.push({ data: inscritInscription, source: 'inscription' });
+        }
+
+        // Chercher dans whatsapp
+        const { data: inscritWhatsapp, error: errorWhatsapp } = await supabase
+          .from('whatsapp')
+          .select('*')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (!errorWhatsapp && inscritWhatsapp) {
+          candidats.push({ data: inscritWhatsapp, source: 'whatsapp' });
+        }
+
+        // Gestion des conflits
+        if (candidats.length === 0) {
+          // Aucun résultat trouvé
+          inscrit = null;
+        } else if (candidats.length === 1) {
+          // Un seul résultat, parfait
+          inscrit = candidats[0].data;
+          tableSource = candidats[0].source;
+        } else {
+          // CONFLIT: Plusieurs résultats avec le même ID
+          // Retourner une erreur explicite avec les options
+          const details = candidats.map(c => ({
+            table: c.source,
+            nom: c.data.nom,
+            prenom: c.data.prenom,
+            identifiant_badge: c.data.identifiant_badge
+          }));
+
+          return res.status(409).json({ 
+            message: `Conflit: ID ${id} trouvé dans plusieurs tables. Spécifiez le paramètre 'source' ou utilisez 'identifiant_badge'.`,
+            conflits: details,
+            solutions: [
+              `?id=${id}&source=inscription`,
+              `?id=${id}&source=whatsapp`,
+              details[0].identifiant_badge ? `?identifiant_badge=${details[0].identifiant_badge}` : null,
+              details[1].identifiant_badge ? `?identifiant_badge=${details[1].identifiant_badge}` : null,
+            ].filter(Boolean)
+          });
+        }
       }
     }
 
@@ -82,6 +134,8 @@ export default async function handler(req, res) {
         criteriaUsed = `identifiant_badge: ${identifiant_badge}`;
       } else if (id && source) {
         criteriaUsed = `id: ${id} dans table: ${source}`;
+      } else if (id) {
+        criteriaUsed = `id: ${id}`;
       }
       
       return res.status(404).json({ 
@@ -116,7 +170,7 @@ export default async function handler(req, res) {
       dateFin: '12 OCT. 2025',
       heureFin: inscrit.heure_fin || '18H00',
       lieu: inscrit.lieu || 'Centre de conférences Fm6education - Av. Allal Al Fassi RABAT',
-      userId: `cnol2025-${tableSource}-${inscrit.id}`, // Inclure la source pour éviter les conflits
+      userId: `cnol2025-${tableSource}-${inscrit.id}`,
       organisation: inscrit.organisation,
       participant_type: inscrit.participant_type
     }
