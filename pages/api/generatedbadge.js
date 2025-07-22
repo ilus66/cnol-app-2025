@@ -9,7 +9,7 @@ export default async function handler(req, res) {
   }
 
   const { identifiant_badge } = req.query
-  if (!id) {
+  if (!identifiant_badge) {
     return res.status(400).json({ message: 'Paramètre identifiant_badge manquant' })
   }
 
