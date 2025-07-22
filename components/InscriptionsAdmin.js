@@ -220,7 +220,7 @@ export default function InscriptionsAdmin() {
 
   function handlePrintBadge(participant) {
     // L'API generatedbadge gère déjà les deux sources automatiquement
-    window.open(`/api/generatedbadge?id=${participant.id}`, '_blank');
+    window.open(`/api/generatedbadge?identifiant_badge=${participant.identifiant_badge}`, '_blank');
   }
 
   async function exportCSV() {
