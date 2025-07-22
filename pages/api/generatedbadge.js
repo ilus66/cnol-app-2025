@@ -8,8 +8,8 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' })
   }
 
-  const { identifiant_badge } = req.query
-  if (!identifiant_badge) {
+  const { id } = req.query
+  if (!id) {
     return res.status(400).json({ message: 'Paramètre identifiant_badge manquant' })
   }
 
