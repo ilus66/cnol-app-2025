@@ -7,76 +7,83 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' })
   }
 
-  const { identifiant_badge, id } = req.query
+  const { identifiant_badge, id, source } = req.query
 
-  // Prioriser identifiant_badge, sinon utiliser id
+  // Vérifier les paramètres requis
   if (!identifiant_badge && !id) {
     return res.status(400).json({ 
       message: 'Paramètre identifiant_badge ou id manquant' 
     })
   }
 
+  // Si on utilise id, source est obligatoire pour éviter les conflits
+  if (id && !identifiant_badge && !source) {
+    return res.status(400).json({ 
+      message: 'Paramètre source requis quand on utilise id (valeurs: "inscription" ou "whatsapp")' 
+    })
+  }
+
   let inscrit = null;
-  let source = null;
+  let tableSource = null;
 
   try {
-    // Stratégie 1: Chercher par identifiant_badge (recommandé)
+    // Stratégie 1: Chercher par identifiant_badge (unique across tables)
     if (identifiant_badge) {
       // Chercher dans inscription
       let { data: inscritInscription, error: errorInscription } = await supabase
         .from('inscription')
         .select('*')
         .eq('identifiant_badge', identifiant_badge)
-        .single();
+        .maybeSingle(); // Utiliser maybeSingle au lieu de single
 
       if (!errorInscription && inscritInscription) {
         inscrit = inscritInscription;
-        source = 'inscription';
+        tableSource = 'inscription';
       } else {
         // Chercher dans whatsapp
         const { data: inscritWhatsapp, error: errorWhatsapp } = await supabase
           .from('whatsapp')
           .select('*')
           .eq('identifiant_badge', identifiant_badge)
-          .single();
+          .maybeSingle(); // Utiliser maybeSingle au lieu de single
 
         if (!errorWhatsapp && inscritWhatsapp) {
           inscrit = inscritWhatsapp;
-          source = 'whatsapp';
+          tableSource = 'whatsapp';
         }
       }
     }
 
-    // Stratégie 2: Si pas trouvé par identifiant_badge, chercher par id (fallback)
-    if (!inscrit && id) {
-      // Chercher dans inscription
-      let { data: inscritInscription, error: errorInscription } = await supabase
-        .from('inscription')
+    // Stratégie 2: Chercher par id + source spécifique
+    if (!inscrit && id && source) {
+      // Valider la source
+      if (!['inscription', 'whatsapp'].includes(source)) {
+        return res.status(400).json({ 
+          message: 'Paramètre source invalide. Valeurs acceptées: "inscription" ou "whatsapp"' 
+        });
+      }
+
+      const { data: inscritData, error: errorData } = await supabase
+        .from(source)
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle();
 
-      if (!errorInscription && inscritInscription) {
-        inscrit = inscritInscription;
-        source = 'inscription';
-      } else {
-        // Chercher dans whatsapp
-        const { data: inscritWhatsapp, error: errorWhatsapp } = await supabase
-          .from('whatsapp')
-          .select('*')
-          .eq('id', id)
-          .single();
-
-        if (!errorWhatsapp && inscritWhatsapp) {
-          inscrit = inscritWhatsapp;
-          source = 'whatsapp';
-        }
+      if (!errorData && inscritData) {
+        inscrit = inscritData;
+        tableSource = source;
       }
     }
 
     // Si toujours pas trouvé
     if (!inscrit) {
-      const criteriaUsed = identifiant_badge ? `identifiant_badge: ${identifiant_badge}` : `id: ${id}`;
+      let criteriaUsed = '';
+      if (identifiant_badge) {
+        criteriaUsed = `identifiant_badge: ${identifiant_badge}`;
+      } else if (id && source) {
+        criteriaUsed = `id: ${id} dans table: ${source}`;
+      }
+      
       return res.status(404).json({ 
         message: `Inscrit non trouvé avec le critère ${criteriaUsed}` 
       });
@@ -103,13 +110,13 @@ export default async function handler(req, res) {
       nom: inscrit.nom,
       function: inscrit.fonction,
       city: inscrit.ville,
-      badgeCode: inscrit.identifiant_badge ? String(inscrit.identifiant_badge) : `${source}-${inscrit.id}`,
+      badgeCode: inscrit.identifiant_badge ? String(inscrit.identifiant_badge) : `${tableSource}-${inscrit.id}`,
       date: '10 OCT. 2025',
       heure: inscrit.heure_debut || '09H00',
       dateFin: '12 OCT. 2025',
       heureFin: inscrit.heure_fin || '18H00',
       lieu: inscrit.lieu || 'Centre de conférences Fm6education - Av. Allal Al Fassi RABAT',
-      userId: `cnol2025-${source}-${inscrit.id}`, // Inclure la source pour éviter les conflits
+      userId: `cnol2025-${tableSource}-${inscrit.id}`, // Inclure la source pour éviter les conflits
       organisation: inscrit.organisation,
       participant_type: inscrit.participant_type
     }
@@ -124,7 +131,7 @@ export default async function handler(req, res) {
 
     const prenom = inscrit.prenom || '';
     const nom = inscrit.nom || '';
-    const identifiantBadge = inscrit.identifiant_badge || `${source}-${inscrit.id}`;
+    const identifiantBadge = inscrit.identifiant_badge || `${tableSource}-${inscrit.id}`;
     
     let filename = '';
     if (prenom && nom) {
@@ -141,8 +148,8 @@ export default async function handler(req, res) {
       `inline; filename="${filename}"`
     )
 
-    // Ajouter des headers pour debug (optionnel, à supprimer en production)
-    res.setHeader('X-Debug-Source', source)
+    // Headers pour debug (optionnel, à supprimer en production)
+    res.setHeader('X-Debug-Source', tableSource)
     res.setHeader('X-Debug-ID', inscrit.id)
     res.setHeader('X-Debug-Badge-ID', inscrit.identifiant_badge || 'none')
 
