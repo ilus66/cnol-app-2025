@@ -343,6 +343,7 @@ export default function InscriptionsAdmin() {
                 <TableCell>Source</TableCell>
                 <TableCell>Nom</TableCell>
                 <TableCell>Prénom</TableCell>
+                <TableCell>Badge ID</TableCell>
                 <TableCell>Email</TableCell>
                 <TableCell>Ville</TableCell>
                 <TableCell>Fonction</TableCell>
@@ -365,6 +366,7 @@ export default function InscriptionsAdmin() {
                   </TableCell>
                   <TableCell>{row.nom}</TableCell>
                   <TableCell>{row.prenom}</TableCell>
+                  <TableCell>{row.identifiant_badge}</TableCell>
                   <TableCell>{row.email}</TableCell>
                   <TableCell>{row.ville}</TableCell>
                   <TableCell>{row.fonction}</TableCell>
