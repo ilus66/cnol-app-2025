@@ -87,55 +87,60 @@ const AdminPage = () => {
   }, [])
 
   async function fetchInscriptions() {
-    setLoading(true)
+    setLoading(true);
     try {
-      let query = supabase
-        .from('inscription')
-        .select('*', { count: 'exact' })
-      // Tri dynamique selon sortOrder
-      if (sortOrder === 'recent') {
-        query = query.order('created_at', { ascending: false })
-      } else if (sortOrder === 'alpha') {
-        query = query.order('nom', { ascending: true }).order('prenom', { ascending: true })
-      }
-      query = query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1)
+      // Fetch from both tables
+      const [inscriptionRes, whatsappRes] = await Promise.all([
+        supabase.from('inscription').select('*'),
+        supabase.from('whatsapp').select('*')
+      ]);
 
-      let countQuery = supabase
-        .from('inscription')
-        .select('id', { count: 'exact', head: true })
+      if (inscriptionRes.error) toast.error(`Erreur chargement inscriptions : ${inscriptionRes.error.message}`);
+      if (whatsappRes.error) toast.error(`Erreur chargement WhatsApp : ${whatsappRes.error.message}`);
 
+      const inscriptionsData = (inscriptionRes.data || []).map(item => ({ ...item, id: `ins_${item.id}`, source: 'Inscription' }));
+      const whatsappData = (whatsappRes.data || []).map(item => ({ ...item, id: `wa_${item.id}`, source: 'WhatsApp' }));
+
+      let combinedData = [...inscriptionsData, ...whatsappData];
+
+      // Apply filters
       if (search) {
-        query = query.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`)
-        countQuery = countQuery.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`)
+        combinedData = combinedData.filter(item =>
+          (item.nom && item.nom.toLowerCase().includes(search.toLowerCase())) ||
+          (item.prenom && item.prenom.toLowerCase().includes(search.toLowerCase())) ||
+          (item.email && item.email.toLowerCase().includes(search.toLowerCase()))
+        );
       }
       if (statusFilter) {
-        query = query.eq('valide', statusFilter === 'validated')
-        countQuery = countQuery.eq('valide', statusFilter === 'validated')
+        combinedData = combinedData.filter(item => item.valide === (statusFilter === 'validated'));
       }
       if (typeFilter) {
-        query = query.ilike('fonction', typeFilter)
-        countQuery = countQuery.ilike('fonction', typeFilter)
+        combinedData = combinedData.filter(item => item.fonction && item.fonction.toLowerCase().includes(typeFilter.toLowerCase()));
       }
-      const { data, error, count } = await query.limit(PAGE_SIZE)
-      const { count: total, error: countError } = await countQuery
-      if (error) {
-        toast.error(`Erreur chargement : ${error.message}`)
-      } else {
-        setInscriptions(data || [])
-        setTotalCount(total || 0)
+
+      // Apply sorting
+      if (sortOrder === 'recent') {
+        combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      } else if (sortOrder === 'alpha') {
+        combinedData.sort((a, b) => (a.nom || '').localeCompare(b.nom || '') || (a.prenom || '').localeCompare(b.prenom || ''));
       }
+
+      setTotalCount(combinedData.length);
+      setInscriptions(combinedData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+
     } catch (error) {
-      toast.error('Erreur réseau')
+      toast.error('Erreur réseau');
     }
-    setLoading(false)
+    setLoading(false);
   }
 
   async function validerInscription(id) {
+    const numericId = id.split('_')[1];
     try {
       const res = await fetch('/api/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: `cnol2025-${id}` }),
+        body: JSON.stringify({ id: `cnol2025-${numericId}` }),
       })
       const result = await res.json()
       if (res.ok) {
@@ -241,7 +246,7 @@ const AdminPage = () => {
   }
 
   function handlePrintBadge(inscrit) {
-    window.open(`/api/generatedbadge?id=${inscrit.id}`, '_blank')
+    window.open(`/api/generatedbadge-unified?id=${inscrit.id}`, '_blank')
   }
 
   const exportCSV = async () => {
@@ -515,6 +520,7 @@ const AdminPage = () => {
                 <TableCell>Nom</TableCell>
                 <TableCell>Prénom</TableCell>
                 <TableCell>Type</TableCell>
+                <TableCell>Source</TableCell>
                 <TableCell>Code identification</TableCell>
                 <TableCell>Statut</TableCell>
                 <TableCell>Email</TableCell>
@@ -526,13 +532,13 @@ const AdminPage = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
+                  <TableCell colSpan={10} align="center">
                     <CircularProgress />
                   </TableCell>
                 </TableRow>
               ) : inscriptions.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} align="center">
+                  <TableCell colSpan={10} align="center">
                     Aucun inscrit trouvé
                   </TableCell>
                 </TableRow>
@@ -542,6 +548,7 @@ const AdminPage = () => {
                     <TableCell>{inscrit.nom}</TableCell>
                     <TableCell>{inscrit.prenom}</TableCell>
                     <TableCell>{inscrit.participant_type || inscrit.fonction}</TableCell>
+                    <TableCell><Chip label={inscrit.source} size="small" color={inscrit.source === 'WhatsApp' ? 'success' : 'primary'} /></TableCell>
                     <TableCell>{inscrit.identifiant_badge || '-'}</TableCell>
                     <TableCell sx={{ color: inscrit.valide ? 'green' : 'red' }}>{inscrit.valide ? 'Validé' : 'Non validé'}</TableCell>
                     <TableCell>{inscrit.email}</TableCell>
