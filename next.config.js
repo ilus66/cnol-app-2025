@@ -2,8 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
-    domains: ['cnol-badge.vercel.app'],
-    unoptimized: true
+    domains: ['cnol-app-2025.vercel.app'],
   },
   experimental: {
     optimizePackageImports: ['@mui/material', '@mui/icons-material']

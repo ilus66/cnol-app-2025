@@ -6,20 +6,33 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Method Not Allowed' })
   }
 
-  const { id } = req.query
-  if (!id) {
-    return res.status(400).json({ message: 'Paramètre id manquant' })
+  const { id: prefixedId } = req.query;
+  if (!prefixedId) {
+    return res.status(400).json({ message: 'Paramètre id manquant' });
+  }
+
+  const parts = prefixedId.split('_');
+  const prefix = parts[0];
+  const id = parts[1];
+
+  let tableName;
+  if (prefix === 'ins') {
+    tableName = 'inscription';
+  } else if (prefix === 'wa') {
+    tableName = 'whatsapp';
+  } else {
+    return res.status(400).json({ message: 'ID préfixe invalide' });
   }
 
   // Récupérer l'inscrit
   const { data: inscrit, error } = await supabase
-    .from('inscription')
+    .from(tableName)
     .select('*')
     .eq('id', id)
-    .single()
+    .single();
 
   if (error || !inscrit) {
-    return res.status(404).json({ message: 'Inscrit non trouvé' })
+    return res.status(404).json({ message: 'Inscrit non trouvé' });
   }
 
   // Vérifier que l'inscription est validée
@@ -42,7 +55,7 @@ export default async function handler(req, res) {
       dateFin: '12 OCT. 2025',
       heureFin: inscrit.heure_fin || '18H00',
       lieu: inscrit.lieu || 'Centre de conférences Fm6education - Av. Allal Al Fassi RABAT',
-      userId: `cnol2025-${inscrit.id}` // Ajout pour QR code
+      userId: prefixedId // Ajout pour QR code
     }
     console.log('userData pour badge unified:', userData);
 

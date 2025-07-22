@@ -50,30 +50,45 @@ export default function InscriptionsAdmin() {
   async function fetchInscriptions() {
     setLoading(true);
     try {
-      let query = supabase.from('inscription').select('*', { count: 'exact' });
-      if (sortOrder === 'recent') query = query.order('created_at', { ascending: false });
-      else if (sortOrder === 'alpha') query = query.order('nom', { ascending: true }).order('prenom', { ascending: true });
-      query = query.range((page - 1) * PAGE_SIZE, page * PAGE_SIZE - 1);
-      let countQuery = supabase.from('inscription').select('id', { count: 'exact', head: true });
+      // Fetch from both tables
+      const [inscriptionRes, whatsappRes] = await Promise.all([
+        supabase.from('inscription').select('*'),
+        supabase.from('whatsapp').select('*')
+      ]);
+
+      if (inscriptionRes.error) toast.error(`Erreur chargement inscriptions : ${inscriptionRes.error.message}`);
+      if (whatsappRes.error) toast.error(`Erreur chargement WhatsApp : ${whatsappRes.error.message}`);
+
+      const inscriptionsData = (inscriptionRes.data || []).map(item => ({ ...item, id: `ins_${item.id}`, source: 'Inscription' }));
+      const whatsappData = (whatsappRes.data || []).map(item => ({ ...item, id: `wa_${item.id}`, source: 'WhatsApp' }));
+
+      let combinedData = [...inscriptionsData, ...whatsappData];
+
+      // Apply filters
       if (search) {
-        query = query.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`);
-        countQuery = countQuery.or(`nom.ilike.%${search}%,prenom.ilike.%${search}%`);
+        combinedData = combinedData.filter(item =>
+          (item.nom && item.nom.toLowerCase().includes(search.toLowerCase())) ||
+          (item.prenom && item.prenom.toLowerCase().includes(search.toLowerCase())) ||
+          (item.email && item.email.toLowerCase().includes(search.toLowerCase()))
+        );
       }
       if (statusFilter) {
-        query = query.eq('valide', statusFilter === 'validated');
-        countQuery = countQuery.eq('valide', statusFilter === 'validated');
+        combinedData = combinedData.filter(item => item.valide === (statusFilter === 'validated'));
       }
       if (typeFilter) {
-        query = query.ilike('fonction', typeFilter);
-        countQuery = countQuery.ilike('fonction', typeFilter);
+        combinedData = combinedData.filter(item => item.fonction && item.fonction.toLowerCase().includes(typeFilter.toLowerCase()));
       }
-      const { data, error, count } = await query.limit(PAGE_SIZE);
-      const { count: total } = await countQuery;
-      if (error) toast.error(`Erreur chargement : ${error.message}`);
-      else {
-        setInscriptions(data || []);
-        setTotalCount(total || 0);
+
+      // Apply sorting
+      if (sortOrder === 'recent') {
+        combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      } else if (sortOrder === 'alpha') {
+        combinedData.sort((a, b) => (a.nom || '').localeCompare(b.nom || '') || (a.prenom || '').localeCompare(b.prenom || ''));
       }
+
+      setTotalCount(combinedData.length);
+      setInscriptions(combinedData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE));
+
     } catch (error) {
       toast.error('Erreur réseau');
     }
@@ -160,28 +175,12 @@ export default function InscriptionsAdmin() {
   }
 
   function handlePrintBadge(inscrit) {
-    window.open(`/api/generatedbadge?id=${inscrit.id}`, '_blank');
+    // The ID is already prefixed
+    window.open(`/api/generatedbadge-unified?id=${inscrit.id}`, '_blank');
   }
 
-  async function exportCSV() {
-    try {
-      const { data, error } = await supabase.from('inscription').select('*');
-      if (error) throw error;
-      const header = Object.keys(data[0] || {});
-      const rows = data.map(row => header.map(h => row[h]));
-      const csvContent = [header, ...rows].map(row => row.map(val => `"${val || ''}"`).join(',')).join('\n');
-      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'inscriptions.csv';
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      toast.error('Erreur export CSV');
-    }
+  function exportCSV() {
+    window.open('/api/export-inscriptions', '_blank');
   }
 
   return (
@@ -238,13 +237,14 @@ export default function InscriptionsAdmin() {
                 <TableCell>Ville</TableCell>
                 <TableCell>Fonction</TableCell>
                 <TableCell>Type</TableCell>
+                <TableCell>Source</TableCell>
                 <TableCell>Validé</TableCell>
                 <TableCell>Actions</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8}><CircularProgress /></TableCell></TableRow>
+                <TableRow><TableCell colSpan={9}><CircularProgress /></TableCell></TableRow>
               ) : inscriptions.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row.nom}</TableCell>
@@ -253,8 +253,9 @@ export default function InscriptionsAdmin() {
                   <TableCell>{row.ville}</TableCell>
                   <TableCell>{row.fonction}</TableCell>
                   <TableCell>{row.participant_type}</TableCell>
+                  <TableCell><Chip label={row.source} size="small" color={row.source === 'WhatsApp' ? 'success' : 'primary'} /></TableCell>
                   <TableCell>
-                    <Checkbox checked={row.valide} onChange={() => validerInscription(row.id)} />
+                    <Checkbox checked={row.valide} onChange={() => validerInscription(row.id.split('_')[1])} />
                   </TableCell>
                   <TableCell>
                     <Button size="small" onClick={() => handlePrintBadge(row)}>Badge</Button>

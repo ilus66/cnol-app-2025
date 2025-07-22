@@ -33,26 +33,33 @@ export default function StatistiquesAdmin() {
       supabase.from('reservations_ateliers').select('id', { count: 'exact', head: true }),
       supabase.from('reservations_masterclass').select('id', { count: 'exact', head: true })
     ]).then(([a, m]) => setTotalReservations((a.count || 0) + (m.count || 0)));
-    fetchStatsVille();
-    fetchStatsFonction();
-    fetchStatsPeriodes();
-    fetchClassement();
+    fetchStats();
   }, []);
 
-  const fetchClassement = async () => {
+  const fetchStats = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('leads')
-      .select('exposant_id, exposant:exposant_id (nom, prenom, qualite_sponsoring)')
-      .neq('exposant_id', null);
-    if (error) return setLoading(false);
-    const countByExposant = {};
-    data.forEach(l => {
-      const key = l.exposant_id;
-      if (!countByExposant[key]) countByExposant[key] = { ...l.exposant, count: 0 };
-      countByExposant[key].count++;
-    });
-    setClassement(Object.values(countByExposant).sort((a, b) => b.count - a.count));
+    const [
+      { data: villeData },
+      { data: fonctionData },
+      { data: jourData },
+      { data: semaineData },
+      { data: moisData },
+      { data: classementData }
+    ] = await Promise.all([
+      supabase.rpc('get_stats_by_ville'),
+      supabase.rpc('get_stats_by_fonction'),
+      supabase.rpc('get_stats_by_day'),
+      supabase.rpc('get_stats_by_week'),
+      supabase.rpc('get_stats_by_month'),
+      supabase.rpc('get_classement_exposants')
+    ]);
+
+    setStatsVille(villeData || []);
+    setStatsFonction(fonctionData || []);
+    setStatsJour(jourData || []);
+    setStatsSemaine(semaineData || []);
+    setStatsMois(moisData || []);
+    setClassement(classementData || []);
     setLoading(false);
   };
 
@@ -109,69 +116,6 @@ export default function StatistiquesAdmin() {
     URL.revokeObjectURL(url);
   };
 
-  const fetchStatsFonction = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('statistiques_participants')
-      .select('fonction');
-    setLoading(false);
-    if (!error && data) {
-      const countByFonction = {};
-      data.forEach(row => {
-        const key = row.fonction || 'Non renseigné';
-        countByFonction[key] = (countByFonction[key] || 0) + 1;
-      });
-      setStatsFonction(Object.entries(countByFonction).map(([fonction, count]) => ({ fonction, count })));
-    }
-  };
-
-  const fetchStatsVille = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('statistiques_participants')
-      .select('ville');
-    setLoading(false);
-    if (!error && data) {
-      const countByVille = {};
-      data.forEach(row => {
-        let ville = (row.ville || '').toUpperCase().trim();
-        if (!ville || ville === 'NON RENSEIGNEE' || ville === 'NON RENSEIGNÉE') return;
-        countByVille[ville] = (countByVille[ville] || 0) + 1;
-      });
-      setStatsVille(
-        Object.entries(countByVille)
-          .sort((a, b) => b[1] - a[1])
-          .map(([ville, count]) => ({ ville, count }))
-      );
-    }
-  };
-
-  const fetchStatsPeriodes = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('statistiques_participants')
-      .select('created_at');
-    setLoading(false);
-    if (!error && data) {
-      const countByDay = {};
-      const countByWeek = {};
-      const countByMonth = {};
-      data.forEach(row => {
-        const date = new Date(row.created_at);
-        const dayKey = date.toISOString().slice(0, 10);
-        countByDay[dayKey] = (countByDay[dayKey] || 0) + 1;
-        const year = date.getFullYear();
-        const week = getWeekNumber(date);
-        const weekKey = `${year}-S${String(week).padStart(2, '0')}`;
-        countByWeek[weekKey] = (countByWeek[weekKey] || 0) + 1;
-        const monthKey = `${year}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-        countByMonth[monthKey] = (countByMonth[monthKey] || 0) + 1;
-      });
-      setStatsJour(Object.entries(countByDay).map(([periode, count]) => ({ periode, count })));
-      setStatsSemaine(Object.entries(countByWeek).map(([periode, count]) => ({ periode, count })));
-      setStatsMois(Object.entries(countByMonth).map(([periode, count]) => ({ periode, count })));
-    }
-  };
 
   function getWeekNumber(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -187,7 +131,7 @@ export default function StatistiquesAdmin() {
       <Typography variant="h4" gutterBottom>Statistiques CNOL 2025</Typography>
       {/* Barre d'actions globales */}
       <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-        <Button variant="contained" onClick={fetchClassement}>Rafraîchir</Button>
+        <Button variant="contained" onClick={fetchStats}>Rafraîchir</Button>
         <Button variant="outlined">Export global</Button>
         <Button variant="outlined" onClick={() => window.print()}>Imprimer</Button>
       </Box>
@@ -278,7 +222,7 @@ export default function StatistiquesAdmin() {
             <TableBody>
               {statsJour.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
                 <TableRow key={idx}>
-                  <TableCell>{row.periode}</TableCell>
+                  <TableCell>{row.jour}</TableCell>
                   <TableCell>{row.count}</TableCell>
                 </TableRow>
               ))}
@@ -297,7 +241,7 @@ export default function StatistiquesAdmin() {
             <TableBody>
               {statsSemaine.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
                 <TableRow key={idx}>
-                  <TableCell>{row.periode}</TableCell>
+                  <TableCell>{row.semaine}</TableCell>
                   <TableCell>{row.count}</TableCell>
                 </TableRow>
               ))}
@@ -316,7 +260,7 @@ export default function StatistiquesAdmin() {
             <TableBody>
               {statsMois.slice().sort((a, b) => b.count - a.count).map((row, idx) => (
                 <TableRow key={idx}>
-                  <TableCell>{row.periode}</TableCell>
+                  <TableCell>{row.mois}</TableCell>
                   <TableCell>{row.count}</TableCell>
                 </TableRow>
               ))}

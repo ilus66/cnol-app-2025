@@ -27,15 +27,66 @@ export default async function handler(req, res) {
   }
 
   try {
-    // 1. Chercher dans ancien_identifiant_badge
-    let { data: user, error } = await supabaseAdmin
-      .from('inscription')
-      .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge')
-      .eq('ancien_identifiant_badge', badge_code)
-      .single();
+    let user = null;
+    let error = null;
 
-    // 2. Si non trouvé et code de la forme cnol2025-XX, chercher dans id
-    if ((!user || error) && /^cnol2025-(\d+)$/i.test(badge_code)) {
+    // 1. Check for prefixed ID
+    if (badge_code.startsWith('ins_') || badge_code.startsWith('wa_')) {
+      const parts = badge_code.split('_');
+      const prefix = parts[0];
+      const id = parts[1];
+      const tableName = prefix === 'ins' ? 'inscription' : 'whatsapp';
+      
+      const { data, err } = await supabaseAdmin
+        .from(tableName)
+        .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge')
+        .eq('id', id)
+        .single();
+      
+      if (data && !err) {
+        user = data;
+      }
+      error = err;
+    } else {
+      // 2. Fallback for non-prefixed IDs
+      // a. Check inscription table
+      const { data: inscUser, error: inscError } = await supabaseAdmin
+        .from('inscription')
+        .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge')
+        .eq('identifiant_badge', badge_code)
+        .single();
+
+      if (inscUser && !inscError) {
+        user = inscUser;
+      } else {
+        // b. Check whatsapp table
+        const { data: waUser, error: waError } = await supabaseAdmin
+          .from('whatsapp')
+          .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge')
+          .eq('identifiant_badge', badge_code)
+          .single();
+        
+        if (waUser && !waError) {
+          user = waUser;
+        }
+      }
+    }
+
+    // 3. If still not found, check legacy formats
+    if (!user) {
+      // a. Chercher dans ancien_identifiant_badge
+      let { data: legacyUser, error: legacyError } = await supabaseAdmin
+        .from('inscription')
+        .select('nom, prenom, email, telephone, fonction, ville, identifiant_badge')
+        .eq('ancien_identifiant_badge', badge_code)
+        .single();
+      
+      if (legacyUser && !legacyError) {
+        user = legacyUser;
+      }
+    }
+    
+    if (!user && /^cnol2025-(\d+)$/i.test(badge_code)) {
       const id = parseInt(badge_code.match(/^cnol2025-(\d+)$/i)[1], 10);
       let { data: userById, error: errorById } = await supabaseAdmin
         .from('inscription')
@@ -44,11 +95,10 @@ export default async function handler(req, res) {
         .single();
       if (userById && !errorById) {
         user = userById;
-        error = null;
       }
     }
 
-    if (error || !user) {
+    if (!user) {
       console.error('Erreur Supabase Admin (recherche badge):', error);
       return res.status(404).json({ message: 'Participant non trouvé.' });
     }
