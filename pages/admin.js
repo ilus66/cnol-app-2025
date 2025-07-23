@@ -250,20 +250,32 @@ const AdminPage = () => {
   }
 
   async function handleSendWhatsApp(inscrit) {
-    // Extraire l'ID numérique
-    const parts = inscrit.id.split('_');
-    const numericId = parts[1];
-    
-    // Ne procéder que si c'est un ID WhatsApp ou si l'utilisateur a un téléphone
-    if (parts[0] !== 'wa' && !inscrit.telephone) {
-      toast.error('Numéro de téléphone manquant pour l\'envoi WhatsApp');
-      return;
-    }
-    
-    // Marquer comme en cours d'envoi
-    setSendingWhatsApp(prev => ({ ...prev, [inscrit.id]: true }));
-    
     try {
+      // Vérifier si l'ID est au format attendu
+      if (!inscrit.id || typeof inscrit.id !== 'string') {
+        toast.error('ID invalide');
+        return;
+      }
+      
+      // Extraire l'ID numérique et le type
+      const parts = inscrit.id.split('_');
+      if (parts.length !== 2) {
+        toast.error('Format d\'ID non reconnu');
+        return;
+      }
+      
+      const sourceType = parts[0];
+      const numericId = parts[1];
+      
+      // Ne procéder que si c'est un ID WhatsApp ou si l'utilisateur a un téléphone
+      if (sourceType !== 'wa' && !inscrit.telephone) {
+        toast.error('Numéro de téléphone manquant pour l\'envoi WhatsApp');
+        return;
+      }
+      
+      // Marquer comme en cours d'envoi
+      setSendingWhatsApp(prev => ({ ...prev, [inscrit.id]: true }));
+      
       // Appeler l'API pour générer et envoyer le badge
       const res = await fetch('/api/whatsapp/generate-badge', {
         method: 'POST',
@@ -271,9 +283,16 @@ const AdminPage = () => {
         body: JSON.stringify({ id: numericId })
       });
       
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Erreur API:', errorText);
+        toast.error(`Erreur: ${errorText || 'Échec de l\'envoi WhatsApp'}`);
+        return;
+      }
+      
       const data = await res.json();
       
-      if (res.ok && data.success) {
+      if (data.success) {
         toast.success('Badge et identifiants envoyés par WhatsApp');
         // Rafraîchir la liste pour mettre à jour le statut
         fetchInscriptions();
@@ -281,12 +300,12 @@ const AdminPage = () => {
         toast.error(`Erreur: ${data.message || 'Échec de l\'envoi WhatsApp'}`);
       }
     } catch (error) {
-      toast.error('Erreur réseau lors de l\'envoi WhatsApp');
       console.error('Erreur envoi WhatsApp:', error);
+      toast.error('Erreur réseau lors de l\'envoi WhatsApp');
+    } finally {
+      // Marquer comme terminé, même en cas d'erreur
+      setSendingWhatsApp(prev => ({ ...prev, [inscrit.id]: false }));
     }
-    
-    // Marquer comme terminé
-    setSendingWhatsApp(prev => ({ ...prev, [inscrit.id]: false }));
   }
 
   const exportCSV = async () => {
