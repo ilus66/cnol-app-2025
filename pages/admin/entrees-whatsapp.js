@@ -75,24 +75,45 @@ export default function EntreesWhatsAppAdmin() {
   const handleSend = async (row) => {
     setSending((prev) => ({ ...prev, [row.id]: true }));
     try {
+      // Extraire l'ID numérique (l'API s'attend à recevoir uniquement l'ID numérique)
+      let numericId = row.id;
+      
+      // Si l'ID est au format "prefix_numericId", extraire la partie numérique
+      if (typeof row.id === 'string' && row.id.includes('_')) {
+        numericId = row.id.split('_')[1];
+      }
+      
       // Utilise l'endpoint generate-badge qui gère tout en une seule requête
       const badgeRes = await fetch('/api/whatsapp/generate-badge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: row.id })
+        body: JSON.stringify({ id: numericId })
       });
-      const badgeData = await badgeRes.json();
-      if (!badgeData.success) {
-        alert('Erreur génération badge');
+      
+      if (!badgeRes.ok) {
+        const errorText = await badgeRes.text();
+        console.error('Erreur API:', errorText);
+        alert(`Erreur génération badge: ${errorText}`);
         setSending((prev) => ({ ...prev, [row.id]: false }));
         return;
       }
+      
+      const badgeData = await badgeRes.json();
+      if (!badgeData.success) {
+        alert(`Erreur génération badge: ${badgeData.message || 'Erreur inconnue'}`);
+        setSending((prev) => ({ ...prev, [row.id]: false }));
+        return;
+      }
+      
       // Mise à jour de l'interface pour indiquer que le badge a été envoyé
       setSent((prev) => ({ ...prev, [row.id]: true }));
     } catch (e) {
+      console.error('Erreur lors de l\'envoi:', e);
       alert('Erreur lors de l\'envoi');
+    } finally {
+      // Toujours réinitialiser l'état d'envoi, même en cas d'erreur
+      setSending((prev) => ({ ...prev, [row.id]: false }));
     }
-    setSending((prev) => ({ ...prev, [row.id]: false }));
   };
 
   return (
