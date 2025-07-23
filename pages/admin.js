@@ -52,6 +52,7 @@ const AdminPage = () => {
   const [sortOrder, setSortOrder] = useState('recent')
   const [totalCount, setTotalCount] = useState(0)
   const [bulkRunning, setBulkRunning] = useState(false)
+  const [sendingWhatsApp, setSendingWhatsApp] = useState({})
 
   const [formData, setFormData] = useState({
     nom: '',
