@@ -14,6 +14,17 @@ export default function EntreesWhatsAppAdmin() {
   const [search, setSearch] = useState('');
   const [sortAsc, setSortAsc] = useState(true);
 
+  // Ajout : état du formulaire
+  const [form, setForm] = useState({
+    nom: '',
+    prenom: '',
+    telephone: '',
+    email: '',
+    fonction: '',
+    ville: ''
+  });
+  const [adding, setAdding] = useState(false);
+
   useEffect(() => {
     setLoading(true);
     fetch('/api/whatsapp/list-to-validate')
@@ -23,6 +34,31 @@ export default function EntreesWhatsAppAdmin() {
         setLoading(false);
       });
   }, []);
+
+  // Ajout : fonction pour ajouter une entrée
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    setAdding(true);
+    try {
+      const res = await fetch('/api/whatsapp/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      if (res.ok) {
+        setForm({ nom: '', prenom: '', telephone: '', email: '', fonction: '', ville: '' });
+        // Recharge la liste
+        fetch('/api/whatsapp/list-to-validate')
+          .then(res => res.json())
+          .then(data => setRows(data.contacts || []));
+      } else {
+        alert('Erreur lors de l\'ajout');
+      }
+    } catch {
+      alert('Erreur réseau');
+    }
+    setAdding(false);
+  };
 
   const filteredRows = rows.filter(row =>
     row.nom && row.nom.toLowerCase().includes(search.toLowerCase())
@@ -69,6 +105,19 @@ export default function EntreesWhatsAppAdmin() {
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: 3 }}>
       <Typography variant="h4" gutterBottom>Validation & Envoi badge WhatsApp</Typography>
+      {/* Formulaire d'ajout */}
+      <Paper sx={{ p: 2, mb: 3 }}>
+        <Typography variant="h6" gutterBottom>Ajouter une entrée WhatsApp</Typography>
+        <form onSubmit={handleAdd} style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <TextField label="Nom" required value={form.nom} onChange={e => setForm(f => ({ ...f, nom: e.target.value }))} />
+          <TextField label="Prénom" required value={form.prenom} onChange={e => setForm(f => ({ ...f, prenom: e.target.value }))} />
+          <TextField label="Téléphone" required value={form.telephone} onChange={e => setForm(f => ({ ...f, telephone: e.target.value }))} />
+          <TextField label="Email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} />
+          <TextField label="Fonction" value={form.fonction} onChange={e => setForm(f => ({ ...f, fonction: e.target.value }))} />
+          <TextField label="Ville" value={form.ville} onChange={e => setForm(f => ({ ...f, ville: e.target.value }))} />
+          <Button type="submit" variant="contained" disabled={adding}>{adding ? 'Ajout...' : 'Ajouter'}</Button>
+        </form>
+      </Paper>
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
         <TextField
           label="Recherche nom"
@@ -137,4 +186,4 @@ export default function EntreesWhatsAppAdmin() {
       )}
     </Box>
   );
-} 
+}
