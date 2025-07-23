@@ -249,6 +249,46 @@ const AdminPage = () => {
     window.open(`/api/generatedbadge-unified?id=${inscrit.id}`, '_blank')
   }
 
+  async function handleSendWhatsApp(inscrit) {
+    // Extraire l'ID numérique
+    const parts = inscrit.id.split('_');
+    const numericId = parts[1];
+    
+    // Ne procéder que si c'est un ID WhatsApp ou si l'utilisateur a un téléphone
+    if (parts[0] !== 'wa' && !inscrit.telephone) {
+      toast.error('Numéro de téléphone manquant pour l\'envoi WhatsApp');
+      return;
+    }
+    
+    // Marquer comme en cours d'envoi
+    setSendingWhatsApp(prev => ({ ...prev, [inscrit.id]: true }));
+    
+    try {
+      // Appeler l'API pour générer et envoyer le badge
+      const res = await fetch('/api/whatsapp/generate-badge', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: numericId })
+      });
+      
+      const data = await res.json();
+      
+      if (res.ok && data.success) {
+        toast.success('Badge et identifiants envoyés par WhatsApp');
+        // Rafraîchir la liste pour mettre à jour le statut
+        fetchInscriptions();
+      } else {
+        toast.error(`Erreur: ${data.message || 'Échec de l\'envoi WhatsApp'}`);
+      }
+    } catch (error) {
+      toast.error('Erreur réseau lors de l\'envoi WhatsApp');
+      console.error('Erreur envoi WhatsApp:', error);
+    }
+    
+    // Marquer comme terminé
+    setSendingWhatsApp(prev => ({ ...prev, [inscrit.id]: false }));
+  }
+
   const exportCSV = async () => {
     let query = supabase
       .from('inscription')
@@ -498,7 +538,7 @@ const AdminPage = () => {
                 <Typography><b>Email :</b> {inscrit.email}</Typography>
                 <Typography><b>Téléphone :</b> {inscrit.telephone}</Typography>
                 <Typography><b>Ville :</b> {inscrit.ville}</Typography>
-                <Box sx={{ mt: 1, display: 'flex', gap: 1 }}>
+                <Box sx={{ mt: 1, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                   {!inscrit.valide && (
                     <Button variant="contained" color="success" size="small" onClick={() => validerInscription(inscrit.id)}>
                       Valider
@@ -507,6 +547,17 @@ const AdminPage = () => {
                   <Button variant="contained" color="primary" size="small" onClick={() => handlePrintBadge(inscrit)}>
                     Imprimer
                   </Button>
+                  {inscrit.valide && (inscrit.telephone || inscrit.id.startsWith('wa_')) && (
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      size="small"
+                      onClick={() => handleSendWhatsApp(inscrit)}
+                      disabled={sendingWhatsApp[inscrit.id]}
+                    >
+                      {sendingWhatsApp[inscrit.id] ? 'Envoi...' : 'Envoi WhatsApp'}
+                    </Button>
+                  )}
                 </Box>
               </Paper>
             ))
@@ -563,6 +614,18 @@ const AdminPage = () => {
                       <Button variant="contained" color="primary" size="small" onClick={() => handlePrintBadge(inscrit)} sx={{ ml: 1 }}>
                         Imprimer
                       </Button>
+                      {inscrit.valide && (inscrit.telephone || inscrit.id.startsWith('wa_')) && (
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          size="small"
+                          onClick={() => handleSendWhatsApp(inscrit)}
+                          sx={{ ml: 1 }}
+                          disabled={sendingWhatsApp[inscrit.id]}
+                        >
+                          {sendingWhatsApp[inscrit.id] ? 'Envoi...' : 'Envoi WhatsApp'}
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))
