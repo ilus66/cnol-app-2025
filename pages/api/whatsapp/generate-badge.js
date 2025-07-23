@@ -1,4 +1,4 @@
-import { generateBadge } from '../../../lib/generateBadge';
+import { generateBadgeUnified } from '../../../lib/generateBadgeUnified';
 
 const { createClient } = require('@supabase/supabase-js');
 const supabaseServiceRole = createClient(
@@ -55,15 +55,21 @@ export default async function handler(req, res) {
   let pdfBuffer;
   try {
     const userData = {
-      name: (contact.prenom ? `${contact.prenom} ` : '') + (contact.nom || ''),
+      prenom: contact.prenom || '',
+      nom: contact.nom || '',
       function: contact.fonction || '',
       city: contact.ville || '',
       email: contact.email || '',
       userId: contact.telephone || '',
-      identifiant_badge: badgeCode,
+      badgeCode: badgeCode,
+      date: '10 OCT. 2025',
+      heure: '09H00',
+      dateFin: '12 OCT. 2025',
+      heureFin: '18H00',
+      lieu: 'Centre de conférences Fm6education - Av. Allal Al Fassi RABAT'
     };
-    console.log('[whatsapp/generate-badge] Données pour generateBadge', userData);
-    pdfBuffer = await generateBadge(userData);
+    console.log('[whatsapp/generate-badge] Données pour generateBadgeUnified', userData);
+    pdfBuffer = await generateBadgeUnified(userData);
     console.log('[whatsapp/generate-badge] PDF généré (buffer) OK');
   } catch (err) {
     console.error('[whatsapp/generate-badge] Erreur génération badge', err);
