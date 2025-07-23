@@ -1,8 +1,20 @@
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_KEY;
+
+// Ajoute ce contrôle
+if (!supabaseUrl || !supabaseKey) {
+  console.error('SUPABASE_URL ou SUPABASE_KEY manquantes', { supabaseUrl, supabaseKey });
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
+  if (!supabaseUrl || !supabaseKey) {
+    res.status(500).json({ error: 'Variables SUPABASE_URL ou SUPABASE_KEY manquantes.' });
+    return;
+  }
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Méthode non autorisée' });
     return;
