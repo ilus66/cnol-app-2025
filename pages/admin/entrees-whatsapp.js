@@ -75,8 +75,8 @@ export default function EntreesWhatsAppAdmin() {
   const handleSend = async (row) => {
     setSending((prev) => ({ ...prev, [row.id]: true }));
     try {
-      // Utilise le nouveau processus
-      const badgeRes = await fetch('/api/generatedbadge-unified', {
+      // Utilise l'endpoint generate-badge qui gère tout en une seule requête
+      const badgeRes = await fetch('/api/whatsapp/generate-badge', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: row.id })
@@ -87,12 +87,7 @@ export default function EntreesWhatsAppAdmin() {
         setSending((prev) => ({ ...prev, [row.id]: false }));
         return;
       }
-      // Marquer comme envoyé
-      await fetch('/api/whatsapp/mark-badge-sent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: row.id })
-      });
+      // Mise à jour de l'interface pour indiquer que le badge a été envoyé
       setSent((prev) => ({ ...prev, [row.id]: true }));
     } catch (e) {
       alert('Erreur lors de l\'envoi');
