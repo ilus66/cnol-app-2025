@@ -75,8 +75,8 @@ export default function EntreesWhatsAppAdmin() {
   const handleSend = async (row) => {
     setSending((prev) => ({ ...prev, [row.id]: true }));
     try {
-      // 1. Générer le badge
-      const badgeRes = await fetch('/api/whatsapp/generate-badge', {
+      // Utilise le nouveau processus
+      const badgeRes = await fetch('/api/generatedbadge-unified', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: row.id })
@@ -87,9 +87,7 @@ export default function EntreesWhatsAppAdmin() {
         setSending((prev) => ({ ...prev, [row.id]: false }));
         return;
       }
-      // 2. Générer le message WhatsApp (supprimé, car déjà fait côté backend)
-      // 3. Envoyer via WhatsApp (supprimé)
-      // 4. Marquer comme envoyé
+      // Marquer comme envoyé
       await fetch('/api/whatsapp/mark-badge-sent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
