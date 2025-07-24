@@ -657,7 +657,7 @@ const AdminPage = () => {
 
       <Box display="flex" justifyContent="center" mt={3}>
         <Pagination
-          count={10} // ajuster si tu connais le total
+          count={Math.ceil(totalCount / PAGE_SIZE)} // ajuster si tu connais le total
           page={page}
           onChange={(_, value) => setPage(value)}
           color="primary"
