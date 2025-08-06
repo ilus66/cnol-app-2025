@@ -90,11 +90,61 @@ const AdminPage = () => {
   async function fetchInscriptions() {
     setLoading(true);
     try {
-      // Fetch from both tables
-      const [inscriptionRes, whatsappRes] = await Promise.all([
-        supabase.from('inscription').select('*'),
-        supabase.from('whatsapp').select('*')
-      ]);
+      // Fetch from both tables with pagination to get all records
+      let allInscriptions = [];
+      let allWhatsapp = [];
+      
+      // Récupérer toutes les inscriptions avec pagination
+      let from = 0;
+      const pageSize = 1000;
+      let hasMore = true;
+      
+      while (hasMore) {
+        const { data: inscriptions, error: inscriptionError } = await supabase
+          .from('inscription')
+          .select('*')
+          .range(from, from + pageSize - 1);
+        
+        if (inscriptionError) {
+          console.error('Erreur récupération inscriptions:', inscriptionError);
+          break;
+        }
+        
+        allInscriptions = [...allInscriptions, ...(inscriptions || [])];
+        
+        if (!inscriptions || inscriptions.length < pageSize) {
+          hasMore = false;
+        } else {
+          from += pageSize;
+        }
+      }
+      
+      // Récupérer toutes les inscriptions WhatsApp avec pagination
+      from = 0;
+      hasMore = true;
+      
+      while (hasMore) {
+        const { data: whatsapp, error: whatsappError } = await supabase
+          .from('whatsapp')
+          .select('*')
+          .range(from, from + pageSize - 1);
+        
+        if (whatsappError) {
+          console.error('Erreur récupération WhatsApp:', whatsappError);
+          break;
+        }
+        
+        allWhatsapp = [...allWhatsapp, ...(whatsapp || [])];
+        
+        if (!whatsapp || whatsapp.length < pageSize) {
+          hasMore = false;
+        } else {
+          from += pageSize;
+        }
+      }
+      
+      const inscriptionRes = { data: allInscriptions, error: null };
+      const whatsappRes = { data: allWhatsapp, error: null };
 
       if (inscriptionRes.error) toast.error(`Erreur chargement inscriptions : ${inscriptionRes.error.message}`);
       if (whatsappRes.error) toast.error(`Erreur chargement WhatsApp : ${whatsappRes.error.message}`);
@@ -121,7 +171,19 @@ const AdminPage = () => {
 
       // Apply sorting
       if (sortOrder === 'recent') {
-        combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        combinedData.sort((a, b) => {
+          const dateA = a.source === 'WhatsApp' ? new Date(a.date_import || 0) : new Date(a.created_at || 0);
+          const dateB = b.source === 'WhatsApp' ? new Date(b.date_import || 0) : new Date(b.created_at || 0);
+          return dateB - dateA;
+        });
+        
+        // Debug: afficher les 5 premières entrées après tri
+        console.log('DEBUG - Top 5 après tri:', combinedData.slice(0, 5).map(item => ({
+          nom: `${item.prenom || ''} ${item.nom}`,
+          source: item.source,
+          date: item.source === 'WhatsApp' ? item.date_import : item.created_at,
+          valide: item.valide
+        })));
       } else if (sortOrder === 'alpha') {
         combinedData.sort((a, b) => (a.nom || '').localeCompare(b.nom || '') || (a.prenom || '').localeCompare(b.prenom || ''));
       }
@@ -137,8 +199,13 @@ const AdminPage = () => {
 
   async function validerInscription(id) {
     const numericId = id.split('_')[1];
+    const source = id.startsWith('wa_') ? 'whatsapp' : 'inscription';
+    
     try {
-      const res = await fetch('/api/validate', {
+      // Utiliser la bonne API selon la source
+      const apiEndpoint = source === 'whatsapp' ? '/api/validate-whatsapp' : '/api/validate';
+      
+      const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: `cnol2025-${numericId}` }),

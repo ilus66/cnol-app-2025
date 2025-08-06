@@ -27,9 +27,10 @@ const statusFilters = [
   { value: 'pending', label: 'Non validé' },
 ];
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 50;
 
 export default function InscriptionsAdmin() {
+  console.log("InscriptionsAdmin component rendered");
   const [inscriptions, setInscriptions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
@@ -50,15 +51,16 @@ export default function InscriptionsAdmin() {
   async function fetchInscriptions() {
     setLoading(true);
     try {
-      // Fetch from both tables
+      // Fetch from both tables with higher limits
       const [inscriptionRes, whatsappRes] = await Promise.all([
-        supabase.from('inscription').select('*'),
-        supabase.from('whatsapp').select('*')
+        supabase.from('inscription').select('*').limit(2000),
+        supabase.from('whatsapp').select('*').limit(2000)
       ]);
       // LOG pour debug
       console.log('DEBUG - inscriptionRes:', inscriptionRes);
+console.log('DEBUG - inscriptionRes.data last 5:', inscriptionRes.data?.slice(-5));
       console.log('DEBUG - whatsappRes:', whatsappRes);
-
+      console.log("InscriptionsAdmin component mounted");
       if (inscriptionRes.error) toast.error(`Erreur chargement inscriptions : ${inscriptionRes.error.message}`);
       if (whatsappRes.error) toast.error(`Erreur chargement WhatsApp : ${whatsappRes.error.message}`);
 
@@ -84,7 +86,12 @@ export default function InscriptionsAdmin() {
 
       // Apply sorting
       if (sortOrder === 'recent') {
-        combinedData.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        combinedData.sort((a, b) => {
+          const dateA = a.source === 'WhatsApp' ? new Date(a.date_import || 0) : new Date(a.created_at || 0);
+          const dateB = b.source === 'WhatsApp' ? new Date(b.date_import || 0) : new Date(b.created_at || 0);
+          return dateB - dateA;
+        });
+        console.log('DEBUG - sorted by recent:', combinedData.slice(0, 5));
       } else if (sortOrder === 'alpha') {
         combinedData.sort((a, b) => (a.nom || '').localeCompare(b.nom || '') || (a.prenom || '').localeCompare(b.prenom || ''));
       }
@@ -100,10 +107,17 @@ export default function InscriptionsAdmin() {
 
   async function validerInscription(id) {
     try {
-      const res = await fetch('/api/validate', {
+      // Extraire l'ID réel de la base de données (enlever les préfixes ins_ ou wa_)
+      const realId = id.replace(/^(ins_|wa_)/, '');
+      const source = id.startsWith('wa_') ? 'whatsapp' : 'inscription';
+      
+      // Utiliser la bonne API selon la source
+      const apiEndpoint = source === 'whatsapp' ? '/api/validate-whatsapp' : '/api/validate';
+      
+      const res = await fetch(apiEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: `cnol2025-${id}` }),
+        body: JSON.stringify({ id: `cnol2025-${realId}` }),
       });
       const result = await res.json();
       if (res.ok) {
@@ -188,7 +202,9 @@ export default function InscriptionsAdmin() {
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 2 }}>Liste des inscrits</Typography>
+      <Typography variant="h5" sx={{ mb: 2 }}>
+        Liste des inscrits ({totalCount} total)
+      </Typography>
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
         <TextField label="Recherche" value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
         <FormControl sx={{ minWidth: 120 }}>
@@ -275,13 +291,13 @@ export default function InscriptionsAdmin() {
       <Divider sx={{ my: 3 }} />
       <Typography variant="h6" sx={{ mb: 1 }}>Ajouter un inscrit</Typography>
       <Box component="form" onSubmit={handleAdd} sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        <TextField label="Nom" name="nom" value={formData.nom} onChange={handleChange} required />
-        <TextField label="Prénom" name="prenom" value={formData.prenom} onChange={handleChange} required />
-        <TextField label="Email" name="email" value={formData.email} onChange={handleChange} />
-        <TextField label="Téléphone" name="telephone" value={formData.telephone} onChange={handleChange} />
-        <TextField label="Ville" name="ville" value={formData.ville} onChange={handleChange} />
-        <TextField label="Fonction" name="fonction" value={formData.fonction} onChange={handleChange} />
-        <TextField label="Organisation (optionnel)" name="organisation" value={formData.organisation} onChange={handleChange} />
+        <TextField label="Nom" name="nom" id="nom" value={formData.nom} onChange={handleChange} required />
+        <TextField label="Prénom" name="prenom" id="prenom" value={formData.prenom} onChange={handleChange} required />
+        <TextField label="Email" name="email" id="email" value={formData.email} onChange={handleChange} />
+        <TextField label="Téléphone" name="telephone" id="telephone" value={formData.telephone} onChange={handleChange} />
+        <TextField label="Ville" name="ville" id="ville" value={formData.ville} onChange={handleChange} />
+        <TextField label="Fonction" name="fonction" id="fonction" value={formData.fonction} onChange={handleChange} />
+        <TextField label="Organisation (optionnel)" name="organisation" id="organisation" value={formData.organisation} onChange={handleChange} />
         <FormControl sx={{ minWidth: 120 }}>
           <InputLabel>Type</InputLabel>
           <Select name="participant_type" value={formData.participant_type} label="Type" onChange={handleChange}>
@@ -289,7 +305,7 @@ export default function InscriptionsAdmin() {
           </Select>
         </FormControl>
         {formData.participant_type === 'exposant' && (
-          <TextField label="Organisation" name="organisation" value={formData.organisation} onChange={handleChange} />
+          <TextField label="Organisation" name="organisation" id="organisation" value={formData.organisation} onChange={handleChange} />
         )}
         {formData.participant_type === 'exposant' && (
           <FormControl sx={{ minWidth: 120 }}>
