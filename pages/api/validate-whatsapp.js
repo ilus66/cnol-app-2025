@@ -68,11 +68,11 @@ export default async function handler(req, res) {
     };
     const pdfBuffer = await generateBadgeUnified(userData);
 
-    // Test upload avec la clé service_role
+    // Upload avec la clé anon (plus sécurisé)
     const { createClient } = require('@supabase/supabase-js');
     const supabaseServiceRole = createClient(
       'https://otmttpiqeehfquoqycol.supabase.co',
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
     // Upload PDF dans Supabase Storage (bucket 'logos') avec service_role

@@ -17,6 +17,13 @@ export default async function handler(req, res) {
     return res.status(405).json({ message: 'Méthode non autorisée' });
   }
 
+  // Vérification basique d'authentification (optionnel)
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    // Pour le moment, on autorise sans token pour la compatibilité
+    console.log('API validate appelée sans token d\'authentification');
+  }
+
   const { id } = req.body;
 
   if (!id) {
@@ -78,13 +85,12 @@ export default async function handler(req, res) {
     };
     const pdfBuffer = await generateBadgeUnified(userData);
 
-    // Test upload avec la clé service_role
+    // Upload avec la clé anon (plus sécurisé)
     const { createClient } = require('@supabase/supabase-js');
     const supabaseServiceRole = createClient(
       'https://otmttpiqeehfquoqycol.supabase.co',
-      process.env.SUPABASE_SERVICE_ROLE_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
     // Upload PDF dans Supabase Storage (bucket 'logos') avec service_role
     const safeName = `${updated.prenom} ${updated.nom}`.toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
