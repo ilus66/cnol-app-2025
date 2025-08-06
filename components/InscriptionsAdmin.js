@@ -55,6 +55,9 @@ export default function InscriptionsAdmin() {
         supabase.from('inscription').select('*'),
         supabase.from('whatsapp').select('*')
       ]);
+      // LOG pour debug
+      console.log('DEBUG - inscriptionRes:', inscriptionRes);
+      console.log('DEBUG - whatsappRes:', whatsappRes);
 
       if (inscriptionRes.error) toast.error(`Erreur chargement inscriptions : ${inscriptionRes.error.message}`);
       if (whatsappRes.error) toast.error(`Erreur chargement WhatsApp : ${whatsappRes.error.message}`);
