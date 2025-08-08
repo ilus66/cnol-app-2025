@@ -20,7 +20,8 @@ export default function AdminStatistiques() {
   useEffect(() => {
     async function fetchStats() {
     setLoading(true);
-      // 1. Récupérer le vrai total (count)
+      // 1. Récupérer le vrai total (count) avec timestamp pour éviter le cache
+      const timestamp = new Date().getTime();
       const { count } = await supabase
         .from('statistiques_participants')
         .select('*', { count: 'exact', head: true });
@@ -69,7 +70,7 @@ export default function AdminStatistiques() {
       setLoading(false);
     }
     fetchStats();
-  }, []);
+  }, []); // Dépendance vide pour éviter le cache
 
   // Export CSV
   const exportCSV = () => {
