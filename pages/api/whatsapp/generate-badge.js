@@ -188,17 +188,8 @@ export default async function handler(req, res) {
     if (source === 'whatsapp') {
       updateData = { badge_envoye: true, badge_url: badgeUrl, valide: true };
     } else {
-      // Pour inscription, on utilise seulement valide et badge_url si la colonne existe
+      // Pour inscription, on utilise seulement valide (pas de badge_envoye ni badge_url)
       updateData = { valide: true };
-      // Ajouter badge_url seulement si la colonne existe
-      try {
-        await supabaseServiceRole
-          .from(tableName)
-          .update({ badge_url: badgeUrl })
-          .eq('id', id);
-      } catch (e) {
-        console.log('[whatsapp/generate-badge] Colonne badge_url non disponible dans inscription');
-      }
     }
     
     const { error } = await supabaseServiceRole
