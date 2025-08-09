@@ -94,24 +94,35 @@ async function analyzeCurrentUsage() {
 
     const externalOptions = [
       {
-        name: 'AWS S3 Standard',
-        costPerGB: 0.023, // USD par GB par mois
-        description: 'Accès fréquent'
+        name: '🎁 AWS S3 Standard (GRATUIT)',
+        costPerGB: 0, // GRATUIT 12 mois (5GB inclus)
+        description: '12 MOIS GRATUITS - 5GB inclus ✅ (recommandé)',
+        freeDetails: '5GB gratuits/mois pendant 12 mois'
       },
       {
-        name: 'AWS S3 Standard-IA',
+        name: 'AWS S3 Standard-IA (après gratuit)',
         costPerGB: 0.0125, // USD par GB par mois  
-        description: 'Accès peu fréquent (recommandé)'
+        description: 'Après période gratuite - Accès peu fréquent'
       },
       {
-        name: 'AWS S3 Glacier',
-        costPerGB: 0.004, // USD par GB par mois
-        description: 'Archivage long terme'
+        name: 'Backblaze B2',
+        costPerGB: 0.005, // USD par GB par mois
+        description: '10GB gratuits à vie + 50% moins cher qu\'AWS'
+      },
+      {
+        name: 'Oracle Cloud (GRATUIT)',
+        costPerGB: 0, // 20GB gratuits à vie
+        description: '20GB gratuits À VIE - Pas de limite de temps ✅'
+      },
+      {
+        name: 'Cloudflare R2',
+        costPerGB: 0, // 10GB gratuits/mois
+        description: '10GB gratuits/mois + 0$ frais sortie ✅'
       },
       {
         name: 'Google Cloud Storage',
         costPerGB: 0.020, // USD par GB par mois
-        description: 'Alternative AWS'
+        description: '5GB gratuits/mois permanent + 300$ crédits'
       },
       {
         name: 'Azure Blob Storage',
@@ -132,17 +143,19 @@ async function analyzeCurrentUsage() {
     });
 
     // 6. Recommandation
-    const recommendedOption = externalOptions[1]; // S3 Standard-IA
+    const recommendedOption = externalOptions[0]; // AWS S3 GRATUIT
     const recommendedCost = totalSizeGB * recommendedOption.costPerGB;
     const totalSavings = currentMonthlyCost - recommendedCost;
     const annualSavings = totalSavings * 12;
 
     console.log('\n🎯 RECOMMANDATION');
     console.log('================');
-    console.log(`✅ Solution recommandée: ${recommendedOption.name}`);
+    console.log(`✅ Solution recommandée: ${recommendedOption.name.replace('🎁 ', '')}`);
+    console.log(`🎁 PÉRIODE GRATUITE: 12 mois (5GB inclus)`);
     console.log(`💰 Coût mensuel: ${recommendedCost.toFixed(2)}$ (vs ${currentMonthlyCost.toFixed(2)}$ actuellement)`);
     console.log(`💸 Économie mensuelle: ${totalSavings.toFixed(2)}$`);
-    console.log(`🏆 Économie annuelle: ${annualSavings.toFixed(2)}$`);
+    console.log(`🏆 Économie 1ère année: ${annualSavings.toFixed(2)}$ (100% GRATUIT)`);
+    console.log(`📊 Votre usage (${totalSizeGB.toFixed(3)}GB) est largement dans les 5GB gratuits ✅`);
 
     // 7. Plan de migration
     console.log('\n📋 PLAN DE MIGRATION');
