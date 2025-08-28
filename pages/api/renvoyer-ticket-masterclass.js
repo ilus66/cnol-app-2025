@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { sendTicketMail } from '../../lib/mailer';
+import { sendTicketMail, sendTicketWhatsApp } from '../../lib/mailer';
 import { generateTicket } from '../../lib/generateTicket';
 
 const supabaseAdmin = createClient(
@@ -76,7 +76,29 @@ export default async function handler(req, res) {
         eventDate: reservation.masterclass.date_heure,
         pdfBuffer
       });
-      res.status(200).json({ message: 'Ticket renvoyé par email avec succès.' });
+
+      // 4. Envoyer également par WhatsApp si un numéro de téléphone est disponible
+      if (reservation.telephone) {
+        try {
+          const pdfFileName = `ticket-masterclass-${reservation.masterclass.titre.replace(/\s+/g, '-')}.pdf`;
+          await sendTicketWhatsApp({
+            to: reservation.telephone,
+            nom: reservation.nom,
+            prenom: reservation.prenom,
+            eventType: 'Masterclass',
+            eventTitle: reservation.masterclass.titre,
+            eventDate: reservation.masterclass.date_heure,
+            pdfBuffer,
+            pdfFileName
+          });
+          console.log(`Ticket WhatsApp renvoyé pour la masterclass ${reservation.masterclass.titre}`);
+        } catch (whatsappError) {
+          console.error('Erreur envoi WhatsApp ticket masterclass:', whatsappError);
+          // Ne pas bloquer le renvoi si WhatsApp échoue
+        }
+      }
+
+      res.status(200).json({ message: 'Ticket de masterclass renvoyé avec succès.' });
     }
 
   } catch (error) {

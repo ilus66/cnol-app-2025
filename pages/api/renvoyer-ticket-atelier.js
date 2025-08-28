@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import { generateTicket } from '../../lib/generateTicket'
-import { sendTicketMail } from '../../lib/mailer'
+import { sendTicketMail, sendTicketWhatsApp } from '../../lib/mailer'
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -75,8 +75,30 @@ export default async function handler(req, res) {
         eventTitle: reservation.ateliers.titre,
         eventDate: reservation.ateliers.date_heure,
         pdfBuffer
-      })
-      res.status(200).json({ message: 'Ticket renvoyé par email avec succès.' })
+      });
+
+      // 4. Envoyer également par WhatsApp si un numéro de téléphone est disponible
+      if (reservation.telephone) {
+        try {
+          const pdfFileName = `ticket-atelier-${reservation.ateliers.titre.replace(/\s+/g, '-')}.pdf`;
+          await sendTicketWhatsApp({
+            to: reservation.telephone,
+            nom: reservation.nom,
+            prenom: reservation.prenom,
+            eventType: 'Atelier',
+            eventTitle: reservation.ateliers.titre,
+            eventDate: reservation.ateliers.date_heure,
+            pdfBuffer,
+            pdfFileName
+          });
+          console.log(`Ticket WhatsApp renvoyé pour l'atelier ${reservation.ateliers.titre}`);
+        } catch (whatsappError) {
+          console.error('Erreur envoi WhatsApp ticket atelier:', whatsappError);
+          // Ne pas bloquer le renvoi si WhatsApp échoue
+        }
+      }
+
+      res.status(200).json({ message: 'Ticket d\'atelier renvoyé avec succès.' });
     }
 
   } catch (error) {

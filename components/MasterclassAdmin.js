@@ -199,6 +199,25 @@ export default function MasterclassAdmin() {
     }
   }
 
+  // Nouvelle fonction pour envoyer le ticket par WhatsApp
+  const handleSendWhatsApp = async (resaId) => {
+    try {
+      const res = await fetch('/api/renvoyer-ticket-masterclass', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: resaId })
+      })
+      if (res.ok) {
+        toast.success('Ticket envoyé par WhatsApp !')
+      } else {
+        toast.error('Erreur lors de l\'envoi WhatsApp')
+      }
+    } catch (error) {
+      console.error('Erreur envoi WhatsApp:', error)
+      toast.error('Erreur lors de l\'envoi WhatsApp')
+    }
+  }
+
   return (
     <Box sx={{ maxWidth: 1200, mx: 'auto', p: { xs: 1, sm: 3 } }}>
       <Typography variant="h4" gutterBottom>Gestion des Masterclass</Typography>
@@ -362,7 +381,10 @@ export default function MasterclassAdmin() {
                     </>
                   )}
                   {resa.statut === 'confirmé' && (
-                    <Button variant="contained" color="info" size="small" onClick={() => handleResendTicket(resa.id)} fullWidth={isMobile}>Renvoyer ticket</Button>
+                    <>
+                      <Button variant="contained" color="info" size="small" onClick={() => handleResendTicket(resa.id)} fullWidth={isMobile}>Renvoyer ticket</Button>
+                      <Button variant="contained" color="success" size="small" onClick={() => handleSendWhatsApp(resa.id)} fullWidth={isMobile}>Envoyer WhatsApp</Button>
+                    </>
                   )}
                 </Stack>
               </ListItem>

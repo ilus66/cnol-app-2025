@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { sendTicketMail } from '../../lib/mailer';
+import { sendTicketMail, sendTicketWhatsApp } from '../../lib/mailer';
 import { generateTicket } from '../../lib/generateTicket';
 
 const supabaseAdmin = createClient(
@@ -53,6 +53,27 @@ export default async function handler(req, res) {
       eventDate: reservation.ateliers.date_heure,
       pdfBuffer
     });
+
+    // 4. Envoyer également par WhatsApp si un numéro de téléphone est disponible
+    if (reservation.telephone) {
+      try {
+        const pdfFileName = `ticket-atelier-${reservation.ateliers.titre.replace(/\s+/g, '-')}.pdf`;
+        await sendTicketWhatsApp({
+          to: reservation.telephone,
+          nom: reservation.nom,
+          prenom: reservation.prenom,
+          eventType: 'Atelier',
+          eventTitle: reservation.ateliers.titre,
+          eventDate: reservation.ateliers.date_heure,
+          pdfBuffer,
+          pdfFileName
+        });
+        console.log(`Ticket WhatsApp envoyé pour l'atelier ${reservation.ateliers.titre}`);
+      } catch (whatsappError) {
+        console.error('Erreur envoi WhatsApp ticket atelier:', whatsappError);
+        // Ne pas bloquer la validation si WhatsApp échoue
+      }
+    }
 
     res.status(200).json({ message: 'Réservation validée et ticket envoyé avec succès.' });
 
