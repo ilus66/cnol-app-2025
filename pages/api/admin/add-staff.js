@@ -54,7 +54,42 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "Erreur lors de la génération du badge PDF : " + err.message });
   }
 
-  // 3. Envoi du badge par email
+  // 3. Upload du badge sur Cloudflare R2
+  let badgeUrl = null;
+  try {
+    const { uploadToR2 } = require('../../../lib/uploadToR2');
+    
+    // Construire le nom de fichier safe
+    const safeNom = nom.toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
+    const safePrenom = prenom.toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
+    const fileName = `badge-cnol2025-staff-${safePrenom}-${safeNom}.pdf`;
+    
+    const { success, publicUrl, error: uploadError } = await uploadToR2(
+      fileName,
+      pdfBuffer,
+      'application/pdf'
+    );
+
+    if (!success) {
+      console.error('Erreur upload badge staff sur R2:', uploadError);
+      return res.status(500).json({ error: 'Erreur upload badge PDF sur R2' });
+    }
+
+    badgeUrl = publicUrl;
+    console.log('Upload badge staff R2 OK:', badgeUrl);
+    
+    // 4. Mettre à jour l'URL du badge en base
+    await supabase
+      .from('inscription')
+      .update({ badge_url: badgeUrl })
+      .eq('id', data.id);
+      
+  } catch (error) {
+    console.error('Exception upload badge staff R2:', error);
+    return res.status(500).json({ error: 'Exception upload badge PDF sur R2' });
+  }
+
+  // 5. Envoi du badge par email
   try {
     await sendBadgeEmail(
       email,
@@ -63,8 +98,41 @@ export default async function handler(req, res) {
       badgeCode
     );
   } catch (err) {
-    return res.status(500).json({ error: "Erreur lors de l'envoi de l'email : " + err.message });
+    console.error('Erreur envoi email badge staff:', err);
+    // Ne pas bloquer si l'email échoue
   }
 
-  return res.status(200).json({ success: true, badgeCode });
+  // 6. Envoi WhatsApp si téléphone disponible
+  if (telephone) {
+    try {
+      const whatsappText = `Bonjour ${prenom} ${nom},\n\nVotre badge nominatif CNOL 2025 (Staff) est en pièce jointe (PDF) et vous a aussi été envoyé par email à : ${email}.\n\nVous pouvez également le télécharger ici :\n${badgeUrl}\n\nPour accéder à l'application CNOL 2025 (programme, notifications, espace personnel...), téléchargez-la ici :\nhttps://www.app.cnol.ma\n\nVos identifiants d'accès :\nEmail : ${email}\nCode badge : ${badgeCode}\nFonction : ${fonction}\nOrganisation : ${organisation}\n\nMerci d'imprimer ce badge et de l'apporter le jour de l'événement.\n\nÀ bientôt !\n\nSuivez CNOL sur Instagram @cnol_maroc`;
+      
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/send-whatsapp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: telephone,
+          text: whatsappText,
+          documentUrl: badgeUrl,
+          fileName: `badge-cnol2025-staff-${prenom}-${nom}.pdf`
+        })
+      });
+      
+      if (response.ok) {
+        console.log('WhatsApp badge staff envoyé avec succès');
+      } else {
+        console.error('Erreur envoi WhatsApp badge staff');
+      }
+    } catch (whatsappError) {
+      console.error('Erreur envoi WhatsApp badge staff:', whatsappError);
+      // Ne pas bloquer si WhatsApp échoue
+    }
+  }
+
+  return res.status(200).json({ 
+    success: true, 
+    badgeCode, 
+    badgeUrl,
+    message: `Staff ${prenom} ${nom} ajouté avec succès. Badge généré et envoyé.`
+  });
 } 
