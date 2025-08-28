@@ -68,29 +68,33 @@ export default async function handler(req, res) {
     };
     const pdfBuffer = await generateBadgeUnified(userData);
 
-    // Upload avec la clé anon (plus sécurisé)
-    const { createClient } = require('@supabase/supabase-js');
-    const supabaseServiceRole = createClient(
-      'https://otmttpiqeehfquoqycol.supabase.co',
-      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
-
-    // Upload PDF dans Supabase Storage (bucket 'logos') avec service_role
+    // Upload sur Cloudflare R2 au lieu de Supabase
     const safeName = `${updated.prenom || ''} ${updated.nom}`.toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
     const fileName = `badge-cnol2025-${safeName}.pdf`;
-    const { data: uploadData, error: uploadError } = await supabaseServiceRole.storage
-      .from('logos')
-      .upload(fileName, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true
-      });
-    if (uploadError) {
-      console.error('Erreur upload badge PDF Supabase (service_role):', uploadError);
-      return res.status(500).json({ message: 'Erreur upload badge PDF (service_role)' });
+    
+    let badgeUrl = null;
+    try {
+      // Utiliser uploadToR2 au lieu de Supabase
+      const { uploadToR2 } = require('../../lib/uploadToR2');
+      
+      const { success, publicUrl, error: uploadError } = await uploadToR2(
+        fileName,
+        pdfBuffer,
+        'application/pdf'
+      );
+
+      if (!success) {
+        console.error('Erreur upload badge PDF sur R2:', uploadError);
+        return res.status(500).json({ message: 'Erreur upload badge PDF sur R2' });
+      }
+
+      badgeUrl = publicUrl;
+      console.log('Upload badge R2 OK:', badgeUrl);
+      
+    } catch (error) {
+      console.error('Exception upload badge R2:', error);
+      return res.status(500).json({ message: 'Exception upload badge PDF sur R2' });
     }
-    // Générer l'URL publique du PDF
-    const { data: publicUrlData } = supabase.storage.from('logos').getPublicUrl(fileName);
-    const badgeUrl = publicUrlData.publicUrl;
 
     // Envoyer mail si email disponible
     if (updated.email) {

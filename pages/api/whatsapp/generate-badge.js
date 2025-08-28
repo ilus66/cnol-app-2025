@@ -151,33 +151,31 @@ export default async function handler(req, res) {
   const safePrenom = (contact.prenom || '').toLowerCase().normalize('NFD').replace(/[^a-zA-Z0-9]/g, '-');
   const fileName = `badge-cnol2025-${safeNom}-${safePrenom}.pdf`;
 
-  // Upload dans le bucket 'logos' avec le client service_role
-  try {
-    console.log('[whatsapp/generate-badge] Tentative upload dans logos:', fileName);
-    const { data: uploadData, error: uploadError } = await supabaseServiceRole.storage
-      .from('logos')
-      .upload(fileName, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true
-      });
-    if (uploadError) {
-      console.error('[whatsapp/generate-badge] Erreur upload badge', uploadError);
-      return res.status(500).json({ success: false, message: 'Erreur upload badge PDF', error: uploadError.message });
-    }
-    console.log('[whatsapp/generate-badge] Upload OK', uploadData);
-  } catch (e) {
-    console.error('[whatsapp/generate-badge] Exception upload badge', e);
-    return res.status(500).json({ success: false, message: 'Exception upload badge PDF', error: e.message });
-  }
-
-  // Récupérer l'URL publique
+  // Upload sur Cloudflare R2 au lieu de Supabase
   let badgeUrl = null;
   try {
-    const { data: publicUrlData } = supabaseServiceRole.storage.from('logos').getPublicUrl(fileName);
-    badgeUrl = publicUrlData?.publicUrl;
-    console.log('[whatsapp/generate-badge] URL publique:', badgeUrl);
+    console.log('[whatsapp/generate-badge] Tentative upload sur R2:', fileName);
+    
+    // Utiliser uploadToR2 au lieu de Supabase
+    const { uploadToR2 } = require('../../../lib/uploadToR2');
+    
+    const { success, publicUrl, error: uploadError } = await uploadToR2(
+      fileName,
+      pdfBuffer,
+      'application/pdf'
+    );
+
+    if (!success) {
+      console.error('[whatsapp/generate-badge] Erreur upload badge sur R2:', uploadError);
+      return res.status(500).json({ success: false, message: 'Erreur upload badge PDF sur R2', error: uploadError.message });
+    }
+
+    badgeUrl = publicUrl;
+    console.log('[whatsapp/generate-badge] Upload R2 OK:', badgeUrl);
+    
   } catch (e) {
-    console.error('[whatsapp/generate-badge] Erreur récupération URL publique', e);
+    console.error('[whatsapp/generate-badge] Exception upload badge R2:', e);
+    return res.status(500).json({ success: false, message: 'Exception upload badge PDF sur R2', error: e.message });
   }
 
   // Met à jour le statut du contact dans la table appropriée
